@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sprint Tracker – Aline & Caio - V2</title>
+  <title>Sprint Tracker – Aline & Caio - V2.1</title>
   <style>
     :root{
       --bg:#0f1220; --panel:#171a2b; --muted:#9aa3b2; --text:#e8ecf1; --accent:#6ee7b7; --accent2:#60a5fa; --danger:#f87171; --warn:#fbbf24;
@@ -65,7 +65,7 @@
     <div class="wrap">
       <div class="row" style="justify-content:space-between">
         <div class="row" style="gap:10px;align-items:center">
-          <h1 id="sprintTitle">🏁 Sprint Tracker – V2</h1>
+          <h1 id="sprintTitle">🏁 Sprint Tracker – V2.1</h1>
           <span id="dateBadge" class="pill">Carregando…</span>
         </div>
         <div class="row">
@@ -136,11 +136,20 @@
         <input name="tags" placeholder="tags (vírgulas)" />
       </div>
       <textarea name="notes" rows="3" placeholder="Notas / critério de aceite (opcional)" style="width:100%;margin:6px 0"></textarea>
-      <div class="modal-actions">
-        <button class="btn danger" value="delete">Excluir</button>
-        <button class="btn" value="cancel">Cancelar</button>
-        <button class="btn primary" value="save">Salvar</button>
+      <div style="margin: 12px 0;">
+        <h4 id="checklistTitle" style="margin: 0 0 8px; font-size: 14px;">Checklist</h4>
+        <div id="checklistContainer"></div>
+        <div class="row" style="gap: 8px; margin-top: 8px;">
+          <input id="newChecklistItem" placeholder="Novo item do checklist..." style="flex: 1;" />
+          <button type="button" class="btn" id="addChecklistItemBtn">Adicionar item</button>
+        </div>
       </div>
+      <div class="modal-actions">
+        <div class="modal-actions">
+          <button type="button" class="btn danger" value="delete">Excluir</button>
+          <button type="button" class="btn" value="cancel">Cancelar</button>
+          <button type="submit" class="btn primary" value="save">Salvar</button>
+        </div>
     </form>
   </dialog>
   <dialog id="sprintModal">
@@ -159,74 +168,75 @@
   </dialog>
 
 <script type="module">
-  // --- Início da Configuração do Firebase ---
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-  import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
-  
-  const firebaseConfig = {
+
+// --- Início da Configuração do Firebase ---
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+
+const firebaseConfig = {
     apiKey: "AIzaSyBjUoks9OQxUQ6_rdUSXE-ZLzjQrjLNVh8",
     authDomain: "sprint-tracker-aline-caio.firebaseapp.com",
     projectId: "sprint-tracker-aline-caio",
     storageBucket: "sprint-tracker-aline-caio.appspot.com",
     messagingSenderId: "1096785458487",
     appId: "1:1096785458487:web:c89269c1c00d2a9b9316b2"
-  };
-  
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  // --- Fim da Configuração do Firebase ---
+};
 
-  // --- Seletores e Estado Global ---
-  const $ = sel => document.querySelector(sel);
-  const $$ = sel => Array.from(document.querySelectorAll(sel));
-  let state = { sprints: [], selected: 0 };
-  const sprintsCol = collection(db, 'sprints');
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+// --- Fim da Configuração do Firebase ---
 
-  // --- Funções de Ajuda (Helpers) ---
-  const cryptoRandomId = () => crypto.randomUUID ? crypto.randomUUID() : `id-${Math.random().toString(36).slice(2)}`;
-  const escapeHtml = str => String(str || '').replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
-  const fmtDate = iso => new Date(`${iso}T00:00:00`).toLocaleDateString('pt-BR');
-  const addDays = (iso, n) => {
+// --- Seletores e Estado Global ---
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+let state = { sprints: [], selected: 0 };
+const sprintsCol = collection(db, 'sprints');
+
+// --- Funções de Ajuda (Helpers) ---
+const cryptoRandomId = () => crypto.randomUUID ? crypto.randomUUID() : `id-${Math.random().toString(36).slice(2)}`;
+const escapeHtml = str => String(str || '').replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+const fmtDate = iso => new Date(`${iso}T00:00:00`).toLocaleDateString('pt-BR');
+const addDays = (iso, n) => {
     const d = new Date(`${iso}T00:00:00`);
     d.setDate(d.getDate() + n);
     return d.toISOString().slice(0, 10);
-  };
-  const currentSprint = () => state.sprints[state.selected];
+};
+const currentSprint = () => state.sprints[state.selected];
 
-  // --- Lógica Principal de Dados (Firebase) ---
-  onSnapshot(sprintsCol, snapshot => {
+// --- Lógica Principal de Dados (Firebase) ---
+onSnapshot(sprintsCol, snapshot => {
     const remoteSprints = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
     if (remoteSprints.length === 0) {
-      console.log("Nenhuma sprint. Criando a primeira de exemplo.");
-      createInitialSprint();
-      return;
+        console.log("Nenhuma sprint. Criando a primeira de exemplo.");
+        createInitialSprint();
+        return;
     }
     state.sprints = remoteSprints.sort((a, b) => a.createdAt - b.createdAt);
     if (state.selected >= state.sprints.length) state.selected = state.sprints.length - 1;
     console.log("Dados sincronizados!", state.sprints);
     renderAllUI();
-  });
+});
 
-  async function createInitialSprint() {
+async function createInitialSprint() {
     const todayISO = new Date().toISOString().slice(0, 10);
     const newSprint = {
-      name: 'Sprint 1', start: todayISO, end: addDays(todayISO, 14), createdAt: Date.now(),
-      epics: [ {id: cryptoRandomId(), name: 'Saúde'}, {id: cryptoRandomId(), name: 'Lazer'}, {id: cryptoRandomId(), name: 'Trabalho'} ],
-      tasks: [ { id: cryptoRandomId(), title: 'Configurar o tracker com Firebase', epicId: null, tags: ['config'], assignee: 'Caio', points: 5, status: 'done', notes: '' } ]
+        name: 'Sprint 1', start: todayISO, end: addDays(todayISO, 14), createdAt: Date.now(),
+        epics: [ {id: cryptoRandomId(), name: 'Saúde'}, {id: cryptoRandomId(), name: 'Lazer'}, {id: cryptoRandomId(), name: 'Trabalho'} ],
+        tasks: [ { id: cryptoRandomId(), title: 'Configurar o tracker com Firebase', epicId: null, tags: ['config'], assignee: 'Caio', points: 5, status: 'done', notes: '' } ]
     };
     await setDoc(doc(sprintsCol), newSprint);
-  }
+}
 
-  async function updateCurrentSprintInFirebase() {
+async function updateCurrentSprintInFirebase() {
     const sp = currentSprint();
     if (!sp || !sp.id) return;
     const { id, ...sprintData } = sp;
     await setDoc(doc(db, 'sprints', sp.id), sprintData, { merge: true });
     console.log(`Sprint "${sp.name}" atualizada.`);
-  }
+}
 
-  // --- Funções de Renderização da UI ---
-  function renderAllUI() {
+// --- Funções de Renderização da UI ---
+function renderAllUI() {
     const sp = currentSprint();
     if (!sp) return;
     renderSprintOptions();
@@ -234,16 +244,16 @@
     renderHeader();
     renderStats();
     renderBoard();
-  }
+}
 
-  function renderSprintOptions() {
+function renderSprintOptions() {
     const selectedSprintId = currentSprint()?.id;
     $('#sprintSelect').innerHTML = state.sprints.map((sp, idx) =>
-      `<option value="${idx}" ${sp.id === selectedSprintId ? 'selected' : ''}>${sp.name}</option>`
+        `<option value="${idx}" ${sp.id === selectedSprintId ? 'selected' : ''}>${sp.name}</option>`
     ).join('');
-  }
+}
 
-  function renderEpicUIs() {
+function renderEpicUIs() {
     const sp = currentSprint();
     const epics = sp.epics || [];
     const epicOptions = epics.map(e => `<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
@@ -251,16 +261,16 @@
     $('#epicSelect').innerHTML = `<option value="">Épico…</option>${epicOptions}`;
     $('#editForm select[name="epicId"]').innerHTML = epicOptions;
     $('#epicList').innerHTML = epics.map(e => `<span class="badge epic epic-chip"><span>${escapeHtml(e.name)}</span><button title="Excluir épico" data-action="del-epic" data-id="${e.id}">×</button></span>`).join('');
-  }
+}
 
-  function renderHeader() {
+function renderHeader() {
     const sp = currentSprint();
     const dl = { total: Math.ceil((new Date(sp.end) - new Date(sp.start)) / 864e5), left: Math.max(0, Math.ceil((new Date(sp.end) - new Date()) / 864e5)) };
     $('#sprintTitle').textContent = `🏁 ${sp.name}`;
     $('#dateBadge').innerHTML = `⏳ ${fmtDate(sp.start)} → ${fmtDate(sp.end)} · ${dl.left}/${dl.total} dias restantes`;
-  }
+}
 
-  function renderStats() {
+function renderStats() {
     const sp = currentSprint();
     const tasks = sp.tasks || [];
     const totals = calcTotals(tasks);
@@ -281,9 +291,9 @@
     $('#todoCount').textContent = tasks.filter(t => t.status === 'todo').length;
     $('#doingCount').textContent = tasks.filter(t => t.status === 'doing').length;
     $('#doneCount').textContent = tasks.filter(t => t.status === 'done').length;
-  }
+}
 
-  function calcTotals(tasks) {
+function calcTotals(tasks) {
     const fib = n => Number(n) || 0;
     const byAssignee = { Caio: { who: 'Caio', total: 0, done: 0 }, Aline: { who: 'Aline', total: 0, done: 0 } };
     tasks.forEach(t => {
@@ -291,62 +301,69 @@
       if (a) { a.total += fib(t.points); if (t.status === 'done') a.done += fib(t.points); }
     });
     return { total: byAssignee.Caio.total + byAssignee.Aline.total, byAssignee };
-  }
+}
 
-  function renderBoard() {
+function renderBoard() {
     $$('.dropzone').forEach(col => col.innerHTML = '');
     const sp = currentSprint();
     const tasks = (sp.tasks || []).filter(t => $('#epicFilter').value === 'all' || t.epicId === $('#epicFilter').value);
     tasks.sort((a, b) => (a._order || 0) - (b._order || 0));
     tasks.forEach(task => {
-      const card = document.createElement('article');
-      card.className = `task${task.status === 'done' ? ' done' : ''}`;
-      card.draggable = true; card.dataset.id = task.id;
-      const epicName = sp.epics.find(e => e.id === task.epicId)?.name || 'Sem épico';
-      const tagsHTML = (task.tags || []).map(tag => `<span class="badge tag">${escapeHtml(tag)}</span>`).join('');
-      let daysInProgressHTML = '';
-      if (task.status === 'doing' && task.startedAt) {
-        const diffDays = Math.ceil(Math.abs(new Date() - new Date(`${task.startedAt}T00:00:00`)) / 864e5);
-        daysInProgressHTML = `<span class="badge warn" style="margin-left: auto;">Há ${diffDays} dia(s)</span>`;
-      }
-      card.innerHTML = `<div class="row-between"><div class="title">${escapeHtml(task.title)}</div><div class="row" style="gap:6px">${daysInProgressHTML}<span class="badge epic">${escapeHtml(epicName)}</span><span class="badge points">${task.points} pts</span><span class="badge assignee">${task.assignee}</span></div></div>${tagsHTML ? `<div class="taglist">${tagsHTML}</div>` : ''}${task.notes ? `<div class="muted" style="font-size:12px;white-space:pre-wrap">${escapeHtml(task.notes)}</div>` : ''}`;
-      card.addEventListener('dblclick', () => openEdit(task.id));
-      makeDraggable(card);
-      $(`#${task.status}`).appendChild(card);
+        const card = document.createElement('article');
+        card.className = `task${task.status === 'done' ? ' done' : ''}`;
+        card.draggable = true; card.dataset.id = task.id;
+        const epicName = sp.epics.find(e => e.id === task.epicId)?.name || 'Sem épico';
+        const tagsHTML = (task.tags || []).map(tag => `<span class="badge tag">${escapeHtml(tag)}</span>`).join('');
+        let daysInProgressHTML = '';
+        if (task.status === 'doing' && task.startedAt) {
+            const diffDays = Math.ceil(Math.abs(new Date() - new Date(`${task.startedAt}T00:00:00`)) / 864e5);
+            daysInProgressHTML = `<span class="badge warn" style="margin-left: auto;">Há ${diffDays} dia(s)</span>`;
+        }
+        let checklistHTML = '';
+        if (task.checklist && task.checklist.length > 0) {
+            const total = task.checklist.length;
+            const done = task.checklist.filter(item => item.done).length;
+            const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+            checklistHTML = `<div style="margin-top: 8px;"><div class="row-between" style="font-size: 12px; margin-bottom: 4px;"><span class="muted">Checklist</span><span class="muted">${done}/${total} (${percent}%)</span></div><div class="progress"><div class="bar" style="width: ${percent}%;"></div></div></div>`;
+        }
+        card.innerHTML = `<div class="row-between"><div class="title">${escapeHtml(task.title)}</div><div class="row" style="gap:6px">${daysInProgressHTML}<span class="badge epic">${escapeHtml(epicName)}</span><span class="badge points">${task.points} pts</span><span class="badge assignee">${task.assignee}</span></div></div>${tagsHTML ? `<div class="taglist">${tagsHTML}</div>` : ''}${task.notes ? `<div class="muted" style="font-size:12px;white-space:pre-wrap;margin-top:4px;">${escapeHtml(task.notes)}</div>` : ''}${checklistHTML}`;
+        card.addEventListener('dblclick', () => openEdit(task.id));
+        makeDraggable(card);
+        $(`#${task.status}`).appendChild(card);
     });
-  }
-  
-  // --- Lógica de Interação do Usuário ---
-  $('#sprintSelect').addEventListener('change', e => { state.selected = Number(e.target.value); renderAllUI(); });
-  $('#epicFilter').addEventListener('change', () => renderBoard());
+}
 
-  $('#taskForm').addEventListener('submit', e => {
+// --- Lógica de Interação do Usuário ---
+$('#sprintSelect').addEventListener('change', e => { state.selected = Number(e.target.value); renderAllUI(); });
+$('#epicFilter').addEventListener('change', () => renderBoard());
+
+$('#taskForm').addEventListener('submit', e => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const sp = currentSprint();
-    sp.tasks.push({ id: cryptoRandomId(), title: String(fd.get('title')||'').trim(), epicId: fd.get('epicId')||null, tags: String(fd.get('tags')||'').split(',').map(s=>s.trim()).filter(Boolean), assignee: fd.get('assignee'), points: Number(fd.get('points')), status: fd.get('status'), notes: '' });
+    sp.tasks.push({ id: cryptoRandomId(), title: String(fd.get('title')||'').trim(), epicId: fd.get('epicId')||null, tags: String(fd.get('tags')||'').split(',').map(s=>s.trim()).filter(Boolean), assignee: fd.get('assignee'), points: Number(fd.get('points')), status: fd.get('status'), notes: '', checklist: [] });
     e.target.reset();
     updateCurrentSprintInFirebase();
-  });
+});
 
-  $('#addSprintBtn').addEventListener('click', () => {
+$('#addSprintBtn').addEventListener('click', () => {
     const last = state.sprints[state.sprints.length - 1];
     const todayISO = new Date().toISOString().slice(0, 10);
     $('#startDate').value = last ? last.end : todayISO;
     $('#endDate').value = last ? addDays(last.end || todayISO, 14) : addDays(todayISO, 14);
     $('#sprintModal').showModal();
-  });
+});
 
-  $('#sprintForm').addEventListener('submit', async e => {
+$('#sprintForm').addEventListener('submit', async e => {
     e.preventDefault();
     const f = new FormData(e.target);
     const prev = currentSprint();
     const newSprint = { name: f.get('name') || 'Sprint', start: f.get('start'), end: f.get('end'), epics: prev?.epics ? JSON.parse(JSON.stringify(prev.epics)) : [], tasks: [], createdAt: Date.now() };
     await setDoc(doc(sprintsCol), newSprint);
     $('#sprintModal').close();
-  });
-  
-  $('#addEpicBtn').addEventListener('click', () => {
+});
+
+$('#addEpicBtn').addEventListener('click', () => {
     const input = $('#newEpicName');
     const name = String(input.value || '').trim();
     if (!name) return;
@@ -356,9 +373,9 @@
     sp.epics.push({ id: cryptoRandomId(), name });
     input.value = '';
     updateCurrentSprintInFirebase();
-  });
+});
 
-  $('#epicList').addEventListener('click', e => {
+$('#epicList').addEventListener('click', e => {
     const btn = e.target.closest('[data-action="del-epic"]');
     if (!btn) return;
     const sp = currentSprint();
@@ -367,9 +384,9 @@
     sp.epics = sp.epics.filter(e => e.id !== btn.dataset.id);
     sp.tasks.forEach(t => { if (t.epicId === btn.dataset.id) t.epicId = null; });
     updateCurrentSprintInFirebase();
-  });
+});
 
-  function openEdit(id) {
+function openEdit(id) {
     const sp = currentSprint();
     const t = sp.tasks.find(x => x.id === id); if (!t) return;
     const f = $('#editForm');
@@ -378,10 +395,60 @@
     renderEpicUIs();
     f.querySelector('select[name="epicId"]').value = t.epicId || '';
     f.querySelector('input[name="tags"]').value = (t.tags || []).join(', ');
+    renderChecklistInModal(t);
     $('#editModal').showModal();
-  }
+}
 
-  $('#editForm').addEventListener('submit', e => {
+// --- FUNÇÕES ESPECÍFICAS DO CHECKLIST ---
+function renderChecklistInModal(task) {
+    const container = $('#checklistContainer');
+    container.innerHTML = '';
+    if (!task.checklist) task.checklist = [];
+    const total = task.checklist.length;
+    const done = task.checklist.filter(item => item.done).length;
+    const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+    $('#checklistTitle').textContent = `Checklist (${done}/${total} - ${percent}%)`;
+    task.checklist.forEach((item, index) => {
+        const itemEl = document.createElement('div');
+        itemEl.className = 'row';
+        itemEl.style.justifyContent = 'space-between';
+        itemEl.style.padding = '4px 0';
+        itemEl.innerHTML = `<label class="row" style="gap: 8px; align-items: center; flex: 1; cursor: pointer;"><input type="checkbox" data-index="${index}" ${item.done ? 'checked' : ''}><span style="${item.done ? 'text-decoration: line-through; opacity: 0.7;' : ''}">${escapeHtml(item.text)}</span></label><button type="button" class="btn ghost" data-index="${index}" style="padding: 2px 6px; color: var(--danger);">×</button>`;
+        itemEl.querySelector('input[type="checkbox"]').addEventListener('change', e => {
+            task.checklist[index].done = e.target.checked;
+            renderChecklistInModal(task);
+        });
+        itemEl.querySelector('button').addEventListener('click', () => {
+            task.checklist.splice(index, 1);
+            renderChecklistInModal(task);
+        });
+        container.appendChild(itemEl);
+    });
+}
+
+$('#addChecklistItemBtn').addEventListener('click', () => {
+    const taskId = $('#editForm').dataset.id;
+    const sp = currentSprint();
+    const task = sp.tasks.find(t => t.id === taskId);
+    const input = $('#newChecklistItem');
+    const text = input.value.trim();
+    if (text && task) {
+        if (!task.checklist) task.checklist = [];
+        task.checklist.push({ id: cryptoRandomId(), text: text, done: false });
+        input.value = '';
+        renderChecklistInModal(task);
+    }
+});
+
+$('#newChecklistItem').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        $('#addChecklistItemBtn').click();
+    }
+});
+
+// --- LÓGICA DO MODAL DE EDIÇÃO ---
+$('#editForm').addEventListener('submit', e => {
     e.preventDefault();
     const f = e.target;
     const id = f.dataset.id;
@@ -393,54 +460,70 @@
     if (item.status !== 'done' && item.doneAt) delete item.doneAt;
     updateCurrentSprintInFirebase();
     $('#editModal').close();
-  });
-  
-  $('#editForm button[value="delete"]').addEventListener('click', () => {
-    const id = $('#editForm').dataset.id;
-    const sp = currentSprint();
-    sp.tasks = sp.tasks.filter(t => t.id !== id);
-    updateCurrentSprintInFirebase();
-  });
-  
-  // --- Lógica de Drag and Drop ---
-  function makeDraggable(card) {
+});
+
+$('#editForm').addEventListener('click', e => {
+    const value = e.target.getAttribute('value');
+    if (value === 'cancel') {
+        $('#editModal').close();
+    } else if (value === 'delete') {
+        if (confirm('Tem certeza de que deseja excluir esta tarefa?')) {
+            const id = $('#editForm').dataset.id;
+            const sp = currentSprint();
+            sp.tasks = sp.tasks.filter(t => t.id !== id);
+            $('#editModal').close();
+            updateCurrentSprintInFirebase();
+        }
+    }
+});
+
+// --- Lógica de Drag and Drop ---
+function makeDraggable(card) {
     card.addEventListener('dragstart', () => card.classList.add('dragging'));
     card.addEventListener('dragend', () => card.classList.remove('dragging'));
-  }
-
-  $$('.dropzone').forEach(zone => {
+}
+$$('.dropzone').forEach(zone => {
     zone.addEventListener('dragover', e => {
-      e.preventDefault();
-      const after = getDragAfterElement(zone, e.clientY);
-      zone.insertBefore($('.task.dragging'), after);
+        e.preventDefault();
+        const after = getDragAfterElement(zone, e.clientY);
+        zone.insertBefore($('.task.dragging'), after);
     });
     zone.addEventListener('drop', e => {
-      e.preventDefault();
-      const dragging = $('.task.dragging');
-      if (!dragging) return;
-      moveTask(dragging.dataset.id, zone.parentElement.dataset.col);
-      persistOrder(zone.parentElement.dataset.col);
+        e.preventDefault();
+        const dragging = $('.task.dragging');
+        if (!dragging) return;
+        moveTask(dragging.dataset.id, zone.parentElement.dataset.col);
+        persistOrder(zone.parentElement.dataset.col);
     });
-  });
-
-  function getDragAfterElement(container, y) {
+});
+function getDragAfterElement(container, y) {
     const draggables = [...container.querySelectorAll('.task:not(.dragging)')];
     return draggables.reduce((closest, child) => {
-      const box = child.getBoundingClientRect();
-      const offset = y - box.top - box.height / 2;
-      return (offset < 0 && offset > closest.offset) ? { offset, element: child } : closest;
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        return (offset < 0 && offset > closest.offset) ? { offset, element: child } : closest;
     }, { offset: Number.NEGATIVE_INFINITY }).element;
-  }
-
-  function persistOrder(status) {
+}
+function persistOrder(status) {
     const sp = currentSprint();
     const ids = $$(`#${status} .task`).map(el => el.dataset.id);
     sp.tasks.forEach(t => { if (t.status === status) t._order = ids.indexOf(t.id); });
     updateCurrentSprintInFirebase();
-  }
-  
-  // --- Botões de Backup e Reset ---
-  $('#exportBtn').addEventListener('click', () => {
+}
+function moveTask(id, newStatus) {
+    const sp = currentSprint();
+    const t = sp.tasks.find(x => x.id === id);
+    if (!t) return;
+    t.status = newStatus;
+    if (newStatus === 'doing' && !t.startedAt) t.startedAt = new Date().toISOString().slice(0, 10);
+    else if (newStatus !== 'doing') delete t.startedAt;
+    if (newStatus === 'done' && !t.doneAt) t.doneAt = new Date().toISOString().slice(0, 10);
+    if (newStatus !== 'done' && t.doneAt) delete t.doneAt;
+    updateCurrentSprintInFirebase();
+}
+
+// --- Botões de Backup e Reset ---
+$('#exportBtn').addEventListener('click', () => {
     const data = JSON.stringify(state.sprints, null, 2);
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -448,15 +531,28 @@
     a.href = url; a.download = 'sprint-tracker-backup.json';
     a.click();
     URL.revokeObjectURL(url);
-  });
-  
-  $('#resetBtn').addEventListener('click', async () => {
-    if (confirm('Tem certeza de que deseja limpar TODOS os dados do Firebase? Esta ação não pode ser desfeita.')) {
-      for (const sp of state.sprints) {
-        await deleteDoc(doc(db, 'sprints', sp.id));
-      }
+});
+
+// MELHORIA: Botão agora deleta apenas a sprint atual
+$('#resetBtn').addEventListener('click', async () => {
+    const sp = currentSprint();
+    if (!sp) return;
+    if (state.sprints.length <= 1) {
+        return alert("Não é possível excluir a última sprint.");
     }
-  });
+
+    if (confirm(`Tem certeza de que deseja excluir a sprint "${sp.name}"? Esta ação não pode ser desfeita.`)) {
+        await deleteDoc(doc(db, 'sprints', sp.id));
+        // Seleciona a primeira sprint para evitar erros.
+        state.selected = 0; 
+        console.log(`Sprint "${sp.name}" foi excluída.`);
+    }
+});
+</script>
+
+</body>
+</html>
+
 </script>
 
 </body>
