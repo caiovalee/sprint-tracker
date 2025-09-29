@@ -65,17 +65,14 @@
     <div class="wrap">
       <div class="row" style="justify-content:space-between">
         <div class="row" style="gap:10px;align-items:center">
-          <h1>🏁 Sprint Tracker — Aline & Caio - V2</h1>
+          <h1 id="sprintTitle">🏁 Sprint Tracker – V2</h1>
           <span id="dateBadge" class="pill">Carregando…</span>
         </div>
         <div class="row">
           <select id="sprintSelect" title="Selecionar sprint"></select>
           <select id="epicFilter" title="Filtrar por épico"><option value="all">Todos os épicos</option></select>
           <button class="btn" id="addSprintBtn">+ Nova Sprint</button>
-          <button class="btn" id="exportBtn" title="Exportar JSON">Exportar</button>
-          <label class="btn ghost" style="cursor:pointer">Importar
-            <input id="importInput" type="file" accept="application/json" style="display:none" />
-          </label>
+          <button class="btn" id="exportBtn" title="Exportar JSON (Backup)">Backup</button>
           <button class="btn warn" id="resetBtn" title="Limpar dados do Firebase">Limpar</button>
         </div>
       </div>
@@ -88,16 +85,13 @@
         <h3>Adicionar tarefa</h3>
         <form id="taskForm" class="row" style="gap:10px">
           <input required name="title" placeholder="Título da tarefa" style="flex:1"/>
-          <select name="epicId" id="epicSelect" required>
-            <option value="">Épico…</option>
-          </select>
+          <select name="epicId" id="epicSelect" required> <option value="">Épico…</option> </select>
           <input name="tags" placeholder="tags (vírgulas)" style="min-width:180px" />
           <select name="assignee" required> <option value="Aline">Aline</option> <option value="Caio">Caio</option> </select>
           <select name="points" required> <option value="0">0</option> <option value="1">1</option> <option value="2">2</option> <option value="3">3</option> <option value="5" selected>5</option> <option value="8">8</option> <option value="13">13</option> <option value="21">21</option> <option value="34">34</option> </select>
           <select name="status" required> <option value="todo">A fazer</option> <option value="doing">Em andamento</option> <option value="done">Concluída</option> </select>
           <button class="btn primary" type="submit">Adicionar</button>
         </form>
-        <p class="muted" style="margin:8px 4px 0">Pontuação usa <b>Fibonacci</b>. Tarefas pertencem a um <b>Épico</b> e podem ter <b>tags</b>.</p>
       </div>
       <div class="card">
         <h3>Resumo da sprint</h3>
@@ -114,7 +108,6 @@
         </div>
       </div>
     </section>
-
     <section class="card">
       <h3>Épicos</h3>
       <div id="epicList" class="taglist" style="margin-bottom:8px"></div>
@@ -123,14 +116,12 @@
         <button class="btn" id="addEpicBtn">Adicionar épico</button>
       </div>
     </section>
-
     <section class="kanban">
       <div class="col" data-col="todo"> <h4>🗂️ A fazer (<span class="muted" id="todoCount">0</span>)</h4> <div class="dropzone" id="todo"></div> </div>
       <div class="col" data-col="doing"> <h4>🚧 Em andamento (<span class="muted" id="doingCount">0</span>)</h4> <div class="dropzone" id="doing"></div> </div>
       <div class="col" data-col="done"> <h4>✅ Concluída (<span class="muted" id="doneCount">0</span>)</h4> <div class="dropzone" id="done"></div> </div>
     </section>
   </main>
-
   <dialog id="editModal">
     <form method="dialog" id="editForm" style="min-width:320px;max-width:520px;padding:12px">
       <h3>Editar tarefa</h3>
@@ -152,7 +143,6 @@
       </div>
     </form>
   </dialog>
-
   <dialog id="sprintModal">
     <form method="dialog" id="sprintForm" style="min-width:320px;max-width:520px;padding:12px">
       <h3>Nova Sprint</h3>
@@ -172,8 +162,7 @@
   // --- Início da Configuração do Firebase ---
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
   import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
-
-  // Your web app's Firebase configuration
+  
   const firebaseConfig = {
     apiKey: "AIzaSyBjUoks9OQxUQ6_rdUSXE-ZLzjQrjLNVh8",
     authDomain: "sprint-tracker-aline-caio.firebaseapp.com",
@@ -182,59 +171,64 @@
     messagingSenderId: "1096785458487",
     appId: "1:1096785458487:web:c89269c1c00d2a9b9316b2"
   };
-
-  // Initialize Firebase and Firestore
+  
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   // --- Fim da Configuração do Firebase ---
 
+  // --- Seletores e Estado Global ---
   const $ = sel => document.querySelector(sel);
   const $$ = sel => Array.from(document.querySelectorAll(sel));
-
   let state = { sprints: [], selected: 0 };
   const sprintsCol = collection(db, 'sprints');
 
+  // --- Funções de Ajuda (Helpers) ---
+  const cryptoRandomId = () => crypto.randomUUID ? crypto.randomUUID() : `id-${Math.random().toString(36).slice(2)}`;
+  const escapeHtml = str => String(str || '').replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+  const fmtDate = iso => new Date(`${iso}T00:00:00`).toLocaleDateString('pt-BR');
+  const addDays = (iso, n) => {
+    const d = new Date(`${iso}T00:00:00`);
+    d.setDate(d.getDate() + n);
+    return d.toISOString().slice(0, 10);
+  };
+  const currentSprint = () => state.sprints[state.selected];
+
+  // --- Lógica Principal de Dados (Firebase) ---
   onSnapshot(sprintsCol, snapshot => {
     const remoteSprints = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
     if (remoteSprints.length === 0) {
-      console.log("Nenhuma sprint encontrada. Criando a primeira sprint de exemplo.");
+      console.log("Nenhuma sprint. Criando a primeira de exemplo.");
       createInitialSprint();
       return;
     }
     state.sprints = remoteSprints.sort((a, b) => a.createdAt - b.createdAt);
-    if (state.selected >= state.sprints.length) {
-      state.selected = state.sprints.length - 1;
-    }
-    console.log("Dados sincronizados do Firebase!", state.sprints);
+    if (state.selected >= state.sprints.length) state.selected = state.sprints.length - 1;
+    console.log("Dados sincronizados!", state.sprints);
     renderAllUI();
   });
 
   async function createInitialSprint() {
     const todayISO = new Date().toISOString().slice(0, 10);
     const newSprint = {
-      name: 'Sprint 1',
-      start: todayISO,
-      end: addDays(todayISO, 14),
-      epics: [ {id: cryptoRandomId(), name: 'Saúde'}, {id: cryptoRandomId(), name: 'Lazer'}, {id: cryptoRandomId(), name: 'Estudos'}, {id: cryptoRandomId(), name: 'Trabalho'} ],
-      tasks: [ { id: cryptoRandomId(), title: 'Planejar Sprint 1 e definir DoD', epicId: null, tags: ['planejamento'], assignee: 'Caio', points: 3, status: 'todo', notes: '' } ],
-      createdAt: Date.now()
+      name: 'Sprint 1', start: todayISO, end: addDays(todayISO, 14), createdAt: Date.now(),
+      epics: [ {id: cryptoRandomId(), name: 'Saúde'}, {id: cryptoRandomId(), name: 'Lazer'}, {id: cryptoRandomId(), name: 'Trabalho'} ],
+      tasks: [ { id: cryptoRandomId(), title: 'Configurar o tracker com Firebase', epicId: null, tags: ['config'], assignee: 'Caio', points: 5, status: 'done', notes: '' } ]
     };
-    const newSprintRef = doc(sprintsCol);
-    await setDoc(newSprintRef, newSprint);
-    state.selected = 0;
+    await setDoc(doc(sprintsCol), newSprint);
   }
 
-  const sprintSelect = $('#sprintSelect');
-  const dateBadge = $('#dateBadge');
-  const statsEl = $('#stats');
+  async function updateCurrentSprintInFirebase() {
+    const sp = currentSprint();
+    if (!sp || !sp.id) return;
+    const { id, ...sprintData } = sp;
+    await setDoc(doc(db, 'sprints', sp.id), sprintData, { merge: true });
+    console.log(`Sprint "${sp.name}" atualizada.`);
+  }
 
-  const currentSprint = () => state.sprints[state.selected];
-
+  // --- Funções de Renderização da UI ---
   function renderAllUI() {
-    if (!currentSprint()) {
-      console.warn("Nenhuma sprint para renderizar.");
-      return;
-    }
+    const sp = currentSprint();
+    if (!sp) return;
     renderSprintOptions();
     renderEpicUIs();
     renderHeader();
@@ -242,149 +236,39 @@
     renderBoard();
   }
 
-  async function updateCurrentSprintInFirebase() {
-    const sp = currentSprint();
-    if (!sp || !sp.id) return;
-    const sprintRef = doc(db, 'sprints', sp.id);
-    const { id, ...sprintData } = sp; // Remove ID before saving
-    await setDoc(sprintRef, sprintData, { merge: true });
-    console.log("Sprint atualizada no Firebase.");
+  function renderSprintOptions() {
+    const selectedSprintId = currentSprint()?.id;
+    $('#sprintSelect').innerHTML = state.sprints.map((sp, idx) =>
+      `<option value="${idx}" ${sp.id === selectedSprintId ? 'selected' : ''}>${sp.name}</option>`
+    ).join('');
   }
 
-  $('#taskForm').addEventListener('submit', e => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const t = { id: cryptoRandomId(), title: String(fd.get('title') || '').trim(), epicId: fd.get('epicId') || null, tags: String(fd.get('tags') || '').split(',').map(s => s.trim()).filter(Boolean), assignee: fd.get('assignee'), points: Number(fd.get('points')), status: fd.get('status'), notes: '' };
+  function renderEpicUIs() {
     const sp = currentSprint();
-    if (!sp.tasks) sp.tasks = [];
-    sp.tasks.push(t);
-    e.target.reset();
-    updateCurrentSprintInFirebase();
-  });
-
-  function moveTask(id, newStatus) {
-    const sp = currentSprint();
-    const t = sp.tasks.find(x => x.id === id);
-    if (!t) return;
-    t.status = newStatus;
-    if (newStatus === 'doing' && !t.startedAt) t.startedAt = new Date().toISOString().slice(0, 10);
-    else if (newStatus !== 'doing') delete t.startedAt;
-    if (newStatus === 'done' && !t.doneAt) t.doneAt = new Date().toISOString().slice(0, 10);
-    if (newStatus !== 'done' && t.doneAt) delete t.doneAt;
-    updateCurrentSprintInFirebase();
-  }
-
-  $('#editForm').addEventListener('click', e => {
-    const action = e.target.value;
-    if (!action) return;
-    const id = e.currentTarget.dataset.id;
-    const sp = currentSprint();
-    const idx = sp.tasks.findIndex(x => x.id === id);
-    if (idx < 0) return;
-    if (action === 'delete') {
-      sp.tasks.splice(idx, 1);
-      $('#editModal').close();
-      updateCurrentSprintInFirebase();
-    } else if (action === 'save') {
-      const f = $('#editForm');
-      const item = sp.tasks[idx];
-      Object.assign(item, { title: String(f.title.value || '').trim(), assignee: f.assignee.value, points: Number(f.points.value), status: f.status.value, notes: f.notes.value, epicId: f.querySelector('select[name="epicId"]').value || null, tags: f.querySelector('input[name="tags"]').value.split(',').map(s => s.trim()).filter(Boolean) });
-      if (item.status === 'done' && !item.doneAt) item.doneAt = new Date().toISOString().slice(0, 10);
-      if (item.status !== 'done' && item.doneAt) delete item.doneAt;
-      $('#editModal').close();
-      updateCurrentSprintInFirebase();
-    } else if (action === 'cancel') {
-      $('#editModal').close();
-    }
-  });
-
-  $('#addSprintBtn').addEventListener('click', () => {
-    const spf = $('#sprintForm');
-    spf.reset();
-    const last = state.sprints[state.sprints.length - 1];
-    const todayISO = new Date().toISOString().slice(0, 10);
-    $('#startDate').value = last ? last.end : todayISO;
-    $('#endDate').value = last ? addDays(last.end, 14) : addDays(todayISO, 14);
-    $('#sprintModal').showModal();
-  });
-
-  $('#sprintForm').addEventListener('click', async e => {
-    if (e.target.value !== 'create') return;
-    const f = new FormData($('#sprintForm'));
-    const prev = currentSprint();
-    const newSprint = { name: f.get('name') || 'Sprint', start: f.get('start'), end: f.get('end'), epics: prev?.epics ? JSON.parse(JSON.stringify(prev.epics)) : [], tasks: [], createdAt: Date.now() };
-    await setDoc(doc(sprintsCol), newSprint);
-    state.selected = state.sprints.length;
-    $('#sprintModal').close();
-  });
-
-  $('#addEpicBtn').addEventListener('click', () => {
-    const input = $('#newEpicName');
-    const name = String(input.value || '').trim();
-    if (!name) return;
-    const sp = currentSprint();
-    if (!sp.epics) sp.epics = [];
-    if (sp.epics.some(e => String(e.name).trim().toLowerCase() === name.toLowerCase())) {
-      alert('Já existe um épico com esse nome.');
-      return;
-    }
-    sp.epics.push({ id: cryptoRandomId(), name });
-    input.value = '';
-    updateCurrentSprintInFirebase();
-  });
-
-  $('#epicList').addEventListener('click', e => {
-    const btn = e.target.closest('[data-action="del-epic"]');
-    if (!btn) return;
-    const { id } = btn.dataset;
-    const sp = currentSprint();
-    if (!sp?.epics) return;
-    const epic = sp.epics.find(e => e.id === id);
-    if (!epic || !confirm(`Excluir épico "${epic.name}"? As tarefas vinculadas ficarão sem épico.`)) return;
-    sp.epics = sp.epics.filter(e => e.id !== id);
-    sp.tasks.forEach(t => { if (t.epicId === id) t.epicId = null; });
-    updateCurrentSprintInFirebase();
-  });
-
-  function cryptoRandomId() {
-    try { return crypto.randomUUID(); } catch (e) { return `id-${Math.random().toString(36).slice(2)}`; }
-  }
-
-  const fmtDate = iso => new Date(`${iso}T00:00:00`).toLocaleDateString('pt-BR');
-
-  function daysLeft(start, end) {
-    const s = new Date(`${start}T00:00:00`);
-    const e = new Date(`${end}T23:59:59`);
-    const now = new Date();
-    return { total: Math.ceil((e - s) / 864e5), left: Math.max(0, Math.ceil((e - now) / 864e5)) };
+    const epics = sp.epics || [];
+    const epicOptions = epics.map(e => `<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
+    $('#epicFilter').innerHTML = `<option value="all">Todos os épicos</option>${epicOptions}`;
+    $('#epicSelect').innerHTML = `<option value="">Épico…</option>${epicOptions}`;
+    $('#editForm select[name="epicId"]').innerHTML = epicOptions;
+    $('#epicList').innerHTML = epics.map(e => `<span class="badge epic epic-chip"><span>${escapeHtml(e.name)}</span><button title="Excluir épico" data-action="del-epic" data-id="${e.id}">×</button></span>`).join('');
   }
 
   function renderHeader() {
     const sp = currentSprint();
-    if (!sp) return;
-    const dl = daysLeft(sp.start, sp.end);
-    dateBadge.innerHTML = `⏳ ${fmtDate(sp.start)} → ${fmtDate(sp.end)} · ${dl.left}/${dl.total} dias restantes`;
+    const dl = { total: Math.ceil((new Date(sp.end) - new Date(sp.start)) / 864e5), left: Math.max(0, Math.ceil((new Date(sp.end) - new Date()) / 864e5)) };
+    $('#sprintTitle').textContent = `🏁 ${sp.name}`;
+    $('#dateBadge').innerHTML = `⏳ ${fmtDate(sp.start)} → ${fmtDate(sp.end)} · ${dl.left}/${dl.total} dias restantes`;
   }
 
   function renderStats() {
     const sp = currentSprint();
-    if (!sp) return;
-    const totals = calcTotals(sp.tasks || []);
+    const tasks = sp.tasks || [];
+    const totals = calcTotals(tasks);
     const { Caio: caio, Aline: aline } = totals.byAssignee;
-    statsEl.innerHTML = [aline, caio].map(b => {
+    $('#stats').innerHTML = [aline, caio].map(b => {
       const pct = b.total ? Math.min(100, Math.round((b.done / b.total) * 100)) : 0;
       const share = totals.total ? Math.round((b.total / totals.total) * 100) : 0;
-      return `<div class="stat">
-        <div class="muted">${b.who}</div>
-        <div class="n">Planejados: ${b.total} pts</div>
-        <div class="muted">Entregues: ${b.done} pts</div>
-        <div class="muted" style="margin-top:6px">Progresso</div>
-        <div class="progress"><div class="bar" style="width:${pct}%"></div></div>
-        <div class="muted" style="margin-top:4px">Conclusão: ${pct}%</div>
-        <div class="muted" style="margin-top:6px">Participação na sprint</div>
-        <div class="progress"><div class="bar" style="width:${share}%"></div></div>
-        <div class="muted" style="margin-top:4px">${share}% dos pontos planejados</div>
-      </div>`;
+      return `<div class="stat"><div class="muted">${b.who}</div><div class="n">Planejados: ${b.total} pts</div><div class="muted">Entregues: ${b.done} pts</div><div class="muted" style="margin-top:6px">Progresso</div><div class="progress"><div class="bar" style="width:${pct}%"></div></div><div class="muted" style="margin-top:4px">Conclusão: ${pct}%</div><div class="muted" style="margin-top:6px">Participação</div><div class="progress"><div class="bar" style="width:${share}%"></div></div><div class="muted" style="margin-top:4px">${share}% dos pontos</div></div>`;
     }).join('');
     const alinePct = aline.total ? Math.round((aline.done / aline.total) * 100) : 0;
     const caioPct = caio.total ? Math.round((caio.done / caio.total) * 100) : 0;
@@ -394,7 +278,6 @@
     $('#progressCaioPct').textContent = `${caioPct}%`;
     $('#concluidoAline').textContent = `Concluído Aline: ${aline.done} pts`;
     $('#concluidoCaio').textContent = `Concluído Caio: ${caio.done} pts`;
-    const tasks = sp.tasks || [];
     $('#todoCount').textContent = tasks.filter(t => t.status === 'todo').length;
     $('#doingCount').textContent = tasks.filter(t => t.status === 'doing').length;
     $('#doneCount').textContent = tasks.filter(t => t.status === 'done').length;
@@ -405,79 +288,121 @@
     const byAssignee = { Caio: { who: 'Caio', total: 0, done: 0 }, Aline: { who: 'Aline', total: 0, done: 0 } };
     tasks.forEach(t => {
       const a = byAssignee[t.assignee];
-      if (a) {
-        a.total += fib(t.points);
-        if (t.status === 'done') a.done += fib(t.points);
-      }
+      if (a) { a.total += fib(t.points); if (t.status === 'done') a.done += fib(t.points); }
     });
-    const total = byAssignee.Caio.total + byAssignee.Aline.total;
-    return { total, byAssignee };
+    return { total: byAssignee.Caio.total + byAssignee.Aline.total, byAssignee };
   }
 
   function renderBoard() {
     $$('.dropzone').forEach(col => col.innerHTML = '');
     const sp = currentSprint();
-    if (!sp) return;
-    const tasks = sp.tasks || [];
-    const filteredTasks = tasks.filter(t => $('#epicFilter').value === 'all' || t.epicId === $('#epicFilter').value);
-    filteredTasks.sort((a, b) => (a._order || 0) - (b._order || 0));
-    filteredTasks.forEach(task => {
+    const tasks = (sp.tasks || []).filter(t => $('#epicFilter').value === 'all' || t.epicId === $('#epicFilter').value);
+    tasks.sort((a, b) => (a._order || 0) - (b._order || 0));
+    tasks.forEach(task => {
       const card = document.createElement('article');
       card.className = `task${task.status === 'done' ? ' done' : ''}`;
-      card.draggable = true;
-      card.dataset.id = task.id;
-      const epicName = epicNameById(task.epicId) || 'Sem épico';
+      card.draggable = true; card.dataset.id = task.id;
+      const epicName = sp.epics.find(e => e.id === task.epicId)?.name || 'Sem épico';
       const tagsHTML = (task.tags || []).map(tag => `<span class="badge tag">${escapeHtml(tag)}</span>`).join('');
       let daysInProgressHTML = '';
       if (task.status === 'doing' && task.startedAt) {
         const diffDays = Math.ceil(Math.abs(new Date() - new Date(`${task.startedAt}T00:00:00`)) / 864e5);
         daysInProgressHTML = `<span class="badge warn" style="margin-left: auto;">Há ${diffDays} dia(s)</span>`;
       }
-      card.innerHTML = `<div class="row-between">
-          <div class="title">${escapeHtml(task.title)}</div>
-          <div class="row" style="gap:6px">${daysInProgressHTML}<span class="badge epic">${escapeHtml(epicName)}</span><span class="badge points">${task.points} pts</span><span class="badge assignee">${task.assignee}</span></div>
-        </div>
-        ${tagsHTML ? `<div class="taglist">${tagsHTML}</div>` : ''}
-        ${task.notes ? `<div class="muted" style="font-size:12px;white-space:pre-wrap">${escapeHtml(task.notes)}</div>` : ''}`;
+      card.innerHTML = `<div class="row-between"><div class="title">${escapeHtml(task.title)}</div><div class="row" style="gap:6px">${daysInProgressHTML}<span class="badge epic">${escapeHtml(epicName)}</span><span class="badge points">${task.points} pts</span><span class="badge assignee">${task.assignee}</span></div></div>${tagsHTML ? `<div class="taglist">${tagsHTML}</div>` : ''}${task.notes ? `<div class="muted" style="font-size:12px;white-space:pre-wrap">${escapeHtml(task.notes)}</div>` : ''}`;
       card.addEventListener('dblclick', () => openEdit(task.id));
       makeDraggable(card);
       $(`#${task.status}`).appendChild(card);
     });
   }
+  
+  // --- Lógica de Interação do Usuário ---
+  $('#sprintSelect').addEventListener('change', e => { state.selected = Number(e.target.value); renderAllUI(); });
+  $('#epicFilter').addEventListener('change', () => renderBoard());
 
-  sprintSelect.addEventListener('change', e => {
-    state.selected = Number(e.target.value);
-    renderAllUI();
+  $('#taskForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const sp = currentSprint();
+    sp.tasks.push({ id: cryptoRandomId(), title: String(fd.get('title')||'').trim(), epicId: fd.get('epicId')||null, tags: String(fd.get('tags')||'').split(',').map(s=>s.trim()).filter(Boolean), assignee: fd.get('assignee'), points: Number(fd.get('points')), status: fd.get('status'), notes: '' });
+    e.target.reset();
+    updateCurrentSprintInFirebase();
   });
 
-  $('#exportBtn').addEventListener('click', () => {
-    const data = JSON.stringify(state, null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'sprint-tracker-backup.json';
-    a.click();
-    URL.revokeObjectURL(url);
+  $('#addSprintBtn').addEventListener('click', () => {
+    const last = state.sprints[state.sprints.length - 1];
+    const todayISO = new Date().toISOString().slice(0, 10);
+    $('#startDate').value = last ? last.end : todayISO;
+    $('#endDate').value = last ? addDays(last.end || todayISO, 14) : addDays(todayISO, 14);
+    $('#sprintModal').showModal();
   });
 
-  $('#importInput').disabled = true;
-
-  $('#resetBtn').addEventListener('click', async () => {
-    if (confirm('Tem certeza de que deseja limpar TODOS os dados do Firebase? Esta ação não pode ser desfeita.')) {
-      for (const sp of state.sprints) {
-        await deleteDoc(doc(db, 'sprints', sp.id));
-      }
-      console.log("Todos os dados foram limpos.");
-    }
+  $('#sprintForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const prev = currentSprint();
+    const newSprint = { name: f.get('name') || 'Sprint', start: f.get('start'), end: f.get('end'), epics: prev?.epics ? JSON.parse(JSON.stringify(prev.epics)) : [], tasks: [], createdAt: Date.now() };
+    await setDoc(doc(sprintsCol), newSprint);
+    $('#sprintModal').close();
+  });
+  
+  $('#addEpicBtn').addEventListener('click', () => {
+    const input = $('#newEpicName');
+    const name = String(input.value || '').trim();
+    if (!name) return;
+    const sp = currentSprint();
+    if (!sp.epics) sp.epics = [];
+    if (sp.epics.some(e => String(e.name).trim().toLowerCase() === name.toLowerCase())) return alert('Já existe um épico com esse nome.');
+    sp.epics.push({ id: cryptoRandomId(), name });
+    input.value = '';
+    updateCurrentSprintInFirebase();
   });
 
-  const addDays = (iso, n) => {
-    const d = new Date(`${iso}T00:00:00`);
-    d.setDate(d.getDate() + n);
-    return d.toISOString().slice(0, 10);
-  };
+  $('#epicList').addEventListener('click', e => {
+    const btn = e.target.closest('[data-action="del-epic"]');
+    if (!btn) return;
+    const sp = currentSprint();
+    const epic = sp.epics.find(e => e.id === btn.dataset.id);
+    if (!epic || !confirm(`Excluir épico "${epic.name}"?`)) return;
+    sp.epics = sp.epics.filter(e => e.id !== btn.dataset.id);
+    sp.tasks.forEach(t => { if (t.epicId === btn.dataset.id) t.epicId = null; });
+    updateCurrentSprintInFirebase();
+  });
 
+  function openEdit(id) {
+    const sp = currentSprint();
+    const t = sp.tasks.find(x => x.id === id); if (!t) return;
+    const f = $('#editForm');
+    f.dataset.id = id;
+    f.title.value = t.title; f.assignee.value = t.assignee; f.points.value = String(t.points); f.status.value = t.status; f.notes.value = t.notes || '';
+    renderEpicUIs();
+    f.querySelector('select[name="epicId"]').value = t.epicId || '';
+    f.querySelector('input[name="tags"]').value = (t.tags || []).join(', ');
+    $('#editModal').showModal();
+  }
+
+  $('#editForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const f = e.target;
+    const id = f.dataset.id;
+    const sp = currentSprint();
+    const item = sp.tasks.find(x => x.id === id);
+    if (!item) return;
+    Object.assign(item, { title: String(f.title.value || '').trim(), assignee: f.assignee.value, points: Number(f.points.value), status: f.status.value, notes: f.notes.value, epicId: f.querySelector('select[name="epicId"]').value || null, tags: f.querySelector('input[name="tags"]').value.split(',').map(s => s.trim()).filter(Boolean) });
+    if (item.status === 'done' && !item.doneAt) item.doneAt = new Date().toISOString().slice(0, 10);
+    if (item.status !== 'done' && item.doneAt) delete item.doneAt;
+    updateCurrentSprintInFirebase();
+    $('#editModal').close();
+  });
+  
+  $('#editForm button[value="delete"]').addEventListener('click', () => {
+    const id = $('#editForm').dataset.id;
+    const sp = currentSprint();
+    sp.tasks = sp.tasks.filter(t => t.id !== id);
+    updateCurrentSprintInFirebase();
+  });
+  
+  // --- Lógica de Drag and Drop ---
   function makeDraggable(card) {
     card.addEventListener('dragstart', () => card.classList.add('dragging'));
     card.addEventListener('dragend', () => card.classList.remove('dragging'));
@@ -486,20 +411,15 @@
   $$('.dropzone').forEach(zone => {
     zone.addEventListener('dragover', e => {
       e.preventDefault();
-      zone.closest('.col').classList.add('dragover');
-      const dragging = $('.task.dragging');
-      if (!dragging) return;
       const after = getDragAfterElement(zone, e.clientY);
-      zone.insertBefore(dragging, after);
+      zone.insertBefore($('.task.dragging'), after);
     });
-    zone.addEventListener('dragleave', () => zone.closest('.col').classList.remove('dragover'));
     zone.addEventListener('drop', e => {
       e.preventDefault();
-      zone.closest('.col').classList.remove('dragover');
       const dragging = $('.task.dragging');
       if (!dragging) return;
-      moveTask(dragging.dataset.id, zone.id);
-      persistOrder(zone.id);
+      moveTask(dragging.dataset.id, zone.parentElement.dataset.col);
+      persistOrder(zone.parentElement.dataset.col);
     });
   });
 
@@ -518,43 +438,25 @@
     sp.tasks.forEach(t => { if (t.status === status) t._order = ids.indexOf(t.id); });
     updateCurrentSprintInFirebase();
   }
-
-  function openEdit(id) {
-    const sp = currentSprint();
-    const t = sp.tasks.find(x => x.id === id);
-    if (!t) return;
-    const f = $('#editForm');
-    f.dataset.id = id;
-    f.title.value = t.title;
-    f.assignee.value = t.assignee;
-    f.points.value = String(t.points);
-    f.status.value = t.status;
-    f.notes.value = t.notes || '';
-    renderEpicUIs();
-    f.querySelector('select[name="epicId"]').value = t.epicId || '';
-    f.querySelector('input[name="tags"]').value = (t.tags || []).join(', ');
-    $('#editModal').showModal();
-  }
-
-  function epicNameById(id) {
-    const sp = currentSprint();
-    return sp?.epics?.find(e => e.id === id)?.name || null;
-  }
-
-  function renderEpicUIs() {
-    const sp = currentSprint();
-    if (!sp) return;
-    const epics = sp.epics || [];
-    const epicOptions = epics.map(e => `<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
-    $('#epicFilter').innerHTML = `<option value="all">Todos os épicos</option>${epicOptions}`;
-    $('#epicSelect').innerHTML = `<option value="">Épico…</option>${epicOptions}`;
-    $('#editForm select[name="epicId"]').innerHTML = epicOptions;
-    $('#epicList').innerHTML = epics.map(e => `<span class="badge epic epic-chip"><span>${escapeHtml(e.name)}</span><button title="Excluir épico" data-action="del-epic" data-id="${e.id}">×</button></span>`).join('');
-  }
-
-  $('#epicFilter').addEventListener('change', () => renderBoard());
-
-  const escapeHtml = str => String(str || '').replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+  
+  // --- Botões de Backup e Reset ---
+  $('#exportBtn').addEventListener('click', () => {
+    const data = JSON.stringify(state.sprints, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'sprint-tracker-backup.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+  
+  $('#resetBtn').addEventListener('click', async () => {
+    if (confirm('Tem certeza de que deseja limpar TODOS os dados do Firebase? Esta ação não pode ser desfeita.')) {
+      for (const sp of state.sprints) {
+        await deleteDoc(doc(db, 'sprints', sp.id));
+      }
+    }
+  });
 </script>
 
 </body>
