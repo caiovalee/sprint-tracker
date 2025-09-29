@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sprint Tracker – Aline & Caio - V1</title>
+  <style>
+    :root{
+      --bg:#0f1220; --panel:#171a2b; --muted:#9aa3b2; --text:#e8ecf1; --accent:#6ee7b7; --accent2:#60a5fa; --danger:#f87171; --warn:#fbbf24;
+      --card:#1e2338; --border:#2b3151;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial,sans-serif;background:radial-gradient(1200px 600px at 20% -10%,#1c2040 0%,transparent 65%),radial-gradient(1000px 800px at 120% 10%,#112033 0%,transparent 60%),var(--bg);color:var(--text)}
+    header{position:sticky;top:0;z-index:5;background:linear-gradient(180deg,rgba(15,18,32,.95),rgba(15,18,32,.75));backdrop-filter:saturate(140%) blur(8px);border-bottom:1px solid var(--border)}
+    .wrap{max-width:1200px;margin:0 auto;padding:16px}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    h1{font-size:20px;margin:0}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:12px;background:var(--panel);color:var(--text)}
+    select,input,button,textarea{background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 10px;outline:none}
+    select:focus,input:focus,textarea:focus{border-color:var(--accent2);box-shadow:0 0 0 2px rgba(96,165,250,.25)}
+    button{cursor:pointer}
+    .btn{border:1px solid var(--border);background:var(--card)}
+    .btn.primary{background:linear-gradient(180deg,#1f8b6a,#146a53);border-color:#2f9b7b}
+    .btn.primary:hover{filter:brightness(1.05)}
+    .btn.ghost{background:transparent}
+    .btn.warn{background:#3a2c11;border-color:#6b4c12;color:#ffd88a}
+    .btn.danger{background:#3a1717;border-color:#6b1f1f;color:#ffb3b3}
+
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media (min-width:900px){.grid{grid-template-columns:320px 1fr}}
+
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px}
+    .card h3{margin:0 0 8px;font-size:16px}
+
+    /* Kanban */
+    .kanban{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:14px}
+    @media (min-width:900px){.kanban{grid-template-columns:repeat(3,1fr)}}
+    .col{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:10px;min-height:240px}
+    .col h4{margin:4px 6px 8px;font-size:14px;color:var(--muted)}
+    .task{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:10px;margin:8px;display:grid;gap:8px;box-shadow:0 2px 0 rgba(0,0,0,.2)}
+    .task.dragging{opacity:.6;outline:2px dashed var(--accent2)}
+    .col.dragover{outline:2px dashed var(--accent2)}
+    .row-between{display:flex;justify-content:space-between;align-items:center}
+    .badge{font-size:12px; padding:4px 8px; border-radius:999px;border:1px solid var(--border);background:#11162a; color:#c9d3e3}
+    .points{background:#1b2b1e;color:#b7fdd4;border-color:#214e35}
+    .assignee{background:#162338;color:#cfe3ff;border-color:#274168}
+    .done .title{text-decoration:line-through;color:#a7b0c0}
+
+    .muted{color:var(--muted)}
+    .stats{display:grid;gap:16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));}
+    .stat{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px}
+    .stat .n{font-size:20px;font-weight:700}
+
+    .progress{height:10px;border-radius:999px;background:#121527;border:1px solid var(--border);overflow:hidden}
+    .bar{height:100%;background:linear-gradient(90deg,#60a5fa,#6ee7b7)}
+
+    /* Tags & épicos */
+    .epic{background:#30224a;border-color:#523d7e;color:#e6d8ff}
+    .tag{background:#26343a;border-color:#35606b;color:#c7f2ff;font-size:11px;padding:3px 6px}
+    .taglist{display:flex;flex-wrap:wrap;gap:6px}
+    /* Epic chip with delete */
+    .epic-chip{display:inline-flex;align-items:center;gap:6px}
+    .epic-chip button{all:unset;cursor:pointer;font-weight:700;line-height:1;padding:0 6px;border-radius:8px;color:#fbb6b6}
+    .epic-chip button:hover{background:#44222a}
+
+    dialog{border:none;border-radius:16px;background:var(--panel);color:var(--text);box-shadow:0 20px 60px rgba(0,0,0,.45);}
+    .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+    .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    
+    /* Classe para espaçamento dos pills de concluído */
+    .pill-container {
+      margin-top: 16px;
+      gap: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="row" style="justify-content:space-between">
+        <div class="row" style="gap:10px;align-items:center">
+          <h1>🏁 Sprint Tracker — Aline & Caio - V1</h1>
+          <span id="dateBadge" class="pill">Carregando…</span>
+        </div>
+        <div class="row">
+          <select id="sprintSelect" title="Selecionar sprint"></select>
+          <select id="epicFilter" title="Filtrar por épico"><option value="all">Todos os épicos</option></select>
+          <button class="btn" id="addSprintBtn">+ Nova Sprint</button>
+          <button class="btn" id="exportBtn" title="Exportar JSON">Exportar</button>
+          <label class="btn ghost" style="cursor:pointer">Importar
+            <input id="importInput" type="file" accept="application/json" style="display:none" />
+          </label>
+          <button class="btn warn" id="resetBtn" title="Limpar dados locais">Limpar</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap" style="display:grid;gap:14px">
+    <section class="grid">
+      <div class="card">
+        <h3>Adicionar tarefa</h3>
+        <form id="taskForm" class="row" style="gap:10px">
+          <input required name="title" placeholder="Título da tarefa" style="flex:1"/>
+          <select name="epicId" id="epicSelect" required>
+            <option value="">Épico…</option>
+          </select>
+          <input name="tags" placeholder="tags (separe por vírgulas)" style="min-width:180px" />
+          <select name="assignee" required>
+            <option value="Aline">Aline</option>
+            <option value="Caio">Caio</option>
+          </select>
+          <select name="points" required>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="5" selected>5</option>
+            <option value="8">8</option>
+            <option value="13">13</option>
+            <option value="21">21</option>
+            <option value="34">34</option>
+          </select>
+          <select name="status" required>
+            <option value="todo">A fazer</option>
+            <option value="doing">Em andamento</option>
+            <option value="done">Concluída</option>
+          </select>
+          <button class="btn primary" type="submit">Adicionar</button>
+        </form>
+        <p class="muted" style="margin:8px 4px 0">Pontuação usa <b>Fibonacci</b> (0,1,2,3,5,8,13,21,34). Cada tarefa pertence a um <b>Épico</b> e pode ter <b>tags</b>.</p>
+      </div>
+      <div class="card">
+        <h3>Resumo da sprint</h3>
+        <div class="stats" id="stats"></div>
+        <div style="margin-top:8px">
+          <div class="row-between"><span class="muted">Progresso Aline</span><span id="progressAlinePct">0%</span></div>
+          <div class="progress"><div id="progressAlineBar" class="bar" style="width:0%"></div></div>
+          <div class="row-between" style="margin-top:6px"><span class="muted">Progresso Caio</span><span id="progressCaioPct">0%</span></div>
+          <div class="progress"><div id="progressCaioBar" class="bar" style="width:0%"></div></div>
+          <div class="row pill-container">
+            <span class="pill" id="concluidoAline">Concluído Aline: 0 pts</span>
+            <span class="pill" id="concluidoCaio">Concluído Caio: 0 pts</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Épicos</h3>
+      <div id="epicList" class="taglist" style="margin-bottom:8px"></div>
+      <div class="row" style="gap:8px">
+        <input id="newEpicName" placeholder="Novo épico (ex.: Saúde)"/>
+        <button class="btn" id="addEpicBtn" type="button">Adicionar épico</button>
+      </div>
+      <p class="muted" style="margin-top:8px">Épicos não possuem pontos. Os pontos são atribuídos às tarefas relacionadas.</p>
+    </section>
+
+    <section class="kanban">
+      <div class="col" data-col="todo">
+        <h4>🗂️ A fazer (<span class="muted" id="todoCount">0</span>)</h4>
+        <div class="dropzone" id="todo"></div>
+      </div>
+      <div class="col" data-col="doing">
+        <h4>🚧 Em andamento (<span class="muted" id="doingCount">0</span>)</h4>
+        <div class="dropzone" id="doing"></div>
+      </div>
+      <div class="col" data-col="done">
+        <h4>✅ Concluída (<span class="muted" id="doneCount">0</span>)</h4>
+        <div class="dropzone" id="done"></div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="editModal">
+    <form method="dialog" id="editForm" style="min-width:320px;max-width:520px;padding:12px">
+      <h3 style="margin:0 0 8px">Editar tarefa</h3>
+      <input name="title" placeholder="Título" style="width:100%;margin:6px 0" />
+      <div class="row" style="gap:8px;margin:6px 0">
+        <select name="assignee">
+          <option value="Aline">Aline</option>
+          <option value="Caio">Caio</option>
+        </select>
+        <select name="points">
+          <option>0</option><option>1</option><option>2</option><option>3</option><option>5</option><option>8</option><option>13</option><option>21</option><option>34</option>
+        </select>
+        <select name="status">
+          <option value="todo">A fazer</option>
+          <option value="doing">Em andamento</option>
+          <option value="done">Concluída</option>
+        </select>
+      </div>
+      <div class="row" style="gap:8px;margin:6px 0">
+        <select name="epicId"></select>
+        <input name="tags" placeholder="tags (vírgulas)" />
+      </div>
+      <textarea name="notes" rows="3" placeholder="Notas / critério de aceite (opcional)" style="width:100%;margin:6px 0"></textarea>
+      <div class="modal-actions">
+        <button class="btn danger" value="delete">Excluir</button>
+        <button class="btn" value="cancel">Cancelar</button>
+        <button class="btn primary" value="save">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="sprintModal">
+    <form method="dialog" id="sprintForm" style="min-width:320px;max-width:520px;padding:12px">
+      <h3 style="margin:0 0 8px">Nova Sprint</h3>
+      <label>Nome<input name="name" placeholder="Sprint X" style="width:100%;margin:6px 0" required></label>
+      <div class="row" style="gap:8px;margin:6px 0">
+        <label class="sr" for="startDate">Início</label>
+        <input id="startDate" name="start" type="date" required>
+        <label class="sr" for="endDate">Fim</label>
+        <input id="endDate" name="end" type="date" required>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" value="cancel">Cancelar</button>
+        <button class="btn primary" value="create">Criar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+  (function(){
+  const LS_KEY = 'sprintTracker_v1';
+  const TEST_FLAG = 'sprintTracker_tests_ran';
+  const $ = function(sel){ return document.querySelector(sel); };
+  const $$ = function(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); };
+
+  // Default initial data: create Sprint 1 with today to 2025-10-12
+  const todayISO = new Date().toISOString().slice(0,10);
+  const defaultData = {
+    sprints: [
+      {
+        id: cryptoRandomId(),
+        name: 'Sprint 1',
+        start: todayISO,
+        end: '2025-10-12',
+        epics: [
+          {id: cryptoRandomId(), name: 'Saúde'},
+          {id: cryptoRandomId(), name: 'Lazer'},
+          {id: cryptoRandomId(), name: 'Estudos'},
+          {id: cryptoRandomId(), name: 'Trabalho'}
+        ],
+        tasks: [
+          { id: cryptoRandomId(), title: 'Planejar Sprint 1 e definir DoD', epicId: null, tags: ['planejamento'], assignee: 'Caio', points: 3, status: 'todo', notes: '' },
+          { id: cryptoRandomId(), title: 'Criar cenários BDD para Checkout', epicId: null, tags: ['QA','BDD'], assignee: 'Caio', points: 8, status: 'doing', notes: 'Fluxos: CEP válido, CEP inválido, abandono.' },
+          { id: cryptoRandomId(), title: 'Revisar UX das gavetas (Storyblok)', epicId: null, tags: ['UX'], assignee: 'Aline', points: 5, status: 'todo', notes: '' },
+          { id: cryptoRandomId(), title: 'Configurar suíte Cypress básica', epicId: null, tags: ['Cypress'], assignee: 'Caio', points: 5, status: 'todo', notes: '' },
+          { id: cryptoRandomId(), title: 'Checklist de evidências (Notion)', epicId: null, tags: ['Processo'], assignee: 'Aline', points: 3, status: 'done', notes: '', doneAt: new Date().toISOString().slice(0,10) },
+          { id: cryptoRandomId(), title: 'Validação de tags (dataLayer)', epicId: null, tags: ['Analytics'], assignee: 'Aline', points: 8, status: 'doing', notes: '' }
+        ]
+      }
+    ],
+    selected: 0
+  };
+
+  function cryptoRandomId(){
+    try{
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+    }catch(e){}
+    return 'id-' + Math.random().toString(36).slice(2);
+  }
+
+  let state = load();
+
+  // Elements
+  const sprintSelect = $('#sprintSelect');
+  const dateBadge = $('#dateBadge');
+  const statsEl = $('#stats');
+  const progressBar = $('#progressBar');
+  const progressPct = $('#progressPct');
+
+  // Initialize
+  renderSprintOptions();
+  renderEpicUIs();
+  renderAll();
+  runSelfTests();
+
+  // --- Persistence ---
+  function load(){
+    try{
+      const raw = localStorage.getItem(LS_KEY);
+      if(!raw){
+        localStorage.setItem(LS_KEY, JSON.stringify(defaultData));
+        return JSON.parse(JSON.stringify(defaultData));
+      }
+      const parsed = JSON.parse(raw);
+      if(!parsed.sprints || !Array.isArray(parsed.sprints)) parsed.sprints = defaultData.sprints;
+      if(typeof parsed.selected !== 'number') parsed.selected = 0;
+      for (var i=0;i<parsed.sprints.length;i++){
+        var sp = parsed.sprints[i];
+        if(!sp.epics) sp.epics = [];
+        if(!sp.tasks) sp.tasks = [];
+      }
+      return parsed;
+    }catch(e){
+      console.warn('Falha ao carregar, usando padrão', e);
+      return JSON.parse(JSON.stringify(defaultData));
+    }
+  }
+  function save(){
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  }
+
+  // --- Sprint rendering ---
+  function currentSprint(){ return state.sprints[state.selected]; }
+
+  function renderSprintOptions(){
+    sprintSelect.innerHTML = '';
+    for (var idx=0; idx<state.sprints.length; idx++){
+      var sp = state.sprints[idx];
+      var opt = document.createElement('option');
+      opt.value = idx; opt.textContent = sp.name + ' ('+ fmtDate(sp.start) +' → '+ fmtDate(sp.end) +')';
+      if(idx===state.selected) opt.selected = true;
+      sprintSelect.appendChild(opt);
+    }
+  }
+
+  function fmtDate(iso){
+    var d = new Date(iso+'T00:00:00');
+    return d.toLocaleDateString('pt-BR');
+  }
+
+  function daysLeft(start,end){
+    var s = new Date(start+'T00:00:00');
+    var e = new Date(end+'T23:59:59');
+    var now = new Date();
+    var total = Math.ceil((e - s) / 86400000);
+    var left = Math.max(0, Math.ceil((e - now) / 86400000));
+    return {total: total, left: left};
+  }
+
+  function renderHeader(){
+    var sp = currentSprint();
+    var dl = daysLeft(sp.start, sp.end);
+    dateBadge.innerHTML = '⏳ ' + fmtDate(sp.start) + ' → ' + fmtDate(sp.end) + ' · ' + dl.left + '/' + dl.total + ' dias restantes';
+  }
+
+  function renderStats(){
+    var sp = currentSprint();
+    var totals = calcTotals(sp.tasks);
+    var by = totals.byAssignee;
+    statsEl.innerHTML = '';
+
+    var blocks = [
+      {who:'Aline', planned: by.Aline.total, delivered: by.Aline.done},
+      {who:'Caio', planned: by.Caio.total, delivered: by.Caio.done}
+    ];
+
+    var totalPlanned = totals.total || 0;
+    for (var i=0;i<blocks.length;i++){
+      var b = blocks[i];
+      var pct = b.planned? Math.min(100, Math.round((b.delivered/b.planned)*100)) : 0;
+      var share = totalPlanned? Math.round((b.planned/totalPlanned)*100) : 0;
+      var el = document.createElement('div'); el.className='stat';
+      el.innerHTML = ''+
+        '<div class="muted">'+b.who+'</div>'+
+        '<div class="n">Planejados: '+b.planned+' pts</div>'+
+        '<div class="muted">Entregues: '+b.delivered+' pts</div>'+
+        '<div class="muted" style="margin-top:6px">Progresso</div>'+
+        '<div class="progress"><div class="bar" style="width:'+pct+'%"></div></div>'+
+        '<div class="muted" style="margin-top:4px">Conclusão: '+pct+'%</div>'+
+        '<div class="muted" style="margin-top:6px">Participação na sprint</div>'+
+        '<div class="progress"><div class="bar" style="width:'+share+'%"></div></div>'+
+        '<div class="muted" style="margin-top:4px">'+share+'% dos pontos planejados da sprint</div>';
+      statsEl.appendChild(el);
+    }
+
+    // progress per person (same style bars)
+    var alinePlanned = by.Aline.total, alineDone = by.Aline.done;
+    var caioPlanned = by.Caio.total, caioDone = by.Caio.done;
+    var alinePct = alinePlanned? Math.round((alineDone/alinePlanned)*100) : 0;
+    var caioPct = caioPlanned? Math.round((caioDone/caioPlanned)*100) : 0;
+    var progressAlineBar = document.getElementById('progressAlineBar');
+    var progressAlinePct = document.getElementById('progressAlinePct');
+    var progressCaioBar = document.getElementById('progressCaioBar');
+    var progressCaioPct = document.getElementById('progressCaioPct');
+    if(progressAlineBar) progressAlineBar.style.width = alinePct + '%';
+    if(progressAlinePct) progressAlinePct.textContent = alinePct + '%';
+    if(progressCaioBar) progressCaioBar.style.width = caioPct + '%';
+    if(progressCaioPct) progressCaioPct.textContent = caioPct + '%';
+
+    // concluded pills
+    var conclA = document.getElementById('concluidoAline');
+    var conclC = document.getElementById('concluidoCaio');
+    if(conclA) conclA.textContent = 'Concluído Aline: ' + alineDone + ' pts';
+    if(conclC) conclC.textContent = 'Concluído Caio: ' + caioDone + ' pts';
+
+    // counts in titles
+    $('#todoCount').textContent = sp.tasks.filter(function(t){return t.status==='todo';}).length;
+    $('#doingCount').textContent = sp.tasks.filter(function(t){return t.status==='doing';}).length;
+    $('#doneCount').textContent = sp.tasks.filter(function(t){return t.status==='done';}).length;
+  }
+
+  function calcTotals(tasks){
+    function fib(n){ return Number(n)||0; }
+    var total = tasks.reduce(function(a,t){return a+fib(t.points);},0);
+    var done = tasks.filter(function(t){return t.status==='done';}).reduce(function(a,t){return a+fib(t.points);},0);
+    var byAssignee = {Caio:{total:0,done:0}, Aline:{total:0,done:0}};
+    tasks.forEach(function(t){
+      var a = byAssignee[t.assignee]||{total:0,done:0};
+      a.total += fib(t.points); if(t.status==='done') a.done += fib(t.points);
+      byAssignee[t.assignee]=a;
+    });
+    var pct = total? (done/total*100):0;
+    return {total: total, done: done, pct: pct, byAssignee: byAssignee};
+  }
+
+  function renderBoard(){
+    ['todo','doing','done'].forEach(function(col){ $('#'+col).innerHTML = ''; });
+    var sp = currentSprint();
+    var filterVal = $('#epicFilter').value;
+    var tasks = sp.tasks.filter(function(t){ return filterVal==='all' || t.epicId===filterVal; });
+    tasks.sort(function(a,b){ return (a._order||0) - (b._order||0); });
+    tasks.forEach(function(task){
+      var card = document.createElement('article');
+      card.className = 'task'+(task.status==='done'?' done':'');
+      card.draggable = true; card.dataset.id = task.id;
+      var epicName = epicNameById(task.epicId) || 'Sem épico';
+      var tagsHTML = (task.tags||[]).map(function(tag){return '<span class="badge tag">'+escapeHtml(tag)+'</span>';}).join('');
+      
+      // Lógica para exibir o contador de dias
+      var daysInProgressHTML = '';
+      if (task.status === 'doing' && task.startedAt) {
+        var startDate = new Date(task.startedAt + 'T00:00:00');
+        var today = new Date();
+        var diffTime = Math.abs(today - startDate);
+        var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        // Adiciona 1 para contar o dia atual como "dia 1"
+        daysInProgressHTML = '<span class="badge warn" style="margin-left: auto;">Há ' + diffDays + ' dia(s)</span>';
+      }
+
+      card.innerHTML = ''+
+        '<div class="row-between">'+
+          '<div class="title">'+escapeHtml(task.title)+'</div>'+
+          '<div class="row" style="gap:6px">'+
+            daysInProgressHTML + // Adicionado o contador aqui
+            '<span class="badge epic">'+escapeHtml(epicName)+'</span>'+
+            '<span class="badge points">'+task.points+' pts</span>'+
+            '<span class="badge assignee">'+task.assignee+'</span>'+
+          '</div>'+
+        '</div>'+
+        (tagsHTML?'<div class="taglist">'+tagsHTML+'</div>':'')+
+        (task.notes?'<div class="muted" style="font-size:12px;white-space:pre-wrap">'+escapeHtml(task.notes)+'</div>':'');
+      card.addEventListener('dblclick', function(){ openEdit(task.id); });
+      makeDraggable(card);
+      $('#'+task.status).appendChild(card);
+    });
+  }
+
+  function renderAll(){
+    renderHeader();
+    renderStats();
+    renderBoard();
+    save();
+  }
+
+  // --- Form handlers ---
+  $('#taskForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var fd = new FormData(e.target);
+    var t = {
+      id: cryptoRandomId(),
+      title: String(fd.get('title')||'').trim(),
+      epicId: fd.get('epicId') || null,
+      tags: String(fd.get('tags')||'').split(',').map(function(s){return s.trim();}).filter(Boolean),
+      assignee: fd.get('assignee'),
+      points: Number(fd.get('points')),
+      status: fd.get('status'),
+      notes: ''
+    };
+    currentSprint().tasks.push(t);
+    e.target.reset();
+    renderAll();
+  });
+
+  sprintSelect.addEventListener('change', function(e){
+    state.selected = Number(e.target.value);
+    renderEpicUIs();
+    renderAll();
+  });
+
+  // Export / Import / Reset
+  $('#exportBtn').addEventListener('click', function(){
+    var data = JSON.stringify(state, null, 2);
+    var blob = new Blob([data], {type:'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'sprint-tracker.json'; a.click();
+    URL.revokeObjectURL(url);
+  });
+  $('#importInput').addEventListener('change', function(e){
+    var file = e.target.files[0]; if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{
+        var data = JSON.parse(String(reader.result||'{}'));
+        if(!data.sprints) throw new Error('Arquivo inválido');
+        state = data; renderSprintOptions(); renderEpicUIs(); renderAll();
+      }catch(err){ alert('Falha ao importar: '+err.message); }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
+  $('#resetBtn').addEventListener('click', function(){
+    if(confirm('Tem certeza de que deseja limpar os dados locais?')){
+      localStorage.removeItem(LS_KEY); state = load(); renderSprintOptions(); renderEpicUIs(); renderAll();
+    }
+  });
+
+  // New sprint
+  var sprintModal = $('#sprintModal');
+  $('#addSprintBtn').addEventListener('click', function(){
+    var spf = $('#sprintForm');
+    spf.reset();
+    var last = state.sprints[state.sprints.length-1];
+    spf.start.value = last? last.end : todayISO;
+    spf.end.value = last? addDays(last.end, 14) : addDays(todayISO, 14);
+    sprintModal.showModal();
+  });
+  $('#sprintForm').addEventListener('submit', function(e){ e.preventDefault(); });
+  $('#sprintForm').addEventListener('click', function(e){
+    var val = e.target.value;
+    if(val==='create'){
+      var f = new FormData($('#sprintForm'));
+      var prev = currentSprint();
+      var copiedEpics = prev && prev.epics ? JSON.parse(JSON.stringify(prev.epics)) : [];
+      var sp = { id: cryptoRandomId(), name: f.get('name')||'Sprint', start: f.get('start'), end: f.get('end'), epics: copiedEpics, tasks: [] };
+      state.sprints.push(sp); state.selected = state.sprints.length-1; renderSprintOptions(); renderEpicUIs(); renderAll(); sprintModal.close();
+    }
+  });
+
+  function addDays(iso, n){ var d = new Date(iso+'T00:00:00'); d.setDate(d.getDate()+Number(n)); return d.toISOString().slice(0,10); }
+
+  // --- Drag & drop ---
+  function makeDraggable(card){
+    card.addEventListener('dragstart', function(){ card.classList.add('dragging'); });
+    card.addEventListener('dragend', function(){ card.classList.remove('dragging'); });
+  }
+  $$('.dropzone').forEach(function(zone){
+    zone.addEventListener('dragover', function(e){
+      e.preventDefault();
+      zone.closest('.col').classList.add('dragover');
+      var dragging = document.querySelector('.task.dragging');
+      if(!dragging) return;
+      var after = getDragAfterElement(zone, e.clientY);
+      if(after==null){ zone.appendChild(dragging); }
+      else { zone.insertBefore(dragging, after); }
+    });
+    zone.addEventListener('dragleave', function(){ zone.closest('.col').classList.remove('dragover'); });
+    zone.addEventListener('drop', function(e){
+      e.preventDefault();
+      zone.closest('.col').classList.remove('dragover');
+      var dragging = document.querySelector('.task.dragging');
+      if(!dragging) return;
+      var id = dragging.dataset.id;
+      moveTask(id, zone.id);
+      // persist intra-col order
+      persistOrder(zone.id);
+    });
+  });
+
+  function getDragAfterElement(container, y){
+    var draggableElements = [].slice.call(container.querySelectorAll('.task:not(.dragging)'));
+    var closest = {offset: Number.NEGATIVE_INFINITY, element: null};
+    for(var i=0;i<draggableElements.length;i++){
+      var el = draggableElements[i];
+      var box = el.getBoundingClientRect();
+      var offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset){ closest = {offset: offset, element: el}; }
+    }
+    return closest.element;
+  }
+
+  function persistOrder(status){
+    var sp = currentSprint();
+    var ids = [].slice.call(document.querySelectorAll('#'+status+' .task')).map(function(el){return el.dataset.id;});
+    for(var i=0;i<sp.tasks.length;i++){
+      var t = sp.tasks[i];
+      if(t.status===status){ t._order = ids.indexOf(t.id); }
+    }
+    save();
+  }
+
+  function moveTask(id, newStatus){
+    var sp = currentSprint();
+    var t = sp.tasks.find(function(x){return x.id===id;}); if(!t) return;
+    
+    // Lógica do contador de dias
+    if (newStatus === 'doing' && !t.startedAt) {
+      t.startedAt = new Date().toISOString().slice(0, 10);
+    } else if (newStatus !== 'doing') {
+      // Opcional: remove a data de início se sair de "Em andamento"
+      delete t.startedAt;
+    }
+    
+    t.status = newStatus;
+    if(newStatus==='done' && !t.doneAt){ t.doneAt = new Date().toISOString().slice(0,10); }
+    if(newStatus!=='done' && t.doneAt){ delete t.doneAt; }
+    renderAll();
+  }
+
+  // --- Edit ---
+  var editModal = $('#editModal');
+  function openEdit(id){
+    var sp = currentSprint();
+    var t = sp.tasks.find(function(x){return x.id===id;}); if(!t) return;
+    var f = $('#editForm');
+    f.dataset.id = id;
+    f.title.value = t.title; f.assignee.value = t.assignee; f.points.value = String(t.points); f.status.value = t.status; f.notes.value = t.notes||'';
+    var selEpic = f.querySelector('select[name="epicId"]');
+    if(selEpic){ renderEpicUIs(); selEpic.value = t.epicId || ''; }
+    var tagsInput = f.querySelector('input[name="tags"]'); if(tagsInput) tagsInput.value = (t.tags||[]).join(', ');
+    editModal.showModal();
+  }
+  $('#editForm').addEventListener('click', function(e){
+    var action = e.target.value;
+    if(!action) return;
+    var id = e.currentTarget.dataset.id;
+    var sp = currentSprint();
+    var idx = sp.tasks.findIndex(function(x){return x.id===id;});
+    if(idx<0) return;
+    if(action==='delete'){
+      sp.tasks.splice(idx,1); editModal.close(); renderAll(); return;
+    }
+    if(action==='save'){
+      var f = $('#editForm');
+      var item = sp.tasks[idx];
+      item.title = String(f.title.value||'').trim();
+      item.assignee = f.assignee.value;
+      item.points = Number(f.points.value);
+      item.status = f.status.value;
+      item.notes = f.notes.value;
+      var selEpic2 = f.querySelector('select[name="epicId"]'); item.epicId = selEpic2? (selEpic2.value||null) : null;
+      var tagsInput2 = f.querySelector('input[name="tags"]'); item.tags = tagsInput2? String(tagsInput2.value||'').split(',').map(function(s){return s.trim();}).filter(Boolean) : [];
+      if(item.status==='done' && !item.doneAt){ item.doneAt = new Date().toISOString().slice(0,10); }
+      if(item.status!=='done' && item.doneAt){ delete item.doneAt; }
+      editModal.close(); renderAll();
+    }
+    if(action==='cancel'){ editModal.close(); }
+  });
+
+  // --- Epics ---
+  function epicNameById(id){
+    var sp = currentSprint();
+    var arr = (sp.epics||[]);
+    for (var i=0;i<arr.length;i++){ if(arr[i].id===id) return arr[i].name; }
+    return null;
+  }
+  function renderEpicUIs(){
+    var sp = currentSprint();
+    var epicFilter = document.getElementById('epicFilter');
+    epicFilter.innerHTML = '<option value="all">Todos os épicos</option>' + (sp.epics||[]).map(function(e){return '<option value="'+e.id+'">'+escapeHtml(e.name)+'</option>';}).join('');
+    var options = '<option value="">Épico…</option>' + (sp.epics||[]).map(function(e){return '<option value="'+e.id+'">'+escapeHtml(e.name)+'</option>';}).join('');
+    var epicSelect = document.getElementById('epicSelect'); if(epicSelect) epicSelect.innerHTML = options;
+    var editEpicSel = document.querySelector('#editForm select[name="epicId"]');
+    if(editEpicSel) editEpicSel.innerHTML = (sp.epics||[]).map(function(e){return '<option value="'+e.id+'">'+escapeHtml(e.name)+'</option>';}).join('');
+    var epicList = document.getElementById('epicList');
+    epicList.innerHTML = (sp.epics||[]).map(function(e){
+      return '<span class="badge epic epic-chip">'
+           +   '<span>'+escapeHtml(e.name)+'</span>'
+           +   '<button title="Excluir épico" data-action="del-epic" data-id="'+e.id+'">×</button>'
+           + '</span>';
+    }).join('');
+  }
+
+  function addEpic(name){
+    if(!name) return null;
+    var sp = currentSprint();
+    if(!sp.epics) sp.epics = [];
+    // evitar duplicados (case-insensitive)
+    var norm = String(name).trim().toLowerCase();
+    for(var i=0;i<sp.epics.length;i++){
+      if(String(sp.epics[i].name).trim().toLowerCase()===norm){
+        alert('Já existe um épico com esse nome.');
+        return null;
+      }
+    }
+    var id = cryptoRandomId();
+    sp.epics.push({id:id, name:String(name).trim()});
+    renderEpicUIs(); renderBoard(); save();
+    return id;
+  }
+
+  document.getElementById('epicFilter').addEventListener('change', function(){ renderBoard(); });
+  document.getElementById('addEpicBtn').addEventListener('click', function(){
+    var input = document.getElementById('newEpicName');
+    var name = String(input.value||'').trim();
+    if(!name) return;
+    var created = addEpic(name);
+    if(created){ input.value=''; }
+  });
+  // excluir épico (delegação)
+  document.getElementById('epicList').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-action="del-epic"]');
+    if(!btn) return;
+    deleteEpic(btn.dataset.id);
+  });
+
+  // delete epic helper
+  function deleteEpic(id){
+    var sp = currentSprint();
+    if(!sp || !sp.epics) return;
+    var epic = (sp.epics||[]).find(function(e){return e.id===id});
+    if(!epic) return;
+    if(!confirm('Excluir épico "'+epic.name+'"? As tarefas vinculadas ficarão sem épico.')) return;
+    sp.epics = sp.epics.filter(function(e){return e.id!==id});
+    // limpar referência nas tarefas
+    sp.tasks.forEach(function(t){ if(t.epicId===id) t.epicId=null; });
+    // se filtro estava no épico deletado, resetar
+    var filter = document.getElementById('epicFilter');
+    if(filter && filter.value===id){ filter.value='all'; }
+    renderEpicUIs(); renderBoard(); save();
+  }
+
+  // --- Helpers ---
+  function escapeHtml(str){
+    return String(str||'').replace(/[&<>"']/g, function(m){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]; });
+  }
+
+  // --- Minimal self-tests (console) ---
+  function runSelfTests(){
+    try{
+      if(localStorage.getItem(TEST_FLAG)) return; // run once
+      console.group('%cSprint Tracker – Self Tests','color:#6ee7b7');
+      // Test 1: unique #sprintSelect
+      var selects = document.querySelectorAll('#sprintSelect');
+      console.assert(selects.length===1, 'Deve existir apenas um elemento com id="sprintSelect" (atual: '+selects.length+')');
+
+      // Test 2: add/remove epic programaticamente
+      var before = (currentSprint().epics||[]).length;
+      var id = addEpic('[TEST] Epic temporário');
+      var after = (currentSprint().epics||[]).length;
+      console.assert(after===before+1, 'Adicionar épico deve incrementar a contagem');
+      // rollback
+      var sp = currentSprint();
+      var idx = sp.epics.findIndex(function(e){return e.id===id;});
+      if(idx>-1){ sp.epics.splice(idx,1); renderEpicUIs(); save(); }
+      console.assert((currentSprint().epics||[]).length===before, 'Remoção do épico de teste deve restaurar o estado');
+
+      console.groupEnd();
+      localStorage.setItem(TEST_FLAG, '1');
+    }catch(err){ console.warn('Self tests falharam:', err); }
+  }
+  })();
+  </script>
+</body>
+</html>
