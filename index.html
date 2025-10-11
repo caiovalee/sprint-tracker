@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sprint Tracker – Aline & Caio - V2</title>
+  <title>Sprint Tracker – Aline & Caio - V3.1</title>
   <style>
     :root{
       --bg:#0f1220; --panel:#171a2b; --muted:#9aa3b2; --text:#e8ecf1; --accent:#6ee7b7; --accent2:#60a5fa; --danger:#f87171; --warn:#fbbf24;
@@ -31,7 +31,7 @@
     .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px}
     .card h3{margin:0 0 8px;font-size:16px}
     .kanban{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:14px}
-    @media (min-width:900px){.kanban{grid-template-columns:repeat(3,1fr)}}
+    @media (min-width:900px){.kanban{grid-template-columns:repeat(4,1fr)}}
     .col{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:10px;min-height:240px}
     .col h4{margin:4px 6px 8px;font-size:14px;color:var(--muted)}
     .task{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:10px;margin:8px;display:grid;gap:8px;box-shadow:0 2px 0 rgba(0,0,0,.2)}
@@ -65,7 +65,7 @@
     <div class="wrap">
       <div class="row" style="justify-content:space-between">
         <div class="row" style="gap:10px;align-items:center">
-          <h1 id="sprintTitle">🏁 Sprint Tracker – V2</h1>
+          <h1 id="sprintTitle">🏁 Sprint Tracker – V3.1</h1><button class="btn ghost" id="editSprintNameBtn" title="Editar nome da sprint" style="padding:6px 8px">✎</button>
           <span id="dateBadge" class="pill">Carregando…</span>
         </div>
         <div class="row">
@@ -89,7 +89,7 @@
           <input name="tags" placeholder="tags (vírgulas)" style="min-width:180px" />
           <select name="assignee" required> <option value="Aline">Aline</option> <option value="Caio">Caio</option> </select>
           <select name="points" required> <option value="0">0</option> <option value="1">1</option> <option value="2">2</option> <option value="3">3</option> <option value="5" selected>5</option> <option value="8">8</option> <option value="13">13</option> <option value="21">21</option> <option value="34">34</option> </select>
-          <select name="status" required> <option value="todo">A fazer</option> <option value="doing">Em andamento</option> <option value="done">Concluída</option> </select>
+          <select name="status" required> <option value="todo">A fazer</option> <option value="doing">Em andamento</option> <option value="done">Concluída</option> <option value="notdone">Não concluída</option> </select>
           <button class="btn primary" type="submit">Adicionar</button>
         </form>
       </div>
@@ -120,8 +120,10 @@
       <div class="col" data-col="todo"> <h4>🗂️ A fazer (<span class="muted" id="todoCount">0</span>)</h4> <div class="dropzone" id="todo"></div> </div>
       <div class="col" data-col="doing"> <h4>🚧 Em andamento (<span class="muted" id="doingCount">0</span>)</h4> <div class="dropzone" id="doing"></div> </div>
       <div class="col" data-col="done"> <h4>✅ Concluída (<span class="muted" id="doneCount">0</span>)</h4> <div class="dropzone" id="done"></div> </div>
-    </section>
-  </main>
+    
+  <div class="col" data-col="notdone"> <h4>❌ Não concluída (<span class="muted" id="notDoneCount">0</span>)</h4> <div class="dropzone" id="notdone"></div> </div>
+  </section>
+</main>
   <dialog id="editModal">
     <form method="dialog" id="editForm" style="min-width:320px;max-width:520px;padding:12px">
       <h3>Editar tarefa</h3>
@@ -129,7 +131,7 @@
       <div class="row" style="gap:8px;margin:6px 0">
         <select name="assignee"> <option value="Aline">Aline</option> <option value="Caio">Caio</option> </select>
         <select name="points"> <option>0</option><option>1</option><option>2</option><option>3</option><option>5</option><option>8</option><option>13</option><option>21</option><option>34</option> </select>
-        <select name="status"> <option value="todo">A fazer</option> <option value="doing">Em andamento</option> <option value="done">Concluída</option> </select>
+        <select name="status"> <option value="todo">A fazer</option> <option value="doing">Em andamento</option> <option value="done">Concluída</option> <option value="notdone">Não concluída</option> </select>
       </div>
       <div class="row" style="gap:8px;margin:6px 0">
         <select name="epicId"></select>
@@ -270,16 +272,34 @@ function renderHeader() {
     $('#dateBadge').innerHTML = `⏳ ${fmtDate(sp.start)} → ${fmtDate(sp.end)} · ${dl.left}/${dl.total} dias restantes`;
 }
 
+
 function renderStats() {
     const sp = currentSprint();
     const tasks = sp.tasks || [];
     const totals = calcTotals(tasks);
     const { Caio: caio, Aline: aline } = totals.byAssignee;
+
+    // Build the per-assignee stat cards including Not Done
     $('#stats').innerHTML = [aline, caio].map(b => {
-      const pct = b.total ? Math.min(100, Math.round((b.done / b.total) * 100)) : 0;
+      const pctDone = b.total ? Math.min(100, Math.round((b.done / b.total) * 100)) : 0;
+      const pctNotDone = b.total ? Math.min(100, Math.round((b.notdone / b.total) * 100)) : 0;
       const share = totals.total ? Math.round((b.total / totals.total) * 100) : 0;
-      return `<div class="stat"><div class="muted">${b.who}</div><div class="n">Planejados: ${b.total} pts</div><div class="muted">Entregues: ${b.done} pts</div><div class="muted" style="margin-top:6px">Progresso</div><div class="progress"><div class="bar" style="width:${pct}%"></div></div><div class="muted" style="margin-top:4px">Conclusão: ${pct}%</div><div class="muted" style="margin-top:6px">Participação</div><div class="progress"><div class="bar" style="width:${share}%"></div></div><div class="muted" style="margin-top:4px">${share}% dos pontos</div></div>`;
+      return `<div class="stat">
+          <div class="muted">${b.who}</div>
+          <div class="n">Planejados: ${b.total} pts</div>
+          <div class="muted">Entregues: ${b.done} pts · Não concl.: ${b.notdone} pts</div>
+          <div class="muted" style="margin-top:6px">Progresso</div>
+          <div class="progress"><div class="bar" style="width:${pctDone}%"></div></div>
+          <div class="muted" style="margin-top:4px">Conclusão: ${pctDone}%</div>
+          <div class="muted" style="margin-top:6px">Não concluídas</div>
+          <div class="progress"><div class="bar" style="width:${pctNotDone}%"></div></div>
+          <div class="muted" style="margin-top:4px">${pctNotDone}% dos pontos</div>
+          <div class="muted" style="margin-top:6px">Participação</div>
+          <div class="progress"><div class="bar" style="width:${share}%"></div></div>
+          <div class="muted" style="margin-top:4px">${share}% dos pontos</div>
+        </div>`;
     }).join('');
+
     const alinePct = aline.total ? Math.round((aline.done / aline.total) * 100) : 0;
     const caioPct = caio.total ? Math.round((caio.done / caio.total) * 100) : 0;
     $('#progressAlineBar').style.width = `${alinePct}%`;
@@ -288,20 +308,33 @@ function renderStats() {
     $('#progressCaioPct').textContent = `${caioPct}%`;
     $('#concluidoAline').textContent = `Concluído Aline: ${aline.done} pts`;
     $('#concluidoCaio').textContent = `Concluído Caio: ${caio.done} pts`;
+
+    // Column counters
     $('#todoCount').textContent = tasks.filter(t => t.status === 'todo').length;
     $('#doingCount').textContent = tasks.filter(t => t.status === 'doing').length;
     $('#doneCount').textContent = tasks.filter(t => t.status === 'done').length;
+    const notDoneCount = tasks.filter(t => t.status === 'notdone').length;
+    const notDoneEl = document.getElementById('notDoneCount');
+    if (notDoneEl) notDoneEl.textContent = notDoneCount;
 }
+
+
 
 function calcTotals(tasks) {
     const fib = n => Number(n) || 0;
-    const byAssignee = { Caio: { who: 'Caio', total: 0, done: 0 }, Aline: { who: 'Aline', total: 0, done: 0 } };
+    const byAssignee = { Caio: { who: 'Caio', total: 0, done: 0, notdone: 0 }, Aline: { who: 'Aline', total: 0, done: 0, notdone: 0 } };
     tasks.forEach(t => {
       const a = byAssignee[t.assignee];
-      if (a) { a.total += fib(t.points); if (t.status === 'done') a.done += fib(t.points); }
+      if (a) {
+        const pts = fib(t.points);
+        a.total += pts;
+        if (t.status === 'done') a.done += pts;
+        if (t.status === 'notdone') a.notdone += pts;
+      }
     });
     return { total: byAssignee.Caio.total + byAssignee.Aline.total, byAssignee };
 }
+
 
 function renderBoard() {
     $$('.dropzone').forEach(col => col.innerHTML = '');
@@ -510,6 +543,7 @@ function persistOrder(status) {
     sp.tasks.forEach(t => { if (t.status === status) t._order = ids.indexOf(t.id); });
     updateCurrentSprintInFirebase();
 }
+
 function moveTask(id, newStatus) {
     const sp = currentSprint();
     const t = sp.tasks.find(x => x.id === id);
@@ -519,8 +553,11 @@ function moveTask(id, newStatus) {
     else if (newStatus !== 'doing') delete t.startedAt;
     if (newStatus === 'done' && !t.doneAt) t.doneAt = new Date().toISOString().slice(0, 10);
     if (newStatus !== 'done' && t.doneAt) delete t.doneAt;
+    // Not done should not carry doneAt
+    if (newStatus === 'notdone') { if (t.doneAt) delete t.doneAt; }
     updateCurrentSprintInFirebase();
 }
+
 
 // --- Botões de Backup e Reset ---
 $('#exportBtn').addEventListener('click', () => {
@@ -548,10 +585,92 @@ $('#resetBtn').addEventListener('click', async () => {
         console.log(`Sprint "${sp.name}" foi excluída.`);
     }
 });
+
+// --- Edit Sprint Name (inline via button prompt) ---
+const editBtn = document.getElementById('editSprintNameBtn');
+if (editBtn) {
+  editBtn.addEventListener('click', () => {
+      const sp = currentSprint();
+      if (!sp) return;
+      const newName = prompt('Novo nome da sprint:', sp.name || '');
+      if (newName !== null) {
+          const trimmed = String(newName).trim();
+          if (trimmed && trimmed !== sp.name) {
+              sp.name = trimmed;
+              updateCurrentSprintInFirebase();
+              renderHeader();
+              renderSprintOptions();
+          }
+      }
+  });
+}
+
+// Also allow double-click on the title to rename quickly
+const sprintTitleEl = document.getElementById('sprintTitle');
+if (sprintTitleEl) {
+  sprintTitleEl.style.cursor = 'text';
+  sprintTitleEl.title = 'Dê um duplo clique para renomear';
+  sprintTitleEl.addEventListener('dblclick', () => {
+      const sp = currentSprint();
+      if (!sp) return;
+      const newName = prompt('Novo nome da sprint:', sp.name || '');
+      if (newName !== null) {
+          const trimmed = String(newName).trim();
+          if (trimmed && trimmed !== sp.name) {
+              sp.name = trimmed;
+              updateCurrentSprintInFirebase();
+              renderHeader();
+              renderSprintOptions();
+          }
+      }
+  });
+}
+
 </script>
 
 </body>
 </html>
+
+
+// --- Edit Sprint Name (inline via button prompt) ---
+const editBtn = document.getElementById('editSprintNameBtn');
+if (editBtn) {
+  editBtn.addEventListener('click', () => {
+      const sp = currentSprint();
+      if (!sp) return;
+      const newName = prompt('Novo nome da sprint:', sp.name || '');
+      if (newName !== null) {
+          const trimmed = String(newName).trim();
+          if (trimmed && trimmed !== sp.name) {
+              sp.name = trimmed;
+              updateCurrentSprintInFirebase();
+              renderHeader();
+              renderSprintOptions();
+          }
+      }
+  });
+}
+
+// Also allow double-click on the title to rename quickly
+const sprintTitleEl = document.getElementById('sprintTitle');
+if (sprintTitleEl) {
+  sprintTitleEl.style.cursor = 'text';
+  sprintTitleEl.title = 'Dê um duplo clique para renomear';
+  sprintTitleEl.addEventListener('dblclick', () => {
+      const sp = currentSprint();
+      if (!sp) return;
+      const newName = prompt('Novo nome da sprint:', sp.name || '');
+      if (newName !== null) {
+          const trimmed = String(newName).trim();
+          if (trimmed && trimmed !== sp.name) {
+              sp.name = trimmed;
+              updateCurrentSprintInFirebase();
+              renderHeader();
+              renderSprintOptions();
+          }
+      }
+  });
+}
 
 </script>
 
