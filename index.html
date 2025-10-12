@@ -1,678 +1,678 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sprint Tracker – Aline & Caio - V3.1</title>
-  <style>
-    :root{
-      --bg:#0f1220; --panel:#171a2b; --muted:#9aa3b2; --text:#e8ecf1; --accent:#6ee7b7; --accent2:#60a5fa; --danger:#f87171; --warn:#fbbf24;
-      --card:#1e2338; --border:#2b3151;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial,sans-serif;background:radial-gradient(1200px 600px at 20% -10%,#1c2040 0%,transparent 65%),radial-gradient(1000px 800px at 120% 10%,#112033 0%,transparent 60%),var(--bg);color:var(--text)}
-    header{position:sticky;top:0;z-index:5;background:linear-gradient(180deg,rgba(15,18,32,.95),rgba(15,18,32,.75));backdrop-filter:saturate(140%) blur(8px);border-bottom:1px solid var(--border)}
-    .wrap{max-width:1200px;margin:0 auto;padding:16px}
-    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-    h1{font-size:20px;margin:0}
-    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:12px;background:var(--panel);color:var(--text)}
-    select,input,button,textarea{background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 10px;outline:none}
-    select:focus,input:focus,textarea:focus{border-color:var(--accent2);box-shadow:0 0 0 2px rgba(96,165,250,.25)}
-    button{cursor:pointer}
-    .btn{border:1px solid var(--border);background:var(--card)}
-    .btn.primary{background:linear-gradient(180deg,#1f8b6a,#146a53);border-color:#2f9b7b}
-    .btn.primary:hover{filter:brightness(1.05)}
-    .btn.ghost{background:transparent}
-    .btn.warn{background:#3a2c11;border-color:#6b4c12;color:#ffd88a}
-    .btn.danger{background:#3a1717;border-color:#6b1f1f;color:#ffb3b3}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    @media (min-width:900px){.grid{grid-template-columns:320px 1fr}}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px}
-    .card h3{margin:0 0 8px;font-size:16px}
-    .kanban{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:14px}
-    @media (min-width:900px){.kanban{grid-template-columns:repeat(4,1fr)}}
-    .col{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:10px;min-height:240px}
-    .col h4{margin:4px 6px 8px;font-size:14px;color:var(--muted)}
-    .task{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:10px;margin:8px;display:grid;gap:8px;box-shadow:0 2px 0 rgba(0,0,0,.2)}
-    .task.dragging{opacity:.6;outline:2px dashed var(--accent2)}
-    .col.dragover{outline:2px dashed var(--accent2)}
-    .row-between{display:flex;justify-content:space-between;align-items:center}
-    .badge{font-size:12px; padding:4px 8px; border-radius:999px;border:1px solid var(--border);background:#11162a; color:#c9d3e3}
-    .points{background:#1b2b1e;color:#b7fdd4;border-color:#214e35}
-    .assignee{background:#162338;color:#cfe3ff;border-color:#274168}
-    .done .title{text-decoration:line-through;color:#a7b0c0}
-    .muted{color:var(--muted)}
-    .stats{display:grid;gap:16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));}
-    .stat{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px}
-    .stat .n{font-size:20px;font-weight:700}
-    .progress{height:10px;border-radius:999px;background:#121527;border:1px solid var(--border);overflow:hidden}
-    .bar{height:100%;background:linear-gradient(90deg,#60a5fa,#6ee7b7)}
-    .epic{background:#30224a;border-color:#523d7e;color:#e6d8ff}
-    .tag{background:#26343a;border-color:#35606b;color:#c7f2ff;font-size:11px;padding:3px 6px}
-    .taglist{display:flex;flex-wrap:wrap;gap:6px}
-    .epic-chip{display:inline-flex;align-items:center;gap:6px}
-    .epic-chip button{all:unset;cursor:pointer;font-weight:700;line-height:1;padding:0 6px;border-radius:8px;color:#fbb6b6}
-    .epic-chip button:hover{background:#44222a}
-    dialog{border:none;border-radius:16px;background:var(--panel);color:var(--text);box-shadow:0 20px 60px rgba(0,0,0,.45);}
-    .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
-    .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-    .pill-container { margin-top: 16px; gap: 12px; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sprint Tracker – V2 (Offline)</title>
+<style>
+:root{
+  --bg:#0f1220; --panel:#171a2b; --muted:#9aa3b2; --text:#e8ecf5;
+  --accent:#6ee7b7; --accent2:#60a5fa; --danger:#f87171; --warn:#fbbf24;
+  --card:#1e2338; --border:#2b3151;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,system-ui,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;
+     background: radial-gradient(120% 80% at 100% 10%,#112033 0%,transparent 60%),
+                 radial-gradient(90% 80% at 0% 100%,#182036 0%,transparent 60%),
+                 var(--bg); color:var(--text)}
+header{position:sticky;top:0;z-index:5;background:linear-gradient(180deg,rgba(15,18,32,.9),rgba(15,18,32,.7));
+       backdrop-filter:saturate(140%) blur(8px);border-bottom:1px solid var(--border)}
+.wrap{max-width:1200px;margin:0 auto;padding:14px}
+.row{display:flex;gap:8px;align-items:center}
+.row-between{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.btn{padding:8px 12px;border:1px solid var(--border);background:#0f1427;color:var(--text);border-radius:12px;cursor:pointer}
+.btn.primary{background:#1d3a2d;border-color:#264e3c}
+.btn.warn{background:#3a2a18;border-color:#574125}
+.btn.ghost{background:transparent}
+select,input,textarea{background:#0e1426;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px}
+h1{margin:0}
+main .wrap{display:grid;grid-template-columns:1fr;gap:14px}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px}
+.statsGrid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px}
+@media (min-width:900px){.statsGrid{grid-template-columns:1fr 1fr}}
+.statCard{background:#11172d;border:1px solid var(--border);border-radius:14px;padding:14px}
+.statCard h4{margin:0 0 4px 0}
+.miniLabel{margin-top:6px;color:var(--muted)}
+.kanban{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:14px}
+@media (min-width:900px){.kanban{grid-template-columns:repeat(4,1fr)}}
+.col{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px;min-height:260px}
+.col h4{margin:0 0 8px 0;color:var(--muted)}
+.dropzone{display:flex;flex-direction:column;gap:8px;min-height:220px}
+.task{background:#121a2f;border:1px solid var(--border);border-radius:12px;padding:10px}
+.task.done{opacity:.8}
+.pill{padding:6px 10px;border:1px solid var(--border);border-radius:999px;color:var(--muted)}
+.pill.ok{border-color:#2e7d32;color:#a5d6a7;background:rgba(46,125,50,.12)}
+.pill.warn{border-color:#7c5f1a;color:#f5d08a;background:rgba(245,158,11,.12)}
+.pill.danger{border-color:#7c1a1a;color:#f2aaaa;background:rgba(239,68,68,.12)}
+.badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:999px;padding:2px 8px;font-size:12px;color:var(--muted)}
+.badge.points{border-color:#2e7d32;color:#a5d6a7;background:rgba(46,125,50,.12)}
+.badge.epic{border-color:#374467}
+.task .title{font-weight:700; font-size:1rem}
+.task.done-like .title{text-decoration:line-through; opacity:.8}
+.task .notes{color:var(--muted); margin-top:6px; white-space:pre-line; font-size:0.86rem; line-height:1.3}
+.task .footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.task .footer .mini{color:var(--muted); font-size:0.86rem}
+.badge.warn{border-color:#5a4918;color:#f7d36e}
+.badge.tag{border-color:#374467}
+.progress{height:8px;background:#0e1530;border-radius:999px;border:1px solid var(--border);overflow:hidden}
+.bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.n{font-weight:700}
+.muted{color:var(--muted)}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:16px}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+/* Mini calendário */
+.minical{display:inline-block;border:1px solid var(--border);border-radius:10px;padding:8px;margin-top:6px}
+.minical header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;color:var(--muted)}
+.minical table{border-collapse:collapse}
+.minical th,.minical td{width:28px;height:24px;text-align:center}
+.minical td button{width:24px;height:24px;border:1px solid transparent;background:transparent;color:var(--text);border-radius:6px;cursor:pointer}
+.minical td button.sel{border-color:#3b82f6;background:rgba(59,130,246,.15)}
+</style>
 </head>
 <body>
   <header>
-    <div class="wrap">
-      <div class="row" style="justify-content:space-between">
-        <div class="row" style="gap:10px;align-items:center">
-          <h1 id="sprintTitle">🏁 Sprint Tracker – V3.1</h1><button class="btn ghost" id="editSprintNameBtn" title="Editar nome da sprint" style="padding:6px 8px">✎</button>
-          <span id="dateBadge" class="pill">Carregando…</span>
-        </div>
-        <div class="row">
-          <select id="sprintSelect" title="Selecionar sprint"></select>
-          <select id="epicFilter" title="Filtrar por épico"><option value="all">Todos os épicos</option></select>
-          <button class="btn" id="addSprintBtn">+ Nova Sprint</button>
-          <button class="btn" id="exportBtn" title="Exportar JSON (Backup)">Backup</button>
-          <button class="btn warn" id="resetBtn" title="Limpar dados do Firebase">Limpar</button>
-        </div>
+    <div class="wrap row-between">
+      <div class="row">
+        <h1 id="sprintTitle">🏁 Sprint</h1>
+        <button class="btn ghost" id="editSprintBtn" title="Editar sprint">✎</button>
+        <span id="dateBadge" class="pill">—</span>
+      </div>
+      <div class="row">
+        <select id="sprintSelect" title="Selecionar sprint"></select>
+        <select id="epicFilter" title="Filtrar por épico"><option value="all">Todos os épicos</option></select>
+        <button class="btn" id="addSprintBtn">+ Nova Sprint</button>
+        <button class="btn" id="exportBtn" title="Exportar JSON (Backup)">Backup</button>
+<button class="btn" id="importBtn" title="Importar JSON de backup">Importar</button>
+<input id="importFile" type="file" accept=".json,application/json" style="display:none">
+        <button class="btn warn" id="resetBtn" title="Excluir sprint atual">Limpar</button>
       </div>
     </div>
   </header>
 
-  <main class="wrap" style="display:grid;gap:14px">
-    <section class="grid">
-      <div class="card">
-        <h3>Adicionar tarefa</h3>
-        <form id="taskForm" class="row" style="gap:10px">
-          <input required name="title" placeholder="Título da tarefa" style="flex:1"/>
-          <select name="epicId" id="epicSelect" required> <option value="">Épico…</option> </select>
-          <input name="tags" placeholder="tags (vírgulas)" style="min-width:180px" />
-          <select name="assignee" required> <option value="Aline">Aline</option> <option value="Caio">Caio</option> </select>
-          <select name="points" required> <option value="0">0</option> <option value="1">1</option> <option value="2">2</option> <option value="3">3</option> <option value="5" selected>5</option> <option value="8">8</option> <option value="13">13</option> <option value="21">21</option> <option value="34">34</option> </select>
-          <select name="status" required> <option value="todo">A fazer</option> <option value="doing">Em andamento</option> <option value="done">Concluída</option> <option value="notdone">Não concluída</option> </select>
-          <button class="btn primary" type="submit">Adicionar</button>
+  <main class="wrap">
+    <section class="panel">
+      <div class="row" style="gap:14px;align-items:stretch;flex-wrap:wrap">
+        <form id="taskForm" class="panel" style="flex:.85;min-width:300px">
+          <h3>Adicionar tarefa</h3>
+          <div class="row" style="gap:8px;flex-wrap:wrap">
+            <input name="title" placeholder="Título da tarefa" style="flex:1" required />
+            <select name="epicId" id="epicSelect"><option value="">Épico…</option></select>
+          </div>
+          <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:6px">
+            <input name="tags" placeholder="tags (vírgulas)" style="flex:1" />
+            <select name="assignee"><option>Aline</option><option>Caio</option></select>
+            <select name="points"><option>1</option><option>2</option><option>3</option><option selected>5</option><option>8</option><option>13</option></select>
+            <select name="status"><option value="todo">A fazer</option><option value="doing">Em andamento</option><option value="done">Concluída</option><option value="notdone">Não concluída</option></select>
+            <button class="btn primary">Adicionar</button>
+          </div>
         </form>
-      </div>
-      <div class="card">
-        <h3>Resumo da sprint</h3>
-        <div class="stats" id="stats"></div>
-        <div style="margin-top:8px">
-          <div class="row-between"><span class="muted">Progresso Aline</span><span id="progressAlinePct">0%</span></div>
+        <div class="panel" style="flex:1.15;min-width:300px">
+          <h3>Resumo da sprint</h3>
+          <div>Progresso Aline</div>
           <div class="progress"><div id="progressAlineBar" class="bar" style="width:0%"></div></div>
-          <div class="row-between" style="margin-top:6px"><span class="muted">Progresso Caio</span><span id="progressCaioPct">0%</span></div>
+          <div class="muted" id="progressAlinePct">0%</div>
+          <div style="margin-top:6px">Progresso Caio</div>
           <div class="progress"><div id="progressCaioBar" class="bar" style="width:0%"></div></div>
-          <div class="row pill-container">
-            <span class="pill" id="concluidoAline">Concluído Aline: 0 pts</span>
-            <span class="pill" id="concluidoCaio">Concluído Caio: 0 pts</span>
+          <div class="muted" id="progressCaioPct">0%</div>
+          <div id="statsCards" class="statsGrid"></div>
+<div class="row" style="gap:8px;margin-top:10px">
+            <span id="concluidoAline" class="pill">Concluído Aline: 0 pts</span>
+            <span id="concluidoCaio" class="pill">Concluído Caio: 0 pts</span>
           </div>
         </div>
       </div>
     </section>
-    <section class="card">
+
+    <section class="panel">
       <h3>Épicos</h3>
-      <div id="epicList" class="taglist" style="margin-bottom:8px"></div>
-      <div class="row" style="gap:8px">
-        <input id="newEpicName" placeholder="Novo épico (ex.: Saúde)"/>
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        <input id="newEpicName" placeholder="Novo épico (ex.: Saúde)" style="flex:1;min-width:220px" />
         <button class="btn" id="addEpicBtn">Adicionar épico</button>
       </div>
+      <div id="epicList" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px"></div>
     </section>
+
     <section class="kanban">
-      <div class="col" data-col="todo"> <h4>🗂️ A fazer (<span class="muted" id="todoCount">0</span>)</h4> <div class="dropzone" id="todo"></div> </div>
-      <div class="col" data-col="doing"> <h4>🚧 Em andamento (<span class="muted" id="doingCount">0</span>)</h4> <div class="dropzone" id="doing"></div> </div>
-      <div class="col" data-col="done"> <h4>✅ Concluída (<span class="muted" id="doneCount">0</span>)</h4> <div class="dropzone" id="done"></div> </div>
-    
-  <div class="col" data-col="notdone"> <h4>❌ Não concluída (<span class="muted" id="notDoneCount">0</span>)</h4> <div class="dropzone" id="notdone"></div> </div>
-  </section>
-</main>
-  <dialog id="editModal">
-    <form method="dialog" id="editForm" style="min-width:320px;max-width:520px;padding:12px">
-      <h3>Editar tarefa</h3>
-      <input name="title" placeholder="Título" style="width:100%;margin:6px 0" />
-      <div class="row" style="gap:8px;margin:6px 0">
-        <select name="assignee"> <option value="Aline">Aline</option> <option value="Caio">Caio</option> </select>
-        <select name="points"> <option>0</option><option>1</option><option>2</option><option>3</option><option>5</option><option>8</option><option>13</option><option>21</option><option>34</option> </select>
-        <select name="status"> <option value="todo">A fazer</option> <option value="doing">Em andamento</option> <option value="done">Concluída</option> <option value="notdone">Não concluída</option> </select>
-      </div>
-      <div class="row" style="gap:8px;margin:6px 0">
-        <select name="epicId"></select>
-        <input name="tags" placeholder="tags (vírgulas)" />
-      </div>
-      <textarea name="notes" rows="3" placeholder="Notas / critério de aceite (opcional)" style="width:100%;margin:6px 0"></textarea>
-      <div style="margin: 12px 0;">
-        <h4 id="checklistTitle" style="margin: 0 0 8px; font-size: 14px;">Checklist</h4>
-        <div id="checklistContainer"></div>
-        <div class="row" style="gap: 8px; margin-top: 8px;">
-          <input id="newChecklistItem" placeholder="Novo item do checklist..." style="flex: 1;" />
-          <button type="button" class="btn" id="addChecklistItemBtn">Adicionar item</button>
-        </div>
-      </div>
-      <div class="modal-actions">
-        <div class="modal-actions">
-          <button type="button" class="btn danger" value="delete">Excluir</button>
-          <button type="button" class="btn" value="cancel">Cancelar</button>
-          <button type="submit" class="btn primary" value="save">Salvar</button>
-        </div>
-    </form>
-  </dialog>
+      <div class="col" data-col="todo"><h4>📁 A fazer (<span class="muted" id="todoCount">0</span>)</h4><div class="dropzone" id="todo"></div></div>
+      <div class="col" data-col="doing"><h4>🧱 Em andamento (<span class="muted" id="doingCount">0</span>)</h4><div class="dropzone" id="doing"></div></div>
+      <div class="col" data-col="done"><h4>✅ Concluída (<span class="muted" id="doneCount">0</span>)</h4><div class="dropzone" id="done"></div></div>
+      <div class="col" data-col="notdone"><h4 style="color:#ff7b7b">❌ Não concluída (<span class="muted" id="notDoneCount">0</span>)</h4><div class="dropzone" id="notdone"></div></div>
+    </section>
+  </main>
+
+  <!-- Modal: Nova Sprint -->
   <dialog id="sprintModal">
     <form method="dialog" id="sprintForm" style="min-width:320px;max-width:520px;padding:12px">
       <h3>Nova Sprint</h3>
-      <label>Nome<input name="name" placeholder="Sprint X" style="width:100%;margin:6px 0" required></label>
+      <label>Nome<input name="name" id="newSprintName" placeholder="Sprint X" style="width:100%;margin:6px 0" required></label>
       <div class="row" style="gap:8px;margin:6px 0">
         <label class="sr" for="startDate">Início</label> <input id="startDate" name="start" type="date" required>
+        <div id="minicalCreateStart" class="minical" data-for="startDate"></div>
         <label class="sr" for="endDate">Fim</label> <input id="endDate" name="end" type="date" required>
+        <div id="minicalCreateEnd" class="minical" data-for="endDate"></div>
       </div>
       <div class="modal-actions">
-        <button class="btn" value="cancel">Cancelar</button>
+        <button class="btn" type="button" value="cancel" onclick="document.getElementById('sprintModal').close()">Cancelar</button>
         <button class="btn primary" value="create">Criar</button>
       </div>
     </form>
   </dialog>
 
-<script type="module">
+  <!-- Modal: Editar Sprint -->
+  <dialog id="editSprintModal">
+    <form method="dialog" id="editSprintForm" style="min-width:320px;max-width:520px;padding:12px">
+      <h3>Editar Sprint</h3>
+      <label>Nome<input name="name" id="editSprintName" placeholder="Sprint X" style="width:100%;margin:6px 0" required></label>
+      <div class="row" style="gap:8px;margin:6px 0">
+        <label class="sr" for="editStartDate">Início</label> <input id="editStartDate" name="start" type="date" required>
+        <div id="minicalEditStart" class="minical" data-for="editStartDate"></div>
+        <label class="sr" for="editEndDate">Fim</label> <input id="editEndDate" name="end" type="date" required>
+        <div id="minicalEditEnd" class="minical" data-for="editEndDate"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" type="button" value="cancel" onclick="document.getElementById('editSprintModal').close()">Cancelar</button>
+        <button class="btn primary" value="save">Salvar</button>
+      </div>
+    </form>
+  </dialog>
 
-// --- Início da Configuração do Firebase ---
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-const firebaseConfig = {
-    apiKey: "AIzaSyBjUoks9OQxUQ6_rdUSXE-ZLzjQrjLNVh8",
-    authDomain: "sprint-tracker-aline-caio.firebaseapp.com",
-    projectId: "sprint-tracker-aline-caio",
-    storageBucket: "sprint-tracker-aline-caio.appspot.com",
-    messagingSenderId: "1096785458487",
-    appId: "1:1096785458487:web:c89269c1c00d2a9b9316b2"
-};
+<!-- Modal: Editar Tarefa -->
+<dialog id="editTaskModal">
+  <form method="dialog" id="editTaskForm" style="min-width:360px;max-width:640px;padding:16px">
+    <h3>Editar tarefa</h3>
+    <input name="title" id="et_title" placeholder="Título" style="width:100%;margin:6px 0" required>
+    <div class="row" style="gap:8px;flex-wrap:wrap">
+      <select name="assignee" id="et_assignee"><option>Aline</option><option>Caio</option></select>
+      <select name="points" id="et_points"><option>1</option><option>2</option><option>3</option><option>5</option><option>8</option><option>13</option></select>
+      <select name="status" id="et_status">
+        <option value="todo">A fazer</option><option value="doing">Em andamento</option><option value="done">Concluída</option><option value="notdone">Não concluída</option>
+      </select>
+      <select name="epicId" id="et_epic"><option value="">Épico…</option></select>
+      <input name="tags" id="et_tags" placeholder="tags (vírgulas)" style="flex:1" />
+    </div>
+    <textarea id="et_notes" placeholder="Notas / descrição" style="width:100%;margin-top:8px;min-height:120px"></textarea>
+    <div id="et_checkMeta" class="miniLabel" style="font-weight:600;margin-top:10px">Checklist</div>
+    <div id="et_checklist" style="display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
+    <div class="row" style="gap:8px;margin-top:10px">
+      <input id="et_newItem" placeholder="Novo item do checklist..." style="flex:1">
+      <button class="btn" id="et_addItem" type="button">Adicionar item</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn warn" id="et_delete" type="button">Excluir</button>
+      <button class="btn" type="button" onclick="document.getElementById('editTaskModal').close()">Cancelar</button>
+      <button class="btn primary" id="et_save">Salvar</button>
+    </div>
+  </form>
+</dialog>
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-// --- Fim da Configuração do Firebase ---
-
-// --- Seletores e Estado Global ---
-const $ = sel => document.querySelector(sel);
-const $$ = sel => Array.from(document.querySelectorAll(sel));
-let state = { sprints: [], selected: 0 };
-const sprintsCol = collection(db, 'sprints');
-
-// --- Funções de Ajuda (Helpers) ---
-const cryptoRandomId = () => crypto.randomUUID ? crypto.randomUUID() : `id-${Math.random().toString(36).slice(2)}`;
-const escapeHtml = str => String(str || '').replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+<script>
+// ================== Helpers ==================
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
 const fmtDate = iso => new Date(`${iso}T00:00:00`).toLocaleDateString('pt-BR');
-const addDays = (iso, n) => {
-    const d = new Date(`${iso}T00:00:00`);
-    d.setDate(d.getDate() + n);
-    return d.toISOString().slice(0, 10);
-};
-const currentSprint = () => state.sprints[state.selected];
+const addDays = (iso, n) => { const d = new Date(`${iso}T00:00:00`); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+function escapeHtml(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 
-// --- Lógica Principal de Dados (Firebase) ---
-onSnapshot(sprintsCol, snapshot => {
-    const remoteSprints = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-    if (remoteSprints.length === 0) {
-        console.log("Nenhuma sprint. Criando a primeira de exemplo.");
-        createInitialSprint();
-        return;
-    }
-    state.sprints = remoteSprints.sort((a, b) => a.createdAt - b.createdAt);
-    if (state.selected >= state.sprints.length) state.selected = state.sprints.length - 1;
-    console.log("Dados sincronizados!", state.sprints);
-    renderAllUI();
-});
-
-async function createInitialSprint() {
-    const todayISO = new Date().toISOString().slice(0, 10);
-    const newSprint = {
-        name: 'Sprint 1', start: todayISO, end: addDays(todayISO, 14), createdAt: Date.now(),
-        epics: [ {id: cryptoRandomId(), name: 'Saúde'}, {id: cryptoRandomId(), name: 'Lazer'}, {id: cryptoRandomId(), name: 'Trabalho'} ],
-        tasks: [ { id: cryptoRandomId(), title: 'Configurar o tracker com Firebase', epicId: null, tags: ['config'], assignee: 'Caio', points: 5, status: 'done', notes: '' } ]
-    };
-    await setDoc(doc(sprintsCol), newSprint);
+// ================== Estado (LocalStorage) ==================
+const LS_KEY = 'sprint-tracker-v2-offline';
+let state = { sprints: [], selected: 0 };
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+function load(){
+  try{ const raw = localStorage.getItem(LS_KEY); if(raw) state = JSON.parse(raw)||state; }catch{}
+  if(!state.sprints.length) createInitial();
 }
+load();
 
-async function updateCurrentSprintInFirebase() {
-    const sp = currentSprint();
-    if (!sp || !sp.id) return;
-    const { id, ...sprintData } = sp;
-    await setDoc(doc(db, 'sprints', sp.id), sprintData, { merge: true });
-    console.log(`Sprint "${sp.name}" atualizada.`);
-}
-
-// --- Funções de Renderização da UI ---
-function renderAllUI() {
-    const sp = currentSprint();
-    if (!sp) return;
-    renderSprintOptions();
-    renderEpicUIs();
-    renderHeader();
-    renderStats();
-    renderBoard();
-}
-
-function renderSprintOptions() {
-    const selectedSprintId = currentSprint()?.id;
-    $('#sprintSelect').innerHTML = state.sprints.map((sp, idx) =>
-        `<option value="${idx}" ${sp.id === selectedSprintId ? 'selected' : ''}>${sp.name}</option>`
-    ).join('');
-}
-
-function renderEpicUIs() {
-    const sp = currentSprint();
-    const epics = sp.epics || [];
-    const epicOptions = epics.map(e => `<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
-    $('#epicFilter').innerHTML = `<option value="all">Todos os épicos</option>${epicOptions}`;
-    $('#epicSelect').innerHTML = `<option value="">Épico…</option>${epicOptions}`;
-    $('#editForm select[name="epicId"]').innerHTML = epicOptions;
-    $('#epicList').innerHTML = epics.map(e => `<span class="badge epic epic-chip"><span>${escapeHtml(e.name)}</span><button title="Excluir épico" data-action="del-epic" data-id="${e.id}">×</button></span>`).join('');
-}
-
-function renderHeader() {
-    const sp = currentSprint();
-    const dl = { total: Math.ceil((new Date(sp.end) - new Date(sp.start)) / 864e5), left: Math.max(0, Math.ceil((new Date(sp.end) - new Date()) / 864e5)) };
-    $('#sprintTitle').textContent = `🏁 ${sp.name}`;
-    $('#dateBadge').innerHTML = `⏳ ${fmtDate(sp.start)} → ${fmtDate(sp.end)} · ${dl.left}/${dl.total} dias restantes`;
-}
-
-
-function renderStats() {
-    const sp = currentSprint();
-    const tasks = sp.tasks || [];
-    const totals = calcTotals(tasks);
-    const { Caio: caio, Aline: aline } = totals.byAssignee;
-
-    // Build the per-assignee stat cards including Not Done
-    $('#stats').innerHTML = [aline, caio].map(b => {
-      const pctDone = b.total ? Math.min(100, Math.round((b.done / b.total) * 100)) : 0;
-      const pctNotDone = b.total ? Math.min(100, Math.round((b.notdone / b.total) * 100)) : 0;
-      const share = totals.total ? Math.round((b.total / totals.total) * 100) : 0;
-      return `<div class="stat">
-          <div class="muted">${b.who}</div>
-          <div class="n">Planejados: ${b.total} pts</div>
-          <div class="muted">Entregues: ${b.done} pts · Não concl.: ${b.notdone} pts</div>
-          <div class="muted" style="margin-top:6px">Progresso</div>
-          <div class="progress"><div class="bar" style="width:${pctDone}%"></div></div>
-          <div class="muted" style="margin-top:4px">Conclusão: ${pctDone}%</div>
-          <div class="muted" style="margin-top:6px">Não concluídas</div>
-          <div class="progress"><div class="bar" style="width:${pctNotDone}%"></div></div>
-          <div class="muted" style="margin-top:4px">${pctNotDone}% dos pontos</div>
-          <div class="muted" style="margin-top:6px">Participação</div>
-          <div class="progress"><div class="bar" style="width:${share}%"></div></div>
-          <div class="muted" style="margin-top:4px">${share}% dos pontos</div>
-        </div>`;
-    }).join('');
-
-    const alinePct = aline.total ? Math.round((aline.done / aline.total) * 100) : 0;
-    const caioPct = caio.total ? Math.round((caio.done / caio.total) * 100) : 0;
-    $('#progressAlineBar').style.width = `${alinePct}%`;
-    $('#progressAlinePct').textContent = `${alinePct}%`;
-    $('#progressCaioBar').style.width = `${caioPct}%`;
-    $('#progressCaioPct').textContent = `${caioPct}%`;
-    $('#concluidoAline').textContent = `Concluído Aline: ${aline.done} pts`;
-    $('#concluidoCaio').textContent = `Concluído Caio: ${caio.done} pts`;
-
-    // Column counters
-    $('#todoCount').textContent = tasks.filter(t => t.status === 'todo').length;
-    $('#doingCount').textContent = tasks.filter(t => t.status === 'doing').length;
-    $('#doneCount').textContent = tasks.filter(t => t.status === 'done').length;
-    const notDoneCount = tasks.filter(t => t.status === 'notdone').length;
-    const notDoneEl = document.getElementById('notDoneCount');
-    if (notDoneEl) notDoneEl.textContent = notDoneCount;
-}
-
-
-
-function calcTotals(tasks) {
-    const fib = n => Number(n) || 0;
-    const byAssignee = { Caio: { who: 'Caio', total: 0, done: 0, notdone: 0 }, Aline: { who: 'Aline', total: 0, done: 0, notdone: 0 } };
-    tasks.forEach(t => {
-      const a = byAssignee[t.assignee];
-      if (a) {
-        const pts = fib(t.points);
-        a.total += pts;
-        if (t.status === 'done') a.done += pts;
-        if (t.status === 'notdone') a.notdone += pts;
+// ================== Mini Calendário ==================
+function minicalRender(containerId){
+  const el = document.getElementById(containerId); if(!el) return;
+  const forInput = document.getElementById(el.dataset.for); if(!forInput) return;
+  const base = forInput.value ? new Date(forInput.value+'T00:00:00') : new Date();
+  const year = base.getFullYear(); const month = base.getMonth();
+  const start = new Date(year, month, 1);
+  const end = new Date(year, month+1, 0);
+  const weeks = ['D','S','T','Q','Q','S','S'];
+  let h = '<header><button data-nav="-1" class="btn ghost">‹</button><span>'+start.toLocaleString('pt-BR',{month:'long',year:'numeric'})+'</span><button data-nav="1" class="btn ghost">›</button></header>';
+  h += '<table><thead><tr>'+weeks.map(w=>'<th class="muted">'+w+'</th>').join('')+'</tr></thead><tbody>';
+  const pad = start.getDay();
+  let day=1, rows='';
+  for(let r=0;r<6;r++){
+    let t='<tr>';
+    for(let c=0;c<7;c++){
+      if (r===0 && c<pad) t+='<td></td>';
+      else if (day> end.getDate()) t+='<td></td>';
+      else{
+        const dstr = new Date(year,month,day).toISOString().slice(0,10);
+        const sel = (forInput.value===dstr)?' sel':'';
+        t += `<td><button data-day="${dstr}" class="${sel}">${day}</button></td>`;
+        day++;
       }
-    });
-    return { total: byAssignee.Caio.total + byAssignee.Aline.total, byAssignee };
-}
-
-
-function renderBoard() {
-    $$('.dropzone').forEach(col => col.innerHTML = '');
-    const sp = currentSprint();
-    const tasks = (sp.tasks || []).filter(t => $('#epicFilter').value === 'all' || t.epicId === $('#epicFilter').value);
-    tasks.sort((a, b) => (a._order || 0) - (b._order || 0));
-    tasks.forEach(task => {
-        const card = document.createElement('article');
-        card.className = `task${task.status === 'done' ? ' done' : ''}`;
-        card.draggable = true; card.dataset.id = task.id;
-        const epicName = sp.epics.find(e => e.id === task.epicId)?.name || 'Sem épico';
-        const tagsHTML = (task.tags || []).map(tag => `<span class="badge tag">${escapeHtml(tag)}</span>`).join('');
-        let daysInProgressHTML = '';
-        if (task.status === 'doing' && task.startedAt) {
-            const diffDays = Math.ceil(Math.abs(new Date() - new Date(`${task.startedAt}T00:00:00`)) / 864e5);
-            daysInProgressHTML = `<span class="badge warn" style="margin-left: auto;">Há ${diffDays} dia(s)</span>`;
-        }
-        let checklistHTML = '';
-        if (task.checklist && task.checklist.length > 0) {
-            const total = task.checklist.length;
-            const done = task.checklist.filter(item => item.done).length;
-            const percent = total > 0 ? Math.round((done / total) * 100) : 0;
-            checklistHTML = `<div style="margin-top: 8px;"><div class="row-between" style="font-size: 12px; margin-bottom: 4px;"><span class="muted">Checklist</span><span class="muted">${done}/${total} (${percent}%)</span></div><div class="progress"><div class="bar" style="width: ${percent}%;"></div></div></div>`;
-        }
-        card.innerHTML = `<div class="row-between"><div class="title">${escapeHtml(task.title)}</div><div class="row" style="gap:6px">${daysInProgressHTML}<span class="badge epic">${escapeHtml(epicName)}</span><span class="badge points">${task.points} pts</span><span class="badge assignee">${task.assignee}</span></div></div>${tagsHTML ? `<div class="taglist">${tagsHTML}</div>` : ''}${task.notes ? `<div class="muted" style="font-size:12px;white-space:pre-wrap;margin-top:4px;">${escapeHtml(task.notes)}</div>` : ''}${checklistHTML}`;
-        card.addEventListener('dblclick', () => openEdit(task.id));
-        makeDraggable(card);
-        $(`#${task.status}`).appendChild(card);
-    });
-}
-
-// --- Lógica de Interação do Usuário ---
-$('#sprintSelect').addEventListener('change', e => { state.selected = Number(e.target.value); renderAllUI(); });
-$('#epicFilter').addEventListener('change', () => renderBoard());
-
-$('#taskForm').addEventListener('submit', e => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const sp = currentSprint();
-    sp.tasks.push({ id: cryptoRandomId(), title: String(fd.get('title')||'').trim(), epicId: fd.get('epicId')||null, tags: String(fd.get('tags')||'').split(',').map(s=>s.trim()).filter(Boolean), assignee: fd.get('assignee'), points: Number(fd.get('points')), status: fd.get('status'), notes: '', checklist: [] });
-    e.target.reset();
-    updateCurrentSprintInFirebase();
-});
-
-$('#addSprintBtn').addEventListener('click', () => {
-    const last = state.sprints[state.sprints.length - 1];
-    const todayISO = new Date().toISOString().slice(0, 10);
-    $('#startDate').value = last ? last.end : todayISO;
-    $('#endDate').value = last ? addDays(last.end || todayISO, 14) : addDays(todayISO, 14);
-    $('#sprintModal').showModal();
-});
-
-$('#sprintForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const f = new FormData(e.target);
-    const prev = currentSprint();
-    const newSprint = { name: f.get('name') || 'Sprint', start: f.get('start'), end: f.get('end'), epics: prev?.epics ? JSON.parse(JSON.stringify(prev.epics)) : [], tasks: [], createdAt: Date.now() };
-    await setDoc(doc(sprintsCol), newSprint);
-    $('#sprintModal').close();
-});
-
-$('#addEpicBtn').addEventListener('click', () => {
-    const input = $('#newEpicName');
-    const name = String(input.value || '').trim();
-    if (!name) return;
-    const sp = currentSprint();
-    if (!sp.epics) sp.epics = [];
-    if (sp.epics.some(e => String(e.name).trim().toLowerCase() === name.toLowerCase())) return alert('Já existe um épico com esse nome.');
-    sp.epics.push({ id: cryptoRandomId(), name });
-    input.value = '';
-    updateCurrentSprintInFirebase();
-});
-
-$('#epicList').addEventListener('click', e => {
-    const btn = e.target.closest('[data-action="del-epic"]');
-    if (!btn) return;
-    const sp = currentSprint();
-    const epic = sp.epics.find(e => e.id === btn.dataset.id);
-    if (!epic || !confirm(`Excluir épico "${epic.name}"?`)) return;
-    sp.epics = sp.epics.filter(e => e.id !== btn.dataset.id);
-    sp.tasks.forEach(t => { if (t.epicId === btn.dataset.id) t.epicId = null; });
-    updateCurrentSprintInFirebase();
-});
-
-function openEdit(id) {
-    const sp = currentSprint();
-    const t = sp.tasks.find(x => x.id === id); if (!t) return;
-    const f = $('#editForm');
-    f.dataset.id = id;
-    f.title.value = t.title; f.assignee.value = t.assignee; f.points.value = String(t.points); f.status.value = t.status; f.notes.value = t.notes || '';
-    renderEpicUIs();
-    f.querySelector('select[name="epicId"]').value = t.epicId || '';
-    f.querySelector('input[name="tags"]').value = (t.tags || []).join(', ');
-    renderChecklistInModal(t);
-    $('#editModal').showModal();
-}
-
-// --- FUNÇÕES ESPECÍFICAS DO CHECKLIST ---
-function renderChecklistInModal(task) {
-    const container = $('#checklistContainer');
-    container.innerHTML = '';
-    if (!task.checklist) task.checklist = [];
-    const total = task.checklist.length;
-    const done = task.checklist.filter(item => item.done).length;
-    const percent = total > 0 ? Math.round((done / total) * 100) : 0;
-    $('#checklistTitle').textContent = `Checklist (${done}/${total} - ${percent}%)`;
-    task.checklist.forEach((item, index) => {
-        const itemEl = document.createElement('div');
-        itemEl.className = 'row';
-        itemEl.style.justifyContent = 'space-between';
-        itemEl.style.padding = '4px 0';
-        itemEl.innerHTML = `<label class="row" style="gap: 8px; align-items: center; flex: 1; cursor: pointer;"><input type="checkbox" data-index="${index}" ${item.done ? 'checked' : ''}><span style="${item.done ? 'text-decoration: line-through; opacity: 0.7;' : ''}">${escapeHtml(item.text)}</span></label><button type="button" class="btn ghost" data-index="${index}" style="padding: 2px 6px; color: var(--danger);">×</button>`;
-        itemEl.querySelector('input[type="checkbox"]').addEventListener('change', e => {
-            task.checklist[index].done = e.target.checked;
-            renderChecklistInModal(task);
-        });
-        itemEl.querySelector('button').addEventListener('click', () => {
-            task.checklist.splice(index, 1);
-            renderChecklistInModal(task);
-        });
-        container.appendChild(itemEl);
-    });
-}
-
-$('#addChecklistItemBtn').addEventListener('click', () => {
-    const taskId = $('#editForm').dataset.id;
-    const sp = currentSprint();
-    const task = sp.tasks.find(t => t.id === taskId);
-    const input = $('#newChecklistItem');
-    const text = input.value.trim();
-    if (text && task) {
-        if (!task.checklist) task.checklist = [];
-        task.checklist.push({ id: cryptoRandomId(), text: text, done: false });
-        input.value = '';
-        renderChecklistInModal(task);
     }
-});
+    t+='</tr>'; rows+=t; if(day> end.getDate()) break;
+  }
+  h += rows + '</tbody></table>';
+  el.innerHTML = h;
+  el.querySelectorAll('button[data-day]').forEach(b=> b.addEventListener('click',()=>{ forInput.value = b.dataset.day; minicalRender(containerId);}));
+  el.querySelectorAll('button[data-nav]').forEach(b=> b.addEventListener('click',()=>{
+    const offset = Number(b.dataset.nav);
+    const cur = forInput.value ? new Date(forInput.value+'T00:00:00') : new Date();
+    cur.setMonth(cur.getMonth()+offset);
+    forInput.value = cur.toISOString().slice(0,10);
+    minicalRender(containerId);
+  }));
+}
 
-$('#newChecklistItem').addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        $('#addChecklistItemBtn').click();
+// ================== Render ==================
+function currentSprint(){ return state.sprints[state.selected]; }
+
+function renderSprintOptions(){
+  const sp = currentSprint(); const selectedId = sp ? sp.id : null;
+  $('#sprintSelect').innerHTML = state.sprints.map(s => `<option value="${s.id}" ${s.id===selectedId?'selected':''}>${escapeHtml(s.name)}</option>`).join('');
+}
+
+function renderHeader(){
+  const sp = currentSprint(); if(!sp) return;
+  const total = Math.max(1, Math.ceil((new Date(sp.end) - new Date(sp.start)) / 864e5));
+  const left = Math.max(0, Math.ceil((new Date(sp.end) - new Date()) / 864e5));
+  const ratio = left / total;
+  let cls = 'ok'; if (ratio <= 1/3) cls = 'danger'; else if (ratio <= 2/3) cls = 'warn';
+  $('#sprintTitle').textContent = sp.name;
+  const badge = $('#dateBadge');
+  badge.className = `pill ${cls}`;
+  badge.innerHTML = `⏳ ${fmtDate(sp.start)} → ${fmtDate(sp.end)} · ${left}/${total} dias restantes`;
+}
+
+function calcTotals(tasks){
+  const fib = n => Number(n)||0;
+  const byAssignee = { Aline:{who:'Aline',total:0,done:0,notdone:0}, Caio:{who:'Caio',total:0,done:0,notdone:0} };
+  (tasks||[]).forEach(t=>{
+    const a = byAssignee[t.assignee]; const pts = fib(t.points);
+    if(a){ a.total+=pts; if(t.status==='done') a.done+=pts; if(t.status==='notdone') a.notdone+=pts; }
+  });
+  return { total: byAssignee.Aline.total + byAssignee.Caio.total, byAssignee };
+}
+
+
+function renderStats(){
+  const sp = currentSprint(); const tasks = sp.tasks||[]; const totals = calcTotals(tasks);
+  const {Aline, Caio} = totals.byAssignee;
+  // Simple progress bars (existing summary)
+  const alinePct = Aline.total? Math.round((Aline.done/Aline.total)*100):0;
+  const caioPct  = Caio.total? Math.round((Caio.done/Caio.total)*100):0;
+  $('#progressAlineBar').style.width = `${alinePct}%`; $('#progressAlinePct').textContent = `${alinePct}%`;
+  $('#progressCaioBar').style.width = `${caioPct}%`; $('#progressCaioPct').textContent = `${caioPct}%`;
+  $('#concluidoAline').textContent = `Concluído Aline: ${Aline.done} pts`;
+  $('#concluidoCaio').textContent = `Concluído Caio: ${Caio.done} pts`;
+  // Column counters
+  $('#todoCount').textContent  = tasks.filter(t=>t.status==='todo').length;
+  $('#doingCount').textContent = tasks.filter(t=>t.status==='doing').length;
+  $('#doneCount').textContent  = tasks.filter(t=>t.status==='done').length;
+  $('#notDoneCount').textContent = tasks.filter(t=>t.status==='notdone').length;
+  // Detailed cards (like screenshot)
+  const makeCard = (b) => {
+    const pctDone = b.total? Math.round((b.done/b.total)*100):0;
+    const pctNot  = b.total? Math.round((b.notdone/b.total)*100):0;
+    const share   = totals.total? Math.round((b.total/totals.total)*100):0;
+    return `<div class="statCard">
+      <div class="muted">${b.who}</div>
+      <h4 class="n">Planejados: ${b.total} pts</h4>
+      <div class="muted">Entregues: ${b.done} pts · Não concl.: ${b.notdone} pts</div>
+      <div class="miniLabel">Progresso</div>
+      <div class="progress"><div class="bar" style="width:${pctDone}%"></div></div>
+      <div class="muted">Conclusão: ${pctDone}%</div>
+      <div class="miniLabel">Não concluídas</div>
+      <div class="progress"><div class="bar" style="width:${pctNot}%"></div></div>
+      <div class="muted">${pctNot}% dos pontos</div>
+      <div class="miniLabel">Participação</div>
+      <div class="progress"><div class="bar" style="width:${share}%"></div></div>
+      <div class="muted">${share}% dos pontos</div>
+    </div>`;
+  };
+  $('#statsCards').innerHTML = [makeCard(Aline), makeCard(Caio)].join('');
+}
+
+
+function makeDraggable(card){
+  card.addEventListener('dragstart',()=>card.classList.add('dragging'));
+  card.addEventListener('dragend',()=>card.classList.remove('dragging'));
+}
+function getDragAfterElement(container, y){
+  const draggables = [...container.querySelectorAll('.task:not(.dragging)')];
+  return draggables.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    return (offset < 0 && offset > closest.offset) ? { offset, element: child } : closest;
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+function persistOrder(status){
+  const sp = currentSprint();
+  const ids = $$(`#${status} .task`).map(el=>el.dataset.id);
+  sp.tasks.forEach(t=>{ if(t.status===status) t._order = ids.indexOf(t.id); });
+  save(); // order persisted
+}
+function moveTask(id,newStatus){
+  const sp = currentSprint(); const t = sp.tasks.find(x=>x.id===id); if(!t) return;
+  t.status = newStatus;
+  if(newStatus==='doing' && !t.startedAt) t.startedAt = new Date().toISOString().slice(0,10);
+  if(newStatus!=='doing') delete t.startedAt;
+  if(newStatus==='done' && !t.doneAt) t.doneAt = new Date().toISOString().slice(0,10);
+  if(newStatus!=='done' && t.doneAt) delete t.doneAt;
+  if(newStatus==='notdone' && t.doneAt) delete t.doneAt;
+  save();
+  renderStats();
+}
+
+
+function renderBoard(){
+  $$('.dropzone').forEach(col=>col.innerHTML='');
+  const sp = currentSprint(); const epFilter = $('#epicFilter').value;
+  const tasks = (sp.tasks||[]).filter(t => epFilter==='all' || t.epicId===epFilter);
+  tasks.sort((a,b)=>(a._order||0)-(b._order||0));
+  tasks.forEach(task => {
+    const card = document.createElement('article');
+    const doneLike = (task.status==='done' || task.status==='notdone');
+    card.className = `task${task.status==='done'?' done':''}${doneLike?' done-like':''}`;
+    card.draggable = true; card.dataset.id = task.id;
+    const epicName = sp.epics.find(e=>e.id===task.epicId)?.name || 'Sem épico';
+    const tagsHTML = (task.tags||[]).map(tag=>`<span class="badge tag">${escapeHtml(tag)}</span>`).join('');
+    let daysHTML=''; if(task.status==='doing' && task.startedAt){
+      const diff = Math.ceil(Math.abs(new Date()-new Date(`${task.startedAt}T00:00:00`))/864e5);
+      daysHTML = `<span class="badge warn" style="margin-left:auto">Há ${diff} dia(s)</span>`;
     }
-});
-
-// --- LÓGICA DO MODAL DE EDIÇÃO ---
-$('#editForm').addEventListener('submit', e => {
-    e.preventDefault();
-    const f = e.target;
-    const id = f.dataset.id;
-    const sp = currentSprint();
-    const item = sp.tasks.find(x => x.id === id);
-    if (!item) return;
-    Object.assign(item, { title: String(f.title.value || '').trim(), assignee: f.assignee.value, points: Number(f.points.value), status: f.status.value, notes: f.notes.value, epicId: f.querySelector('select[name="epicId"]').value || null, tags: f.querySelector('input[name="tags"]').value.split(',').map(s => s.trim()).filter(Boolean) });
-    if (item.status === 'done' && !item.doneAt) item.doneAt = new Date().toISOString().slice(0, 10);
-    if (item.status !== 'done' && item.doneAt) delete item.doneAt;
-    updateCurrentSprintInFirebase();
-    $('#editModal').close();
-});
-
-$('#editForm').addEventListener('click', e => {
-    const value = e.target.getAttribute('value');
-    if (value === 'cancel') {
-        $('#editModal').close();
-    } else if (value === 'delete') {
-        if (confirm('Tem certeza de que deseja excluir esta tarefa?')) {
-            const id = $('#editForm').dataset.id;
-            const sp = currentSprint();
-            sp.tasks = sp.tasks.filter(t => t.id !== id);
-            $('#editModal').close();
-            updateCurrentSprintInFirebase();
-        }
-    }
-});
-
-// --- Lógica de Drag and Drop ---
-function makeDraggable(card) {
-    card.addEventListener('dragstart', () => card.classList.add('dragging'));
-    card.addEventListener('dragend', () => card.classList.remove('dragging'));
-}
-$$('.dropzone').forEach(zone => {
-    zone.addEventListener('dragover', e => {
-        e.preventDefault();
-        const after = getDragAfterElement(zone, e.clientY);
-        zone.insertBefore($('.task.dragging'), after);
-    });
-    zone.addEventListener('drop', e => {
-        e.preventDefault();
-        const dragging = $('.task.dragging');
-        if (!dragging) return;
-        moveTask(dragging.dataset.id, zone.parentElement.dataset.col);
-        persistOrder(zone.parentElement.dataset.col);
-    });
-});
-function getDragAfterElement(container, y) {
-    const draggables = [...container.querySelectorAll('.task:not(.dragging)')];
-    return draggables.reduce((closest, child) => {
-        const box = child.getBoundingClientRect();
-        const offset = y - box.top - box.height / 2;
-        return (offset < 0 && offset > closest.offset) ? { offset, element: child } : closest;
-    }, { offset: Number.NEGATIVE_INFINITY }).element;
-}
-function persistOrder(status) {
-    const sp = currentSprint();
-    const ids = $$(`#${status} .task`).map(el => el.dataset.id);
-    sp.tasks.forEach(t => { if (t.status === status) t._order = ids.indexOf(t.id); });
-    updateCurrentSprintInFirebase();
+    const total = Array.isArray(task.checklist) ? task.checklist.length : 0;
+    const done = total ? task.checklist.filter(i=>i.done).length : 0;
+    const pct  = total ? Math.round((done/total)*100) : 0;
+    const notesPreview = task.notes ? `<div class="notes">${escapeHtml(task.notes).slice(0,180)}</div>` : '';
+    card.innerHTML = `<div class="row-between"><div class="title">${escapeHtml(task.title)}</div>${daysHTML}</div>
+      <div class="row" style="gap:6px;margin-top:4px;flex-wrap:wrap">
+        <span class="badge epic">${escapeHtml(epicName)}</span>
+        <span class="badge points">${escapeHtml(String(task.points))} pts</span>
+        <span class="badge">👤 ${escapeHtml(task.assignee)}</span>
+        ${tagsHTML}
+      </div>
+      ${notesPreview}
+      <div class="footer">
+        <div class="mini">Checklist</div>
+        <div class="mini">${done}/${total} (${pct}%)</div>
+      </div>
+      <div class="progress"><div class="bar" style="width:${pct}%"></div></div>`;
+    makeDraggable(card);
+    card.addEventListener('dblclick',()=>openEdit(task.id));
+    $(`#${task.status}`).appendChild(card);
+  });
 }
 
-function moveTask(id, newStatus) {
-    const sp = currentSprint();
-    const t = sp.tasks.find(x => x.id === id);
-    if (!t) return;
+
+
+// ======= Edição de tarefa (modal) =======
+let et_currentId = null;
+function openEdit(id){
+  const sp = currentSprint(); const t = sp.tasks.find(x=>x.id===id); if(!t) return;
+  et_currentId = id;
+  $('#et_title').value = t.title || '';
+  $('#et_assignee').value = t.assignee || 'Aline';
+  $('#et_points').value = String(t.points || 0);
+  $('#et_status').value = t.status || 'todo';
+  const epOpts = (sp.epics||[]).map(e=>`<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
+  $('#et_epic').innerHTML = `<option value="">Épico…</option>${epOpts}`;
+  $('#et_epic').value = t.epicId || '';
+  $('#et_tags').value = (t.tags||[]).join(', ');
+  $('#et_notes').value = t.notes || '';
+  if(!Array.isArray(t.checklist)) t.checklist = [];
+  renderChecklistModal(t);
+  $('#editTaskModal').showModal();
+}
+function renderChecklistModal(t){
+  const host = $('#et_checklist'); host.innerHTML='';
+  const total = t.checklist.length || 0;
+  const done = t.checklist.filter(i=>i.done).length;
+  const pct = total? Math.round((done/total)*100):0;
+  $('#et_checkMeta').textContent = `Checklist (${done}/${total} – ${pct}%)`;
+  t.checklist.forEach((item, idx)=>{
+    const row = document.createElement('div');
+    row.className = 'row'; row.style.justifyContent='space-between';
+    row.innerHTML = `<label class="row" style="gap:8px;align-items:center;flex:1">
+        <input type="checkbox" ${item.done?'checked':''} data-idx="${idx}">
+        <span class="itemText" style="${item.done?'text-decoration:line-through;opacity:.7':''}">${escapeHtml(item.text||'')}</span>
+      </label>
+      <button class="btn" data-del="${idx}" type="button">×</button>`;
+    host.appendChild(row);
+  });
+  host.querySelectorAll('input[type="checkbox"]').forEach(ch => ch.addEventListener('change', e=>{
+    const i = Number(e.target.dataset.idx); t.checklist[i].done = e.target.checked; renderChecklistModal(t);
+  }));
+  host.querySelectorAll('button[data-del]').forEach(btn => btn.addEventListener('click', ()=>{
+    const i = Number(btn.dataset.del); t.checklist.splice(i,1); renderChecklistModal(t);
+  }));
+}
+$('#et_addItem').addEventListener('click', ()=>{
+  const sp = currentSprint(); const t = sp.tasks.find(x=>x.id===et_currentId); if(!t) return;
+  const txt = String($('#et_newItem').value||'').trim(); if(!txt) return;
+  if(!Array.isArray(t.checklist)) t.checklist = [];
+  t.checklist.push({ text: txt, done: false });
+  $('#et_newItem').value = '';
+  renderChecklistModal(t);
+});
+$('#et_save').addEventListener('click', (e)=>{
+  e.preventDefault();
+  const sp = currentSprint(); const t = sp.tasks.find(x=>x.id===et_currentId); if(!t) return;
+  t.title = String($('#et_title').value||'').trim();
+  t.assignee = $('#et_assignee').value;
+  t.points = Number($('#et_points').value||0);
+  const newStatus = $('#et_status').value;
+  if(newStatus !== t.status){
     t.status = newStatus;
-    if (newStatus === 'doing' && !t.startedAt) t.startedAt = new Date().toISOString().slice(0, 10);
-    else if (newStatus !== 'doing') delete t.startedAt;
-    if (newStatus === 'done' && !t.doneAt) t.doneAt = new Date().toISOString().slice(0, 10);
-    if (newStatus !== 'done' && t.doneAt) delete t.doneAt;
-    // Not done should not carry doneAt
-    if (newStatus === 'notdone') { if (t.doneAt) delete t.doneAt; }
-    updateCurrentSprintInFirebase();
-}
-
-
-// --- Botões de Backup e Reset ---
-$('#exportBtn').addEventListener('click', () => {
-    const data = JSON.stringify(state.sprints, null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'sprint-tracker-backup.json';
-    a.click();
-    URL.revokeObjectURL(url);
+    if(newStatus==='doing' && !t.startedAt) t.startedAt = new Date().toISOString().slice(0,10);
+    if(newStatus!=='doing') delete t.startedAt;
+    if(newStatus==='done' && !t.doneAt) t.doneAt = new Date().toISOString().slice(0,10);
+    if(newStatus!=='done' && t.doneAt) delete t.doneAt;
+    if(newStatus==='notdone' && t.doneAt) delete t.doneAt;
+  }
+  t.epicId = $('#et_epic').value || '';
+  t.tags = String($('#et_tags').value||'').split(',').map(s=>s.trim()).filter(Boolean);
+  t.notes = $('#et_notes').value || '';
+  $('#editTaskModal').close();
+  save(); renderBoard(); renderStats();
+});
+$('#et_delete').addEventListener('click', ()=>{
+  if(!confirm('Excluir esta tarefa?')) return;
+  const sp = currentSprint(); sp.tasks = (sp.tasks||[]).filter(x=>x.id!==et_currentId);
+  $('#editTaskModal').close();
+  save(); renderBoard(); renderStats();
 });
 
-// MELHORIA: Botão agora deleta apenas a sprint atual
-$('#resetBtn').addEventListener('click', async () => {
-    const sp = currentSprint();
-    if (!sp) return;
-    if (state.sprints.length <= 1) {
-        return alert("Não é possível excluir a última sprint.");
-    }
+// ================== Interações ==================
+$('#sprintSelect').addEventListener('change', e=>{
+  const id = e.target.value; const idx = state.sprints.findIndex(s=>s.id===id);
+  if(idx>=0){ state.selected = idx; save(); renderAll(); }
+});
+$('#epicFilter').addEventListener('change', ()=>renderBoard());
 
-    if (confirm(`Tem certeza de que deseja excluir a sprint "${sp.name}"? Esta ação não pode ser desfeita.`)) {
-        await deleteDoc(doc(db, 'sprints', sp.id));
-        // Seleciona a primeira sprint para evitar erros.
-        state.selected = 0; 
-        console.log(`Sprint "${sp.name}" foi excluída.`);
-    }
+$('#taskForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target); const sp = currentSprint();
+  sp.tasks.push({
+    id: crypto.randomUUID(),
+    title: String(fd.get('title')||'').trim(),
+    epicId: String(fd.get('epicId')||''),
+    tags: String(fd.get('tags')||'').split(',').map(s=>s.trim()).filter(Boolean),
+    assignee: String(fd.get('assignee')||'Aline'),
+    points: Number(fd.get('points')||0),
+    status: String(fd.get('status')||'todo'),
+    notes:'', checklist: []
+  });
+  const nt = sp.tasks[sp.tasks.length-1];
+  if(nt.status==='doing') nt.startedAt = new Date().toISOString().slice(0,10);
+  e.target.reset();
+  save(); renderBoard(); renderStats();
 });
 
-// --- Edit Sprint Name (inline via button prompt) ---
-const editBtn = document.getElementById('editSprintNameBtn');
-if (editBtn) {
-  editBtn.addEventListener('click', () => {
-      const sp = currentSprint();
-      if (!sp) return;
-      const newName = prompt('Novo nome da sprint:', sp.name || '');
-      if (newName !== null) {
-          const trimmed = String(newName).trim();
-          if (trimmed && trimmed !== sp.name) {
-              sp.name = trimmed;
-              updateCurrentSprintInFirebase();
-              renderHeader();
-              renderSprintOptions();
-          }
-      }
+$('#addSprintBtn').addEventListener('click', ()=>{
+  const last = state.sprints[state.sprints.length-1];
+  const todayISO = new Date().toISOString().slice(0,10);
+  $('#newSprintName').value = `Sprint ${state.sprints.length+1}`;
+  $('#startDate').value = last ? last.end : todayISO;
+  $('#endDate').value = last ? addDays(last.end||todayISO, 14) : addDays(todayISO, 14);
+  $('#sprintModal').showModal();
+  setTimeout(()=>{ minicalRender('minicalCreateStart'); minicalRender('minicalCreateEnd'); },0);
+});
+$('#sprintForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const sd = $('#startDate').value; const ed = $('#endDate').value;
+  if (sd && ed && new Date(sd) > new Date(ed)) { alert('A data de FIM não pode ser anterior à data de INÍCIO.'); return; }
+  const f = new FormData(e.target); const prev = currentSprint();
+  const newSprint = {
+    id: crypto.randomUUID(), name: String(f.get('name')||'Sprint').trim(),
+    start: String(f.get('start')||''), end: String(f.get('end')||''),
+    epics: prev?.epics ? JSON.parse(JSON.stringify(prev.epics)) : [],
+    tasks: [], createdAt: Date.now()
+  };
+  state.sprints.push(newSprint); state.selected = state.sprints.length-1;
+  $('#sprintModal').close(); save(); renderAll();
+});
+
+$('#editSprintBtn').addEventListener('click', ()=>{
+  const sp = currentSprint(); if(!sp) return;
+  $('#editSprintName').value = sp.name||'';
+  $('#editStartDate').value = sp.start||'';
+  $('#editEndDate').value = sp.end||'';
+  $('#editSprintModal').showModal();
+  setTimeout(()=>{ minicalRender('minicalEditStart'); minicalRender('minicalEditEnd'); },0);
+});
+$('#editSprintForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const sd = $('#editStartDate').value; const ed = $('#editEndDate').value;
+  if (sd && ed && new Date(sd) > new Date(ed)) { alert('A data de FIM não pode ser anterior à data de INÍCIO.'); return; }
+  const sp = currentSprint(); const f = new FormData(e.target);
+  sp.name = String(f.get('name')||sp.name).trim();
+  sp.start = String(f.get('start')||sp.start);
+  sp.end   = String(f.get('end')||sp.end);
+  $('#editSprintModal').close(); save(); renderAll();
+});
+
+$('#addEpicBtn').addEventListener('click', ()=>{
+  const input = $('#newEpicName'); const name = String(input.value||'').trim(); if(!name) return;
+  const sp = currentSprint(); if(!sp.epics) sp.epics = [];
+  if(sp.epics.some(e=>String(e.name).trim().toLowerCase()===name.toLowerCase())) return alert('Já existe um épico com esse nome.');
+  sp.epics.push({id: crypto.randomUUID(), name}); input.value=''; save(); renderEpicUIs(); renderBoard();
+});
+
+$('#exportBtn').addEventListener('click', ()=>{
+  const data = JSON.stringify(state, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'sprints-backup.json'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+});
+
+
+// Importar JSON (suporta formato do site antigo e deste offline)
+$('#importBtn').addEventListener('click', ()=> $('#importFile').click());
+$('#importFile').addEventListener('change', async (e)=>{
+  const file = e.target.files?.[0]; if(!file) return;
+  try{
+    const text = await file.text();
+    const data = JSON.parse(text);
+    let sprints = [];
+    if (Array.isArray(data)) {
+      sprints = data;
+    } else if (Array.isArray(data?.sprints)) {
+      sprints = data.sprints;
+    } else if (Array.isArray(data?.state?.sprints)) {
+      sprints = data.state.sprints;
+    } else {
+      alert('Arquivo não reconhecido. Esperado JSON com "sprints".'); return;
+    }
+    if (!sprints.length) { alert('Nenhuma sprint encontrada no arquivo.'); return; }
+    state.sprints = sprints;
+    state.selected = 0;
+    save();
+    renderAll();
+    alert('Importação concluída!');
+  }catch(err){
+    console.error(err);
+    alert('Falha ao importar JSON: ' + (err?.message || err));
+  }finally{
+    e.target.value = '';
+  }
+});
+$('#resetBtn').addEventListener('click', ()=>{
+  const sp = currentSprint(); if(!sp) return;
+  if(state.sprints.length<=1) return alert('Não é possível excluir a última sprint.');
+  if(confirm(`Excluir a sprint "${sp.name}"?`)){
+    state.sprints.splice(state.selected,1);
+    if(state.selected>=state.sprints.length) state.selected = state.sprints.length-1;
+    save(); renderAll();
+  }
+});
+
+// Atalhos ←/→ (ignorando quando digitando)
+window.addEventListener('keydown', (e) => {
+  const tag = (document.activeElement?.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || e.altKey || e.ctrlKey || e.metaKey) return;
+  if (e.key === 'ArrowLeft') {
+    if (state.selected > 0) { state.selected -= 1; save(); renderAll(); $('#sprintSelect').value = state.sprints[state.selected].id; }
+  } else if (e.key === 'ArrowRight') {
+    if (state.selected < state.sprints.length - 1) { state.selected += 1; save(); renderAll(); $('#sprintSelect').value = state.sprints[state.selected].id; }
+  }
+});
+
+// ================== Render All ==================
+function renderEpicUIs(){
+  const sp = currentSprint(); const epics = sp.epics||[];
+  const epicOptions = epics.map(e=>`<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
+  $('#epicFilter').innerHTML = `<option value="all">Todos os épicos</option>${epicOptions}`;
+  $('#epicSelect').innerHTML = `<option value="">Épico…</option>${epicOptions}`;
+  $('#epicList').innerHTML = epics.map(e=>`<span class="badge">${escapeHtml(e.name)} <button class="btn ghost" data-action="del-epic" data-id="${e.id}">×</button></span>`).join('');
+  $('#epicList').querySelectorAll('[data-action="del-epic"]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const sp = currentSprint(); sp.epics = (sp.epics||[]).filter(x=>x.id!==btn.dataset.id);
+      (sp.tasks||[]).forEach(t=>{ if(t.epicId===btn.dataset.id) t.epicId=''; });
+      save(); renderEpicUIs(); renderBoard();
+    });
   });
 }
 
-// Also allow double-click on the title to rename quickly
-const sprintTitleEl = document.getElementById('sprintTitle');
-if (sprintTitleEl) {
-  sprintTitleEl.style.cursor = 'text';
-  sprintTitleEl.title = 'Dê um duplo clique para renomear';
-  sprintTitleEl.addEventListener('dblclick', () => {
-      const sp = currentSprint();
-      if (!sp) return;
-      const newName = prompt('Novo nome da sprint:', sp.name || '');
-      if (newName !== null) {
-          const trimmed = String(newName).trim();
-          if (trimmed && trimmed !== sp.name) {
-              sp.name = trimmed;
-              updateCurrentSprintInFirebase();
-              renderHeader();
-              renderSprintOptions();
-          }
-      }
+function renderAll(){
+  renderSprintOptions();
+  renderEpicUIs();
+  renderHeader();
+  renderBoard();
+  renderStats();
+  // DnD zones
+  $$('.dropzone').forEach(zone=>{
+    zone.addEventListener('dragover', e=>{
+      e.preventDefault();
+      const after = getDragAfterElement(zone, e.clientY);
+      zone.insertBefore($('.task.dragging'), after);
+    });
+    zone.addEventListener('drop', e=>{
+      e.preventDefault();
+      const dragging = $('.task.dragging'); if(!dragging) return;
+      moveTask(dragging.dataset.id, zone.parentElement.dataset.col);
+      persistOrder(zone.parentElement.dataset.col);
+    });
   });
 }
 
+function createInitial(){
+  const todayISO = new Date().toISOString().slice(0,10);
+  state.sprints = [{
+    id: crypto.randomUUID(),
+    name:'Sprint 1',
+    start: todayISO,
+    end: addDays(todayISO, 14),
+    createdAt: Date.now(),
+    epics:[{id:crypto.randomUUID(),name:'Saúde'},{id:crypto.randomUUID(),name:'Casa'},{id:crypto.randomUUID(),name:'Trabalho'}],
+    tasks: [
+      { id:crypto.randomUUID(), title:'Configurar o tracker (offline)', epicId:'', tags:['setup'], assignee:'Caio', points:5, status:'todo', notes:'', checklist:[] }
+    ]
+  }];
+  state.selected = 0; save();
+}
+
+renderAll();
 </script>
-
-</body>
-</html>
-
-
-// --- Edit Sprint Name (inline via button prompt) ---
-const editBtn = document.getElementById('editSprintNameBtn');
-if (editBtn) {
-  editBtn.addEventListener('click', () => {
-      const sp = currentSprint();
-      if (!sp) return;
-      const newName = prompt('Novo nome da sprint:', sp.name || '');
-      if (newName !== null) {
-          const trimmed = String(newName).trim();
-          if (trimmed && trimmed !== sp.name) {
-              sp.name = trimmed;
-              updateCurrentSprintInFirebase();
-              renderHeader();
-              renderSprintOptions();
-          }
-      }
-  });
-}
-
-// Also allow double-click on the title to rename quickly
-const sprintTitleEl = document.getElementById('sprintTitle');
-if (sprintTitleEl) {
-  sprintTitleEl.style.cursor = 'text';
-  sprintTitleEl.title = 'Dê um duplo clique para renomear';
-  sprintTitleEl.addEventListener('dblclick', () => {
-      const sp = currentSprint();
-      if (!sp) return;
-      const newName = prompt('Novo nome da sprint:', sp.name || '');
-      if (newName !== null) {
-          const trimmed = String(newName).trim();
-          if (trimmed && trimmed !== sp.name) {
-              sp.name = trimmed;
-              updateCurrentSprintInFirebase();
-              renderHeader();
-              renderSprintOptions();
-          }
-      }
-  });
-}
-
-</script>
-
 </body>
 </html>
