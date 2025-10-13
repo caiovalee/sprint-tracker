@@ -118,12 +118,10 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
         <button class="btn" id="exportBtn" title="Exportar JSON (Backup)">Backup</button>
         <button class="btn" id="importBtn" title="Importar JSON de backup">Importar</button>
         <input id="importFile" type="file" accept=".json,application/json" style="display:none">
-        <button class="btn warn" id="resetBtn" title="Excluir sprint atual">Excluir Sprint</button>
-<button class="btn primary" id="saveBtn" title="Salvar alterações no navegador">Salvar</button>
-<span id="saveToast" class="pill ok" style="display:none">Salvo!</span>
-</div>
-</div>
-</header>
+        <button class="btn warn" id="resetBtn" title="Excluir sprint atual">Limpar</button>
+      </div>
+    </div>
+  </header>
 
   <main class="wrap">
     <section class="panel">
@@ -251,50 +249,6 @@ const $$ = s => Array.from(document.querySelectorAll(s));
 const fmtDate = iso => new Date(`${iso}T00:00:00`).toLocaleDateString('pt-BR');
 const addDays = (iso, n) => { const d = new Date(`${iso}T00:00:00`); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
 function escapeHtml(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
-// ======= Additions: Active sprint selection + Save button toast =======
-function ensureActiveSprint(){
-  if (!state.sprints || !state.sprints.length) return;
-  const todayIso = new Date().toISOString().slice(0,10);
-  // If currently selected sprint is in the past and not active, choose the active one
-  const cur = state.sprints[state.selected] || null;
-  const isCurActive = cur && cur.start <= todayIso && cur.end >= todayIso;
-  if (!isCurActive){
-    // Try to find active sprint (today within range)
-    let idx = state.sprints.findIndex(s => (s.start||'') <= todayIso && (s.end||'') >= todayIso);
-    if (idx < 0){
-      // Otherwise, pick the most recent sprint not after today
-      let best = -1;
-      for (let i=0;i<state.sprints.length;i++){
-        const s = state.sprints[i];
-        if ((s.start||'') <= todayIso){
-          if (best < 0 || state.sprints[best].start < s.start) best = i;
-        }
-      }
-      if (best >= 0) idx = best;
-    }
-    if (idx < 0){
-      // Otherwise, the earliest upcoming
-      let best = -1;
-      for (let i=0;i<state.sprints.length;i++){
-        const s = state.sprints[i];
-        if ((s.start||'') > todayIso){
-          if (best < 0 || s.start < state.sprints[best].start) best = i;
-        }
-      }
-      if (best >= 0) idx = best;
-    }
-    if (idx >= 0) state.selected = idx;
-  }
-}
-
-function flashSaved(msg){
-  const el = document.getElementById('saveToast');
-  if(!el) return;
-  el.textContent = msg || 'Salvo!';
-  el.style.display = 'inline-flex';
-  setTimeout(()=>{ el.style.display='none'; }, 1400);
-}
-// ======= /Additions =======
 
 // ================== Estado (LocalStorage) ==================
 const LS_KEY = 'sprint-tracker-v2-offline';
@@ -570,16 +524,9 @@ $('#et_delete').addEventListener('click', ()=>{
 });
 
 // ================== Interações ==================
-
-// Save button handler
-const __saveBtn = document.getElementById('saveBtn');
-if (__saveBtn){
-  __saveBtn.addEventListener('click', ()=>{ save(); flashSaved('Salvo!'); });
-}
-
 $('#sprintSelect').addEventListener('change', e=>{
   const id = e.target.value; const idx = state.sprints.findIndex(s=>s.id===id);
-  if(idx>=0){ state.selected = idx; save(); renderAll(); const ef=document.getElementById('epicFilter'); if(ef) ef.value='all'; }
+  if(idx>=0){ state.selected = idx; save(); renderAll(); }
 });
 $('#epicFilter').addEventListener('change', ()=>renderBoard());
 
@@ -670,7 +617,7 @@ $('#importFile').addEventListener('change', async (e)=>{
     else if (Array.isArray(data?.state?.sprints)) sprints = data.state.sprints;
     else { alert('Arquivo não reconhecido. Esperado JSON com "sprints".'); return; }
     if (!sprints.length) { alert('Nenhuma sprint encontrada no arquivo.'); return; }
-    state.sprints = sprints; ensureActiveSprint(); save(); renderAll(); alert('Importação concluída!');
+    state.sprints = sprints; state.selected = 0; save(); renderAll(); alert('Importação concluída!');
   }catch(err){ console.error(err); alert('Falha ao importar JSON: ' + (err?.message || err)); }
   finally{ e.target.value = ''; }
 });
@@ -710,8 +657,6 @@ function renderEpicUIs(){
       save(); renderEpicUIs(); renderBoard();
     });
   });
-  // Always default filter to 'all' on sprint change to avoid accidental hiding
-  const ef = document.getElementById('epicFilter'); if (ef) ef.value = 'all';
 }
 
 function renderAll(){
@@ -752,7 +697,6 @@ function createInitial(){
   state.selected = 0; save();
 }
 
-ensureActiveSprint();
 renderAll();
 // Re-render header on resize (debounced)
 let __rT; window.addEventListener('resize', ()=>{ clearTimeout(__rT); __rT = setTimeout(renderHeader, 120); });
