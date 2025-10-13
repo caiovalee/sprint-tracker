@@ -656,6 +656,14 @@ $('#importFile').addEventListener('change', async (e)=>{
   finally{ e.target.value = ''; }
 });
 
+// Botão "Sincronizar" -> força baixar sprints.json do repo e renderiza
+$('#syncBtn').addEventListener('click', async () => {
+  await seedFromRepoIfNeeded(true);  // força baixar do repositório
+  renderAll();
+  // opcional: feedback
+  // alert('Sincronizado com sprints.json do repositório');
+});
+
 $('#resetBtn').addEventListener('click', ()=>{
   const sp = currentSprint(); if(!sp) return;
   if(state.sprints.length<=1) return alert('Não é possível excluir a última sprint.');
@@ -731,9 +739,12 @@ function createInitial(){
   state.selected = 0; save();
 }
 
-renderAll();
-// Re-render header on resize (debounced)
-let __rT; window.addEventListener('resize', ()=>{ clearTimeout(__rT); __rT = setTimeout(renderHeader, 120); });
+// Carrega do repositório se for 1º acesso ou se houver ?seed=repo
+seedFromRepoIfNeeded().then(() => {
+  renderAll();
+  // Re-render header on resize (debounced)
+  let __rT; window.addEventListener('resize', ()=>{ clearTimeout(__rT); __rT = setTimeout(renderHeader, 120); });
+});
 </script>
 </body>
 </html>
