@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sprint Tracker – V3.2</title>
+<title>Sprint Tracker – V2 (Offline)</title>
 <style>
 :root{
   --bg:#0f1220; --panel:#171a2b; --muted:#9aa3b2; --text:#e8ecf5;
@@ -115,14 +115,15 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
         <select id="sprintSelect" title="Selecionar sprint"></select>
         <select id="epicFilter" title="Filtrar por épico"><option value="all">Todos os épicos</option></select>
         <button class="btn" id="addSprintBtn">+ Nova Sprint</button>
-        <button class="btn" id="syncBtn" title="Recarregar dados do repositório">Sincronizar</button>
         <button class="btn" id="exportBtn" title="Exportar JSON (Backup)">Backup</button>
         <button class="btn" id="importBtn" title="Importar JSON de backup">Importar</button>
         <input id="importFile" type="file" accept=".json,application/json" style="display:none">
-        <button class="btn warn" id="resetBtn" title="Excluir sprint atual">Limpar</button>
-      </div>
-    </div>
-  </header>
+        <button class="btn warn" id="resetBtn" title="Excluir sprint atual">Excluir Sprint</button>
+<button class="btn primary" id="saveBtn" title="Salvar alterações no navegador">Salvar</button>
+<span id="saveToast" class="pill ok" style="display:none">Salvo!</span>
+</div>
+</div>
+</header>
 
   <main class="wrap">
     <section class="panel">
@@ -250,6 +251,50 @@ const $$ = s => Array.from(document.querySelectorAll(s));
 const fmtDate = iso => new Date(`${iso}T00:00:00`).toLocaleDateString('pt-BR');
 const addDays = (iso, n) => { const d = new Date(`${iso}T00:00:00`); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
 function escapeHtml(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+// ======= Additions: Active sprint selection + Save button toast =======
+function ensureActiveSprint(){
+  if (!state.sprints || !state.sprints.length) return;
+  const todayIso = new Date().toISOString().slice(0,10);
+  // If currently selected sprint is in the past and not active, choose the active one
+  const cur = state.sprints[state.selected] || null;
+  const isCurActive = cur && cur.start <= todayIso && cur.end >= todayIso;
+  if (!isCurActive){
+    // Try to find active sprint (today within range)
+    let idx = state.sprints.findIndex(s => (s.start||'') <= todayIso && (s.end||'') >= todayIso);
+    if (idx < 0){
+      // Otherwise, pick the most recent sprint not after today
+      let best = -1;
+      for (let i=0;i<state.sprints.length;i++){
+        const s = state.sprints[i];
+        if ((s.start||'') <= todayIso){
+          if (best < 0 || state.sprints[best].start < s.start) best = i;
+        }
+      }
+      if (best >= 0) idx = best;
+    }
+    if (idx < 0){
+      // Otherwise, the earliest upcoming
+      let best = -1;
+      for (let i=0;i<state.sprints.length;i++){
+        const s = state.sprints[i];
+        if ((s.start||'') > todayIso){
+          if (best < 0 || s.start < state.sprints[best].start) best = i;
+        }
+      }
+      if (best >= 0) idx = best;
+    }
+    if (idx >= 0) state.selected = idx;
+  }
+}
+
+function flashSaved(msg){
+  const el = document.getElementById('saveToast');
+  if(!el) return;
+  el.textContent = msg || 'Salvo!';
+  el.style.display = 'inline-flex';
+  setTimeout(()=>{ el.style.display='none'; }, 1400);
+}
+// ======= /Additions =======
 
 // ================== Estado (LocalStorage) ==================
 const LS_KEY = 'sprint-tracker-v2-offline';
@@ -260,39 +305,6 @@ function load(){
   if(!state.sprints.length) createInitial();
 }
 load();
-  // URL do JSON público no seu Pages (raiz do repo)
-const REPO_JSON_URL = 'sprints.json';
-
-// helper pra ler querystring (?seed=repo)
-const qs = (k) => new URLSearchParams(location.search).get(k);
-
-/**
- * Baixa sprints.json do repositório e aplica no LocalStorage
- * quando for a primeira vez (LS vazio), quando force === true
- * ou quando a URL tiver ?seed=repo
- */
-async function seedFromRepoIfNeeded(force = false){
-  const forceParam = qs('seed') === 'repo';
-  const nothingLocal = !state.sprints || !state.sprints.length;
-  if (!force && !forceParam && !nothingLocal) return;
-
-  try{
-    const res = await fetch(REPO_JSON_URL + '?v=' + Date.now(), { cache: 'no-store' });
-    if (!res.ok) return;
-    const data = await res.json();
-    const sprints = Array.isArray(data) ? data
-                 : Array.isArray(data?.sprints) ? data.sprints
-                 : Array.isArray(data?.state?.sprints) ? data.state.sprints
-                 : [];
-    if (sprints.length){
-      state.sprints = sprints;
-      state.selected = 0;
-      save(); // persiste no LocalStorage
-    }
-  }catch(e){
-    console.warn('Falha ao carregar sprints.json', e);
-  }
-}
 
 // ================== Mini Calendário ==================
 function minicalRender(containerId){
@@ -558,9 +570,16 @@ $('#et_delete').addEventListener('click', ()=>{
 });
 
 // ================== Interações ==================
+
+// Save button handler
+const __saveBtn = document.getElementById('saveBtn');
+if (__saveBtn){
+  __saveBtn.addEventListener('click', ()=>{ save(); flashSaved('Salvo!'); });
+}
+
 $('#sprintSelect').addEventListener('change', e=>{
   const id = e.target.value; const idx = state.sprints.findIndex(s=>s.id===id);
-  if(idx>=0){ state.selected = idx; save(); renderAll(); }
+  if(idx>=0){ state.selected = idx; save(); renderAll(); const ef=document.getElementById('epicFilter'); if(ef) ef.value='all'; }
 });
 $('#epicFilter').addEventListener('change', ()=>renderBoard());
 
@@ -651,7 +670,7 @@ $('#importFile').addEventListener('change', async (e)=>{
     else if (Array.isArray(data?.state?.sprints)) sprints = data.state.sprints;
     else { alert('Arquivo não reconhecido. Esperado JSON com "sprints".'); return; }
     if (!sprints.length) { alert('Nenhuma sprint encontrada no arquivo.'); return; }
-    state.sprints = sprints; state.selected = 0; save(); renderAll(); alert('Importação concluída!');
+    state.sprints = sprints; ensureActiveSprint(); save(); renderAll(); alert('Importação concluída!');
   }catch(err){ console.error(err); alert('Falha ao importar JSON: ' + (err?.message || err)); }
   finally{ e.target.value = ''; }
 });
@@ -691,6 +710,8 @@ function renderEpicUIs(){
       save(); renderEpicUIs(); renderBoard();
     });
   });
+  // Always default filter to 'all' on sprint change to avoid accidental hiding
+  const ef = document.getElementById('epicFilter'); if (ef) ef.value = 'all';
 }
 
 function renderAll(){
@@ -731,547 +752,10 @@ function createInitial(){
   state.selected = 0; save();
 }
 
+ensureActiveSprint();
 renderAll();
 // Re-render header on resize (debounced)
 let __rT; window.addEventListener('resize', ()=>{ clearTimeout(__rT); __rT = setTimeout(renderHeader, 120); });
 </script>
-
-<script id="embedded-seed" type="application/json">
-{
-  "sprints": [
-    {
-      "end": "2025-10-13",
-      "createdAt": 1759182567548,
-      "tasks": [
-        {
-          "status": "done",
-          "_order": 0,
-          "checklist": [],
-          "epicId": "d417410f-61ff-465f-a937-581d5c3c54d5",
-          "title": "Aprendendo IA - APP",
-          "id": "a9f418d4-12bf-456c-bbca-36bb0719f0c5",
-          "assignee": "Caio",
-          "tags": [
-            "IA"
-          ],
-          "doneAt": "2025-10-02",
-          "points": 5,
-          "notes": "ChatGPT, Google Gemini e Firebase para publicar."
-        },
-        {
-          "title": "Aprendendo Firebase - Banco de Dados",
-          "notes": "Aprendizado básico sobre a ferramenta.",
-          "doneAt": "2025-09-30",
-          "assignee": "Caio",
-          "status": "done",
-          "id": "0dc13375-de93-4c63-a2bc-cb19fb274e92",
-          "_order": 2,
-          "epicId": "29372684-d4ce-49f4-9ccc-987ffe571bed",
-          "checklist": [],
-          "points": 3,
-          "tags": [
-            "Dados"
-          ]
-        },
-        {
-          "points": 5,
-          "checklist": [
-            {
-              "text": "10%",
-              "id": "9e3ce7ef-100d-40b7-b976-74d4cf7d6209",
-              "done": true
-            },
-            {
-              "done": true,
-              "id": "c4a104e0-58d0-4651-89a9-e42b245d0d10",
-              "text": "25%"
-            },
-            {
-              "done": true,
-              "id": "11f1a6ba-0fd6-4e93-bb41-cfe8ecaf0e08",
-              "text": "50%"
-            },
-            {
-              "done": true,
-              "text": "75%",
-              "id": "2bdce9a4-f31a-4c28-b271-839c36b5fbda"
-            },
-            {
-              "id": "0084ba66-5b4a-4ee6-9f09-ab40376981c0",
-              "done": true,
-              "text": "100%"
-            }
-          ],
-          "epicId": "bc590172-afdc-4d1d-8876-83548ae3324c",
-          "tags": [
-            "Leitura",
-            "Metas"
-          ],
-          "status": "done",
-          "id": "298a5eb5-e200-4e3b-8806-894c53534986",
-          "assignee": "Aline",
-          "notes": "Meta de 12 livros no ano.",
-          "doneAt": "2025-09-30",
-          "_order": 3,
-          "title": "Ler Livro (6/12): Nunca Minta - Freida McFadden"
-        },
-        {
-          "title": "Filme Brad Pitt (9/12): Sinbad - A Lenda dos Sete Mares",
-          "epicId": "bc590172-afdc-4d1d-8876-83548ae3324c",
-          "points": 3,
-          "checklist": [],
-          "doneAt": "2025-10-01",
-          "_order": 6,
-          "tags": [
-            "Filmes",
-            "Metas"
-          ],
-          "notes": "Meta de 12 filmes por ano.",
-          "id": "85345630-61c9-43a0-bf1e-544fa2f02c6a",
-          "status": "done",
-          "assignee": "Aline"
-        },
-        {
-          "assignee": "Aline",
-          "_order": 2,
-          "title": "Curso Sales Force",
-          "tags": [
-            "Profissional"
-          ],
-          "status": "doing",
-          "id": "cfc3e138-aa8e-457e-b195-ee6bdcf597e9",
-          "points": 8,
-          "epicId": "d417410f-61ff-465f-a937-581d5c3c54d5",
-          "notes": "Udemy"
-        },
-        {
-          "tags": [
-            "Emagrecimento"
-          ],
-          "status": "doing",
-          "title": "Emagrecer 1,5kg",
-          "checklist": [
-            {
-              "id": "96d0a3a7-111e-48f4-952b-668eb761d3e8",
-              "text": "300g",
-              "done": true
-            },
-            {
-              "text": "300g",
-              "done": true,
-              "id": "316ca187-4eeb-480f-a132-6baa666a440a"
-            },
-            {
-              "id": "cf372b3b-f295-4c1d-9060-c3aee8b25d32",
-              "text": "300g",
-              "done": false
-            },
-            {
-              "id": "e644bd3b-02dd-4cc4-a3ed-e2e2d41b6014",
-              "text": "300g",
-              "done": false
-            },
-            {
-              "done": false,
-              "text": "300g",
-              "id": "fb0cf4ad-d00b-4034-a14c-094d09da0934"
-            }
-          ],
-          "points": 5,
-          "notes": "Meta 2025: 92kg / Objetivo Sprint: 100,3kg / Atual: 101,8kg\n\n30/09 - 101,6kg\n01/10 - 101,5kg\n02/10 - 101,3kg\n10/10 - 101,1 kg",
-          "epicId": "33599023-b159-4060-b227-573843a52e95",
-          "_order": 1,
-          "assignee": "Aline",
-          "id": "0b3a6352-0ccf-4753-8107-fbfe19ddefc8",
-          "startedAt": "2025-10-12"
-        },
-        {
-          "assignee": "Caio",
-          "notes": "",
-          "_order": 4,
-          "title": "Passear com a Judith",
-          "epicId": "bc590172-afdc-4d1d-8876-83548ae3324c",
-          "tags": [],
-          "points": 3,
-          "doneAt": "2025-10-12",
-          "checklist": [
-            {
-              "done": true,
-              "text": "Dia 1",
-              "id": "5210355d-2f21-46e7-89ae-d5963ffda4ab"
-            },
-            {
-              "text": "Dia 2",
-              "done": true,
-              "id": "5ae1d453-2eba-4e15-9df7-84afc157c795"
-            },
-            {
-              "id": "2cb1a316-6709-4211-83fe-e13525ec50a4",
-              "text": "Dia 3",
-              "done": true
-            },
-            {
-              "text": "Dia 4",
-              "id": "2b73fcf2-fca2-46c8-86a4-ae20321764b7",
-              "done": true
-            },
-            {
-              "done": true,
-              "text": "Dia 5",
-              "id": "f5ecf856-3a2e-43ae-aa79-6b656d580dab"
-            },
-            {
-              "text": "Dia 6",
-              "done": true,
-              "id": "cb270c9d-e0fd-4361-bcd9-5e4d7599d120"
-            }
-          ],
-          "id": "d4ddee60-3c70-4599-9824-b046ae887611",
-          "status": "done"
-        },
-        {
-          "epicId": "bc590172-afdc-4d1d-8876-83548ae3324c",
-          "tags": [
-            "Leitura"
-          ],
-          "doneAt": "2025-10-12",
-          "_order": 5,
-          "status": "done",
-          "points": 5,
-          "id": "acf736f7-80b0-43a0-9bb7-7c7df9f48cd5",
-          "notes": "",
-          "title": "Livro - Fernão Capelo Gaivota",
-          "assignee": "Caio",
-          "checklist": []
-        },
-        {
-          "tags": [
-            "Leitura",
-            "Metas"
-          ],
-          "assignee": "Aline",
-          "points": 5,
-          "notes": "Meta de 12 livros no ano.",
-          "_order": 4,
-          "checklist": [
-            {
-              "id": "03f63569-d011-4c3f-bdca-e877cb0262a3",
-              "done": false,
-              "text": "10%"
-            },
-            {
-              "done": false,
-              "text": "25%",
-              "id": "6dec1ec7-fbbe-4b06-a865-315068c6f2d3"
-            },
-            {
-              "id": "ae41f899-d542-4161-85f2-3e0c3310247d",
-              "done": false,
-              "text": "50%"
-            },
-            {
-              "done": false,
-              "text": "75%",
-              "id": "6377c345-aac1-49b3-a92d-aedd118a4cd6"
-            },
-            {
-              "text": "100%",
-              "done": false,
-              "id": "09ad2752-ae3c-4015-9078-ec48d1ec5e9b"
-            }
-          ],
-          "status": "doing",
-          "id": "50d68ee6-5480-408f-ad74-2cece505c700",
-          "title": "Ler Livro (7/12): Contando Milagres - Nicholas Sparks",
-          "epicId": "bc590172-afdc-4d1d-8876-83548ae3324c"
-        },
-        {
-          "id": "362f73f5-4979-481d-9780-af903650862d",
-          "title": "Filme Brad Pitt (10/12): Sleepers - A Vingança Adormecida",
-          "_order": 7,
-          "assignee": "Aline",
-          "points": 3,
-          "notes": "Meta de 12 filmes por ano.\n",
-          "doneAt": "2025-10-02",
-          "epicId": "bc590172-afdc-4d1d-8876-83548ae3324c",
-          "status": "done",
-          "tags": [
-            "Filmes",
-            "Metas"
-          ],
-          "checklist": []
-        },
-        {
-          "checklist": [
-            {
-              "done": true,
-              "text": "xCode",
-              "id": "7e9ade35-ca15-4504-8b0f-267dfaa21914"
-            },
-            {
-              "done": true,
-              "id": "45915585-ca4a-4034-9f69-4876ebe627e2",
-              "text": "Spotlight"
-            },
-            {
-              "text": "Janelas e áreas de trabalho",
-              "id": "9a35b7b6-ab90-4e1f-a1f7-a1f87fd84cf1",
-              "done": true
-            },
-            {
-              "done": true,
-              "text": "Print",
-              "id": "655f6009-289c-4125-8371-6a76e232379a"
-            },
-            {
-              "done": true,
-              "text": "Homebrew",
-              "id": "9ff7fd3e-142a-4ca5-a957-89bf483708ac"
-            },
-            {
-              "done": true,
-              "id": "9dd8b5cb-5693-4d99-a538-ffce384fd052",
-              "text": "Trackpad"
-            }
-          ],
-          "_order": 8,
-          "id": "abfdf5c2-b237-4ee0-bb78-17cfd74ab887",
-          "tags": [
-            "MacOs"
-          ],
-          "status": "done",
-          "doneAt": "2025-10-05",
-          "assignee": "Caio",
-          "points": 3,
-          "epicId": "29372684-d4ce-49f4-9ccc-987ffe571bed",
-          "title": "Aprendendo MacOs Tahoe - Básico",
-          "notes": ""
-        },
-        {
-          "assignee": "Caio",
-          "notes": "curso.dev no macbook",
-          "status": "done",
-          "_order": 9,
-          "checklist": [
-            {
-              "done": true,
-              "id": "b2565384-3f7c-476c-bd0c-d7c4079128ae",
-              "text": "Dia 1"
-            },
-            {
-              "done": true,
-              "text": "Dia 2",
-              "id": "1c7feb9d-ba8d-4cd5-86eb-e275a9131da2"
-            },
-            {
-              "done": true,
-              "id": "4e31e83e-8d1e-4da7-8cc7-9f3d5c3f69c9",
-              "text": "Dia 3"
-            },
-            {
-              "text": "Dia 4",
-              "done": true,
-              "id": "d1a0141a-1139-4132-9d02-c5708d64c956"
-            },
-            {
-              "id": "eb34a3a1-9af2-4c90-8afd-0e788225549a",
-              "text": "Dia 5",
-              "done": true
-            }
-          ],
-          "title": "Curso.dev - O recomeço",
-          "doneAt": "2025-10-07",
-          "points": 5,
-          "epicId": "d417410f-61ff-465f-a937-581d5c3c54d5",
-          "tags": [
-            "programação"
-          ],
-          "id": "1d7d8117-d53d-479b-813f-8ba1ea7a0522"
-        },
-        {
-          "id": "8b23482f-d270-4bf3-bc19-41ff4f1c4c94",
-          "notes": "",
-          "points": 3,
-          "_order": 0,
-          "title": "Docker - Básico",
-          "tags": [
-            "macOS"
-          ],
-          "epicId": "29372684-d4ce-49f4-9ccc-987ffe571bed",
-          "checklist": [],
-          "status": "notdone",
-          "assignee": "Caio"
-        },
-        {
-          "points": 3,
-          "status": "done",
-          "assignee": "Caio",
-          "checklist": [],
-          "epicId": "d417410f-61ff-465f-a937-581d5c3c54d5",
-          "title": "Curso.dev - Dias 6 e 7",
-          "id": "9b6cd1c4-c919-47d2-a92b-f2b84a82e809",
-          "_order": 1,
-          "notes": "",
-          "tags": [
-            "programação"
-          ],
-          "doneAt": "2025-10-13"
-        }
-      ],
-      "epics": [
-        {
-          "name": "Saúde",
-          "id": "33599023-b159-4060-b227-573843a52e95"
-        },
-        {
-          "name": "Lazer",
-          "id": "bc590172-afdc-4d1d-8876-83548ae3324c"
-        },
-        {
-          "name": "Estudos",
-          "id": "d417410f-61ff-465f-a937-581d5c3c54d5"
-        },
-        {
-          "name": "Trabalho",
-          "id": "ff510012-7982-4a4d-beb1-1e4bb3bccfe8"
-        },
-        {
-          "name": "Conhecimento",
-          "id": "29372684-d4ce-49f4-9ccc-987ffe571bed"
-        },
-        {
-          "name": "Desafio",
-          "id": "f755d5a0-e5ba-4c63-b109-2ab949aeb666"
-        }
-      ],
-      "name": "Sprint 1",
-      "start": "2025-09-29",
-      "id": "oWc7Iwk6s4pmoVMLEtOR"
-    },
-    {
-      "tasks": [],
-      "start": "2025-11-04",
-      "epics": [
-        {
-          "id": "33599023-b159-4060-b227-573843a52e95",
-          "name": "Saúde"
-        },
-        {
-          "name": "Lazer",
-          "id": "bc590172-afdc-4d1d-8876-83548ae3324c"
-        },
-        {
-          "id": "d417410f-61ff-465f-a937-581d5c3c54d5",
-          "name": "Estudos"
-        },
-        {
-          "id": "ff510012-7982-4a4d-beb1-1e4bb3bccfe8",
-          "name": "Trabalho"
-        },
-        {
-          "id": "29372684-d4ce-49f4-9ccc-987ffe571bed",
-          "name": "Conhecimento"
-        }
-      ],
-      "end": "2025-10-27",
-      "name": "Sprint 2",
-      "createdAt": 1759186544132,
-      "id": "FtRFM9vWIKFMy7ujKU2r"
-    },
-    {
-      "createdAt": 1759615242142,
-      "name": "E",
-      "tasks": [],
-      "epics": [
-        {
-          "name": "Saúde",
-          "id": "33599023-b159-4060-b227-573843a52e95"
-        },
-        {
-          "name": "Lazer",
-          "id": "bc590172-afdc-4d1d-8876-83548ae3324c"
-        },
-        {
-          "id": "d417410f-61ff-465f-a937-581d5c3c54d5",
-          "name": "Estudos"
-        },
-        {
-          "name": "Trabalho",
-          "id": "ff510012-7982-4a4d-beb1-1e4bb3bccfe8"
-        },
-        {
-          "id": "29372684-d4ce-49f4-9ccc-987ffe571bed",
-          "name": "Conhecimento"
-        }
-      ],
-      "end": "2025-11-10",
-      "start": "2025-10-27",
-      "id": "7XmShBXTkCX3Blsx2BlV"
-    }
-  ],
-  "selected": 0
-}
-</script>
-
-<script>
-(function(){
-  function getEmbeddedSeed(){
-    try{
-      var el = document.getElementById('embedded-seed');
-      if(!el) return null;
-      return JSON.parse(el.textContent);
-    }catch(e){
-      console.warn('Falha ao ler embedded seed', e);
-      return null;
-    }
-  }
-  function parseSprints(data){
-    if(!data) return [];
-    if (Array.isArray(data)) return data;
-    if (Array.isArray(data.sprints)) return data.sprints;
-    if (data.state && Array.isArray(data.state.sprints)) return data.state.sprints;
-    return [];
-  }
-  async function seedInline(force){
-    try{
-      var nothingLocal = !window.state || !Array.isArray(state.sprints) || !state.sprints.length;
-      var fromQS = new URLSearchParams(location.search).get('seed') === 'inline';
-      if (!force && !fromQS && !nothingLocal) return false;
-      var sprints = parseSprints(getEmbeddedSeed());
-      if (sprints.length){
-        state.sprints = sprints;
-        state.selected = 0;
-        if (typeof save === 'function') save();
-        return true;
-      }
-    }catch(e){ console.warn(e); }
-    return false;
-  }
-  // Wire the Sync button if present
-  document.addEventListener('DOMContentLoaded', function(){
-    var btn = document.getElementById('syncBtn');
-    if(btn){
-      btn.addEventListener('click', async function(){
-        var changed = await seedInline(true);
-        if (typeof renderAll === 'function') renderAll();
-        if(!changed){ try{ alert('Nada para sincronizar (ou seed inválido).'); }catch(e){} }
-      });
-    }
-  });
-
-  // First-run seeding + ensure renderAll after app is loaded
-  (async function boot(){
-    // Wait a tick so the main script defines state/renderAll
-    setTimeout(async function(){
-      await seedInline(false);
-      if (typeof renderAll === 'function') {
-        // If the page already chamou renderAll, chamar de novo não quebra
-        try { renderAll(); } catch(e){ console.warn(e); }
-      }
-    }, 0);
-  })();
-})();
-</script>
-
 </body>
 </html>
