@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sprint Tracker – V2 (Offline)</title>
+<title>Sprint Tracker – V3.2</title>
 <style>
 :root{
   --bg:#0f1220; --panel:#171a2b; --muted:#9aa3b2; --text:#e8ecf5;
@@ -115,6 +115,7 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
         <select id="sprintSelect" title="Selecionar sprint"></select>
         <select id="epicFilter" title="Filtrar por épico"><option value="all">Todos os épicos</option></select>
         <button class="btn" id="addSprintBtn">+ Nova Sprint</button>
+        <button class="btn" id="syncBtn" title="Recarregar dados do repositório">Sincronizar</button>
         <button class="btn" id="exportBtn" title="Exportar JSON (Backup)">Backup</button>
         <button class="btn" id="importBtn" title="Importar JSON de backup">Importar</button>
         <input id="importFile" type="file" accept=".json,application/json" style="display:none">
@@ -259,6 +260,39 @@ function load(){
   if(!state.sprints.length) createInitial();
 }
 load();
+  // URL do JSON público no seu Pages (raiz do repo)
+const REPO_JSON_URL = 'sprints.json';
+
+// helper pra ler querystring (?seed=repo)
+const qs = (k) => new URLSearchParams(location.search).get(k);
+
+/**
+ * Baixa sprints.json do repositório e aplica no LocalStorage
+ * quando for a primeira vez (LS vazio), quando force === true
+ * ou quando a URL tiver ?seed=repo
+ */
+async function seedFromRepoIfNeeded(force = false){
+  const forceParam = qs('seed') === 'repo';
+  const nothingLocal = !state.sprints || !state.sprints.length;
+  if (!force && !forceParam && !nothingLocal) return;
+
+  try{
+    const res = await fetch(REPO_JSON_URL + '?v=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) return;
+    const data = await res.json();
+    const sprints = Array.isArray(data) ? data
+                 : Array.isArray(data?.sprints) ? data.sprints
+                 : Array.isArray(data?.state?.sprints) ? data.state.sprints
+                 : [];
+    if (sprints.length){
+      state.sprints = sprints;
+      state.selected = 0;
+      save(); // persiste no LocalStorage
+    }
+  }catch(e){
+    console.warn('Falha ao carregar sprints.json', e);
+  }
+}
 
 // ================== Mini Calendário ==================
 function minicalRender(containerId){
