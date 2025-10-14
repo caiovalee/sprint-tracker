@@ -35,6 +35,11 @@ main .wrap{display:grid;grid-template-columns:1fr;gap:14px}
 .dropzone{display:flex;flex-direction:column;gap:8px;min-height:220px}
 .task{background:#121a2f;border:1px solid var(--border);border-radius:12px;padding:10px}
 .task.done{opacity:.8}
+.task.done .title,
+.task[data-status="done"] .title {
+  text-decoration: line-through;
+  opacity: 0.8;
+}
 .pill{padding:6px 10px;border:1px solid var(--border);border-radius:999px;color:var(--muted)}
 .pill.ok{border-color:#2e7d32;color:#a5d6a7;background:rgba(46,125,50,.12)}
 .pill.warn{border-color:#7c5f1a;color:#f5d08a;background:rgba(245,158,11,.12)}
@@ -119,10 +124,7 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
         <button class="btn" id="importBtn" title="Importar JSON de backup">Importar</button>
         <input id="importFile" type="file" accept=".json,application/json" style="display:none">
         <button class="btn warn" id="resetBtn" title="Excluir sprint atual">Limpar</button>
-        <button class="btn primary" id="saveBtn" title="Salvar alterações no navegador">Salvar</button>
-        <button class="btn" id="cloudBtn" title="Conectar ao Cloud (Firebase)">Cloud</button>
-        <span id="saveToast" class="pill ok" style="display:none">Salvo!</span>
-        <span id="cloudStatus" class="pill" style="display:none">Conectado</span>
+        <button class="btn primary" id="saveBtn" title="Salvar alterações">💾 Salvar</button>
       </div>
     </div>
   </header>
@@ -446,6 +448,7 @@ function moveTask(id,newStatus){
   if(newStatus!=='done' && t.doneAt) delete t.doneAt;
   if(newStatus==='notdone' && t.doneAt) delete t.doneAt;
   save();
+  renderBoard();
   renderStats();
 }
 
@@ -576,9 +579,15 @@ $('#et_delete').addEventListener('click', ()=>{
   if(b){ b.addEventListener('click', ()=>{ save(); flashSaved('Salvo!'); }); }
 })();
 
-$('#sprintSelect').addEventListener('change', e=>{
-  const id = e.target.value; const idx = state.sprints.findIndex(s=>s.id===id);
-  if(idx>=0){ state.selected = idx; save(); ensureActiveSprint(); renderAll(); }
+$('#sprintSelect').addEventListener('change', e => {
+  const id = e.target.value;
+  const idx = state.sprints.findIndex(s => s.id === id);
+  if (idx >= 0) {
+    save(); // Salvar estado atual antes de mudar
+    state.selected = idx;
+    save(); // Salvar nova seleção
+    renderAll();
+  }
 });
 $('#epicFilter').addEventListener('change', ()=>renderBoard());
 
@@ -817,7 +826,7 @@ async function cloudConnect(){
         state = data.state;
         ensureActiveSprint && ensureActiveSprint();
         save();
-        renderAll && renderAll();
+        renderAll();
       }
     }else{
       await setDoc(ref, { state, __lastWriteAt: Date.now(), __lastWriteBy: fb.user.uid });
@@ -871,15 +880,6 @@ async function cloudSave(){
 </script>
 </body>
 </html>
-(function(){
-  const b = document.getElementById('cloudBtn');
-  if (b){ b.addEventListener('click', cloudConnect); }
-})();
-
-(function(){
-  if (typeof save === 'function'){
-    const __origSave = save;
-    save = function(){
       const r = __origSave.apply(this, arguments);
       try{ cloudSave(); }catch(e){}
       return r;
