@@ -118,12 +118,15 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
         <button class="btn" id="exportBtn" title="Exportar JSON (Backup)">Backup</button>
         <button class="btn" id="importBtn" title="Importar JSON de backup">Importar</button>
         <input id="importFile" type="file" accept=".json,application/json" style="display:none">
-        <button class="btn warn" id="resetBtn" title="Excluir sprint atual">Excluir Sprint</button>
+        <button class="btn warn" id="resetBtn" title="Excluir sprint atual">Limpar</button>
 <button class="btn primary" id="saveBtn" title="Salvar alterações no navegador">Salvar</button>
+<button class="btn" id="cloudBtn" title="Conectar ao Cloud (Firebase)">Cloud</button>
 <span id="saveToast" class="pill ok" style="display:none">Salvo!</span>
-</div>
-</div>
-</header>
+<span id="cloudStatus" class="pill" style="display:none">Conectado</span>
+
+      </div>
+    </div>
+  </header>
 
   <main class="wrap">
     <section class="panel">
@@ -250,35 +253,33 @@ const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const fmtDate = iso => new Date(`${iso}T00:00:00`).toLocaleDateString('pt-BR');
 const addDays = (iso, n) => { const d = new Date(`${iso}T00:00:00`); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
-function escapeHtml(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
-// ======= Additions: Active sprint selection + Save button toast =======
+
+// ===== Helpers: active sprint + toast =====
 function ensureActiveSprint(){
-  if (!state.sprints || !state.sprints.length) return;
+  if (!state || !state.sprints || !state.sprints.length) return;
   const todayIso = new Date().toISOString().slice(0,10);
-  // If currently selected sprint is in the past and not active, choose the active one
   const cur = state.sprints[state.selected] || null;
-  const isCurActive = cur && cur.start <= todayIso && cur.end >= todayIso;
+  const isCurActive = cur && (cur.start||'') <= todayIso && (cur.end||'') >= todayIso;
   if (!isCurActive){
-    // Try to find active sprint (today within range)
     let idx = state.sprints.findIndex(s => (s.start||'') <= todayIso && (s.end||'') >= todayIso);
     if (idx < 0){
-      // Otherwise, pick the most recent sprint not after today
+      // mais recente já iniciada
       let best = -1;
       for (let i=0;i<state.sprints.length;i++){
         const s = state.sprints[i];
         if ((s.start||'') <= todayIso){
-          if (best < 0 || state.sprints[best].start < s.start) best = i;
+          if (best < 0 || (state.sprints[best].start||'') < (s.start||'')) best = i;
         }
       }
       if (best >= 0) idx = best;
     }
     if (idx < 0){
-      // Otherwise, the earliest upcoming
+      // próxima futura
       let best = -1;
       for (let i=0;i<state.sprints.length;i++){
         const s = state.sprints[i];
         if ((s.start||'') > todayIso){
-          if (best < 0 || s.start < state.sprints[best].start) best = i;
+          if (best < 0 || (s.start||'') < (state.sprints[best].start||'')) best = i;
         }
       }
       if (best >= 0) idx = best;
@@ -286,7 +287,6 @@ function ensureActiveSprint(){
     if (idx >= 0) state.selected = idx;
   }
 }
-
 function flashSaved(msg){
   const el = document.getElementById('saveToast');
   if(!el) return;
@@ -294,7 +294,9 @@ function flashSaved(msg){
   el.style.display = 'inline-flex';
   setTimeout(()=>{ el.style.display='none'; }, 1400);
 }
-// ======= /Additions =======
+// ===== /Helpers =====
+
+function escapeHtml(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 
 // ================== Estado (LocalStorage) ==================
 const LS_KEY = 'sprint-tracker-v2-offline';
@@ -572,14 +574,15 @@ $('#et_delete').addEventListener('click', ()=>{
 // ================== Interações ==================
 
 // Save button handler
-const __saveBtn = document.getElementById('saveBtn');
-if (__saveBtn){
-  __saveBtn.addEventListener('click', ()=>{ save(); flashSaved('Salvo!'); });
-}
+(function(){
+  const b = document.getElementById('saveBtn');
+  if(b){ b.addEventListener('click', ()=>{ save(); flashSaved('Salvo!'); }); }
+})();
 
 $('#sprintSelect').addEventListener('change', e=>{
   const id = e.target.value; const idx = state.sprints.findIndex(s=>s.id===id);
-  if(idx>=0){ state.selected = idx; save(); renderAll(); const ef=document.getElementById('epicFilter'); if(ef) ef.value='all'; }
+  if(idx>=0){ state.selected = idx; save(); ensureActiveSprint();
+renderAll(); }
 });
 $('#epicFilter').addEventListener('change', ()=>renderBoard());
 
@@ -670,8 +673,7 @@ $('#importFile').addEventListener('change', async (e)=>{
     else if (Array.isArray(data?.state?.sprints)) sprints = data.state.sprints;
     else { alert('Arquivo não reconhecido. Esperado JSON com "sprints".'); return; }
     if (!sprints.length) { alert('Nenhuma sprint encontrada no arquivo.'); return; }
-    state.sprints = sprints; ensureActiveSprint(); save(); renderAll(); alert('Importação concluída!');
-  }catch(err){ console.error(err); alert('Falha ao importar JSON: ' + (err?.message || err)); }
+    state.sprints = sprints; ensureActiveSprint(); save(); renderAll(); alert('Importação concluída!');}catch(err){ console.error(err); alert('Falha ao importar JSON: ' + (err?.message || err)); }
   finally{ e.target.value = ''; }
 });
 
@@ -710,11 +712,9 @@ function renderEpicUIs(){
       save(); renderEpicUIs(); renderBoard();
     });
   });
-  // Always default filter to 'all' on sprint change to avoid accidental hiding
-  const ef = document.getElementById('epicFilter'); if (ef) ef.value = 'all';
-}
 
-function renderAll(){
+  const ef = document.getElementById('epicFilter'); if (ef) ef.value = 'all';
+}function renderAll(){
   renderSprintOptions();
   renderEpicUIs();
   renderHeader();
@@ -752,10 +752,125 @@ function createInitial(){
   state.selected = 0; save();
 }
 
-ensureActiveSprint();
 renderAll();
 // Re-render header on resize (debounced)
 let __rT; window.addEventListener('resize', ()=>{ clearTimeout(__rT); __rT = setTimeout(renderHeader, 120); });
+</script>
+<script type="module">
+
+// ======= Cloud Sync (Firebase Firestore) =======
+let fb = { app:null, db:null, auth:null, user:null, boardId:null, connected:false, unsub:null, saving:false };
+
+async function cloudConnect(){
+  try{
+    const previousCfg = localStorage.getItem('fb_cfg') || '';
+    const cfgRaw = prompt('Cole o firebaseConfig (JSON do Firebase Console > Project settings > SDK setup):', previousCfg);
+    if(!cfgRaw) return;
+    let cfg;
+    try{ cfg = JSON.parse(cfgRaw); }catch(e){ alert('JSON inválido.'); return; }
+
+    const prevBoard = localStorage.getItem('fb_board') || 'default';
+    const boardId = prompt('Informe um Board ID (ex.: casal-1):', prevBoard);
+    if(!boardId) return;
+
+    localStorage.setItem('fb_cfg', cfgRaw);
+    localStorage.setItem('fb_board', boardId);
+
+    const appMod = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js');
+    const fsMod  = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js');
+    const auMod  = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js');
+
+    const { initializeApp } = appMod;
+    const { getFirestore, doc, getDoc, setDoc, onSnapshot } = fsMod;
+    const { getAuth, signInAnonymously } = auMod;
+
+    fb.app = initializeApp(cfg);
+    fb.db = getFirestore(fb.app);
+    fb.auth = getAuth(fb.app);
+    await signInAnonymously(fb.auth);
+    fb.user = fb.auth.currentUser;
+    fb.boardId = boardId;
+    fb.connected = true;
+
+    const status = document.getElementById('cloudStatus');
+    if(status){ status.textContent = 'Conectado'; status.style.display = 'inline-flex'; }
+
+    const ref = fsMod.doc(fb.db, 'boards', fb.boardId);
+
+    if (fb.unsub) try{ fb.unsub(); }catch(_){}
+    fb.unsub = onSnapshot(ref, (snap)=>{
+      const data = snap.data();
+      if (!data) return;
+      if (data.__lastWriteBy === (fb.user && fb.user.uid)) return;
+      if (data.state){
+        try{
+          state = data.state;
+          ensureActiveSprint && ensureActiveSprint();
+          save();
+          renderAll && renderAll();
+          flashSaved && flashSaved('Sincronizado (cloud)!');
+        }catch(err){ console.error('Falha ao aplicar estado remoto', err); }
+      }
+    });
+
+    const cur = await getDoc(ref);
+    if (cur.exists()){
+      const data = cur.data();
+      if (data.state){
+        state = data.state;
+        ensureActiveSprint && ensureActiveSprint();
+        save();
+        renderAll && renderAll();
+      }
+    }else{
+      await setDoc(ref, { state, __lastWriteAt: Date.now(), __lastWriteBy: fb.user.uid });
+    }
+  }catch(err){
+    console.error(err);
+    alert('Erro ao conectar ao Cloud. Veja o console.');
+  }
+}
+
+async function cloudSave(){
+  try{
+    if (!fb.connected || !fb.db || !fb.user) return;
+    const fsMod  = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js');
+    const ref = fsMod.doc(fb.db, 'boards', fb.boardId);
+    await fsMod.setDoc(ref, { state, __lastWriteAt: Date.now(), __lastWriteBy: fb.user.uid }, { merge: true });
+    if (typeof flashSaved === 'function') flashSaved('Sincronizado!');
+  }catch(err){
+    console.warn('cloudSave falhou (ok offline):', err);
+  }
+}
+
+(function(){
+  const b = document.getElementById('cloudBtn');
+  if (b){ b.addEventListener('click', cloudConnect); }
+})();
+
+(function(){
+  if (typeof save === 'function'){
+    const __origSave = save;
+    save = function(){
+      const r = __origSave.apply(this, arguments);
+      try{ cloudSave(); }catch(e){}
+      return r;
+    }
+  }else{
+    setTimeout(()=>{
+      if (typeof save === 'function'){
+        const __origSave = save;
+        save = function(){
+          const r = __origSave.apply(this, arguments);
+          try{ cloudSave(); }catch(e){}
+          return r;
+        }
+      }
+    }, 1200);
+  }
+})();
+// ======= /Cloud Sync =======
+
 </script>
 </body>
 </html>
