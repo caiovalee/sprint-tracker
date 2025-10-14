@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sprint Tracker – V2 (Offline)</title>
+<title>Sprint Tracker</title>
 <style>
 :root{
   --bg:#0f1220; --panel:#171a2b; --muted:#9aa3b2; --text:#e8ecf5;
@@ -123,8 +123,11 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
         <button class="btn" id="exportBtn" title="Exportar JSON (Backup)">Backup</button>
         <button class="btn" id="importBtn" title="Importar JSON de backup">Importar</button>
         <input id="importFile" type="file" accept=".json,application/json" style="display:none">
+        <button class="btn" id="cloudBtn" title="Conectar ao Cloud">Cloud</button>
         <button class="btn warn" id="resetBtn" title="Excluir sprint atual">Limpar</button>
-        <button class="btn primary" id="saveBtn" title="Salvar alterações">💾 Salvar</button>
+        <button class="btn primary" id="saveBtn" title="Salvar alterações no navegador">Salvar</button>
+        <span id="saveToast" class="pill ok" style="display:none">Salvo!</span>
+        <span id="cloudStatus" class="pill" style="display:none">Conectado</span>
       </div>
     </div>
   </header>
@@ -300,7 +303,7 @@ let state = { sprints: [], selected: 0 };
 function save(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
 function load(){
   try{ const raw = localStorage.getItem(LS_KEY); if(raw) state = JSON.parse(raw)||state; }catch{}
-  if(!state.sprints.length) createInitial();
+  if(!state || !state.sprints || !state.sprints.length) createInitial();
 }
 load();
 
@@ -348,7 +351,7 @@ function currentSprint(){ return state.sprints[state.selected]; }
 
 function renderSprintOptions(){
   const sp = currentSprint(); const selectedId = sp ? sp.id : null;
-  $('#sprintSelect').innerHTML = state.sprints.map(s => `<option value="${s.id}" ${s.id===selectedId?'selected':''}>${escapeHtml(s.name)}</option>`).join('');
+  $('#sprintSelect').innerHTML = state.sprints.map((s, idx) => `<option value="${idx}" ${idx===state.selected?'selected':''}>${escapeHtml(s.name)}</option>`).join('');
 }
 
 function renderHeader(){
@@ -445,7 +448,6 @@ function moveTask(id,newStatus){
   if(newStatus!=='done' && t.doneAt) delete t.doneAt;
   if(newStatus==='notdone' && t.doneAt) delete t.doneAt;
   save();
-  renderBoard();
   renderStats();
 }
 
@@ -459,7 +461,7 @@ function renderBoard(){
     const doneLike = (task.status==='done' || task.status==='notdone');
     card.className = `task${task.status==='done'?' done':''}${doneLike?' done-like':''}`;
     card.draggable = true; card.dataset.id = task.id;
-    const epicName = sp.epics.find(e=>e.id===task.epicId)?.name || 'Sem épico';
+    const epicName = (sp.epics || []).find(e=>e.id===task.epicId)?.name || 'Sem épico';
     const tagsHTML = (task.tags||[]).map(tag=>`<span class="badge tag">${escapeHtml(tag)}</span>`).join('');
     let daysHTML=''; if(task.status==='doing' && task.startedAt){
       const diff = Math.ceil(Math.abs(new Date()-new Date(`${task.startedAt}T00:00:00`))/864e5);
@@ -548,12 +550,7 @@ $('#et_save').addEventListener('click', (e)=>{
   t.points = Number($('#et_points').value||0);
   const newStatus = $('#et_status').value;
   if(newStatus !== t.status){
-    t.status = newStatus;
-    if(newStatus==='doing' && !t.startedAt) t.startedAt = new Date().toISOString().slice(0,10);
-    if(newStatus!=='doing') delete t.startedAt;
-    if(newStatus==='done' && !t.doneAt) t.doneAt = new Date().toISOString().slice(0,10);
-    if(newStatus!=='done' && t.doneAt) delete t.doneAt;
-    if(newStatus==='notdone' && t.doneAt) delete t.doneAt;
+    moveTask(t.id, newStatus); // Use moveTask to handle status-related dates
   }
   t.epicId = $('#et_epic').value || '';
   t.tags = String($('#et_tags').value||'').split(',').map(s=>s.trim()).filter(Boolean);
@@ -569,43 +566,21 @@ $('#et_delete').addEventListener('click', ()=>{
 });
 
 // ================== Interações ==================
-
-
-// Save button handler
-(function(){
-  const b = document.getElementById('saveBtn');
-  if(b){ b.addEventListener('click', ()=>{ save(); flashSaved('Salvo!'); }); }
-})();
-
-
-$('#sprintSelect').addEventListener('change', e => {
-  const id = e.target.value;
-  const idx = state.sprints.findIndex(s => s.id === id);
-  if (idx >= 0) {
-    save(); // Salvar estado atual antes de mudar
+$('#sprintSelect').addEventListener('change', e=>{
+  const idx = Number(e.target.value);
+  if(idx >= 0 && idx < state.sprints.length){
     state.selected = idx;
-    save(); // Salvar nova seleção
+    save();
     renderAll();
   }
-
-
-// Save button handler
-(function(){
-  const b = document.getElementById('saveBtn');
-  if(b){ b.addEventListener('click', ()=>{ save(); flashSaved('Salvo!'); }); }
-})();
-
-$('#sprintSelect').addEventListener('change', e=>{
-  const id = e.target.value; const idx = state.sprints.findIndex(s=>s.id===id);
-  if(idx>=0){ state.selected = idx; save(); ensureActiveSprint(); renderAll(); }
-
 });
 $('#epicFilter').addEventListener('change', ()=>renderBoard());
 
 $('#taskForm').addEventListener('submit', e=>{
   e.preventDefault();
   const fd = new FormData(e.target); const sp = currentSprint();
-  sp.tasks.push({
+  if(!sp.tasks) sp.tasks = [];
+  const newTask = {
     id: crypto.randomUUID(),
     title: String(fd.get('title')||'').trim(),
     epicId: String(fd.get('epicId')||''),
@@ -614,9 +589,9 @@ $('#taskForm').addEventListener('submit', e=>{
     points: Number(fd.get('points')||0),
     status: String(fd.get('status')||'todo'),
     notes:'', checklist: []
-  });
-  const nt = sp.tasks[sp.tasks.length-1];
-  if(nt.status==='doing') nt.startedAt = new Date().toISOString().slice(0,10);
+  };
+  if(newTask.status === 'doing') newTask.startedAt = new Date().toISOString().slice(0,10);
+  sp.tasks.push(newTask);
   e.target.reset();
   save(); renderBoard(); renderStats();
 });
@@ -668,7 +643,7 @@ $('#addEpicBtn').addEventListener('click', ()=>{
   const input = $('#newEpicName'); const name = String(input.value||'').trim(); if(!name) return;
   const sp = currentSprint(); if(!sp.epics) sp.epics = [];
   if(sp.epics.some(e=>String(e.name).trim().toLowerCase()===name.toLowerCase())) return alert('Já existe um épico com esse nome.');
-  sp.epics.push({id: crypto.randomUUID(), name}); input.value=''; save(); renderEpicUIs(); renderBoard();
+  sp.epics.push({id: crypto.randomUUID(), name}); input.value=''; save(); renderEpicUIs();
 });
 
 $('#exportBtn').addEventListener('click', ()=>{
@@ -683,43 +658,19 @@ $('#importFile').addEventListener('change', async (e)=>{
   try{
     const text = await file.text();
     const data = JSON.parse(text);
-
-    
-    if (data.sprints && Array.isArray(data.sprints)) {
-      state = {
-        sprints: data.sprints,
-        selected: data.selected || 0
-      };
-    } else if (Array.isArray(data)) {
-      state = {
-        sprints: data,
-        selected: 0
-      };
-    } else {
-      throw new Error('Formato inválido');
-    }
-    
-    save();
-    renderAll();
-    
-  } catch (err) {
-    console.error('Erro na importação:', err);
-    alert('Falha ao importar o arquivo');
-  } finally {
-    e.target.value = '';
-  }
-
     let sprints = [];
     if (Array.isArray(data)) sprints = data;
     else if (Array.isArray(data?.sprints)) sprints = data.sprints;
     else if (Array.isArray(data?.state?.sprints)) sprints = data.state.sprints;
     else { alert('Arquivo não reconhecido. Esperado JSON com "sprints".'); return; }
     if (!sprints.length) { alert('Nenhuma sprint encontrada no arquivo.'); return; }
-    state.sprints = sprints; ensureActiveSprint(); save(); renderAll(); alert('Importação concluída!');
+    state.sprints = sprints;
+    state.selected = 0;
+    ensureActiveSprint();
+    save(); renderAll();
+    alert('Importação concluída!');
   }catch(err){ console.error(err); alert('Falha ao importar JSON: ' + (err?.message || err)); }
   finally{ e.target.value = ''; }
-
-
 });
 
 $('#resetBtn').addEventListener('click', ()=>{
@@ -737,9 +688,9 @@ window.addEventListener('keydown', (e) => {
   const tag = (document.activeElement?.tagName || '').toLowerCase();
   if (tag === 'input' || tag === 'textarea' || e.altKey || e.ctrlKey || e.metaKey) return;
   if (e.key === 'ArrowLeft') {
-    if (state.selected > 0) { state.selected -= 1; save(); renderAll(); $('#sprintSelect').value = state.sprints[state.selected].id; }
+    if (state.selected > 0) { state.selected -= 1; save(); renderAll(); }
   } else if (e.key === 'ArrowRight') {
-    if (state.selected < state.sprints.length - 1) { state.selected += 1; save(); renderAll(); $('#sprintSelect').value = state.sprints[state.selected].id; }
+    if (state.selected < state.sprints.length - 1) { state.selected += 1; save(); renderAll(); }
   }
 });
 
@@ -760,6 +711,10 @@ function renderEpicUIs(){
 }
 
 function renderAll(){
+  if(!currentSprint()) {
+    if(state.sprints.length > 0) state.selected = 0;
+    else return; // Don't render if no sprints
+  }
   renderSprintOptions();
   renderEpicUIs();
   renderHeader();
@@ -770,13 +725,16 @@ function renderAll(){
     zone.addEventListener('dragover', e=>{
       e.preventDefault();
       const after = getDragAfterElement(zone, e.clientY);
-      zone.insertBefore($('.task.dragging'), after);
+      const dragging = $('.task.dragging');
+      if(dragging) zone.insertBefore(dragging, after);
     });
     zone.addEventListener('drop', e=>{
       e.preventDefault();
       const dragging = $('.task.dragging'); if(!dragging) return;
-      moveTask(dragging.dataset.id, zone.parentElement.dataset.col);
-      persistOrder(zone.parentElement.dataset.col);
+      const newStatus = zone.parentElement.dataset.col;
+      moveTask(dragging.dataset.id, newStatus);
+      persistOrder(newStatus);
+      renderBoard();
     });
   });
 }
@@ -791,7 +749,7 @@ function createInitial(){
     createdAt: Date.now(),
     epics:[{id:crypto.randomUUID(),name:'Saúde'},{id:crypto.randomUUID(),name:'Casa'},{id:crypto.randomUUID(),name:'Trabalho'}],
     tasks: [
-      { id:crypto.randomUUID(), title:'Configurar o tracker (offline)', epicId:'', tags:['setup'], assignee:'Caio', points:5, status:'todo', notes:'', checklist:[] }
+      { id:crypto.randomUUID(), title:'Configurar o tracker', epicId:'', tags:['setup'], assignee:'Caio', points:5, status:'todo', notes:'', checklist:[] }
     ]
   }];
   state.selected = 0; save();
@@ -804,7 +762,7 @@ let __rT; window.addEventListener('resize', ()=>{ clearTimeout(__rT); __rT = set
 <script type="module">
 
 // ======= Cloud Sync (Firebase Firestore) =======
-let fb = { app:null, db:null, auth:null, user:null, boardId:null, connected:false, unsub:null, saving:false };
+let fb = { app:null, db:null, auth:null, user:null, boardId:null, connected:false, unsub:null };
 
 async function cloudConnect(){
   try{
@@ -814,22 +772,18 @@ async function cloudConnect(){
     let cfg;
     try{ cfg = JSON.parse(cfgRaw); }catch(e){ alert('JSON inválido.'); return; }
 
-    const prevBoard = localStorage.getItem('fb_board') || 'default';
+    const prevBoard = localStorage.getItem('fb_board') || 'casal-1';
     const boardId = prompt('Informe um Board ID (ex.: casal-1):', prevBoard);
     if(!boardId) return;
 
     localStorage.setItem('fb_cfg', cfgRaw);
     localStorage.setItem('fb_board', boardId);
 
-    const appMod = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js');
-    const fsMod  = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js');
-    const auMod  = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js');
+    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js');
+    const { getFirestore, doc, getDoc, setDoc, onSnapshot } = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js');
+    const { getAuth, signInAnonymously } = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js');
 
-    const { initializeApp } = appMod;
-    const { getFirestore, doc, getDoc, setDoc, onSnapshot } = fsMod;
-    const { getAuth, signInAnonymously } = auMod;
-
-    fb.app = initializeApp(cfg);
+    if (fb.app) { /* Already initialized */ } else { fb.app = initializeApp(cfg); }
     fb.db = getFirestore(fb.app);
     fb.auth = getAuth(fb.app);
     await signInAnonymously(fb.auth);
@@ -838,22 +792,21 @@ async function cloudConnect(){
     fb.connected = true;
 
     const status = document.getElementById('cloudStatus');
-    if(status){ status.textContent = 'Conectado'; status.style.display = 'inline-flex'; }
+    if(status){ status.textContent = `Cloud: ${fb.boardId}`; status.className = "pill ok"; status.style.display = 'inline-flex'; }
 
-    const ref = fsMod.doc(fb.db, 'boards', fb.boardId);
+    const ref = doc(fb.db, 'boards', fb.boardId);
 
-    if (fb.unsub) try{ fb.unsub(); }catch(_){}
+    if (fb.unsub) fb.unsub();
     fb.unsub = onSnapshot(ref, (snap)=>{
       const data = snap.data();
-      if (!data) return;
-      if (data.__lastWriteBy === (fb.user && fb.user.uid)) return;
+      if (!data || data.__lastWriteBy === fb.user?.uid) return;
       if (data.state){
         try{
           state = data.state;
-          ensureActiveSprint && ensureActiveSprint();
-          save();
-          renderAll && renderAll();
-          flashSaved && flashSaved('Sincronizado (cloud)!');
+          ensureActiveSprint();
+          save(); // Save to local storage too
+          renderAll();
+          flashSaved('Sincronizado!');
         }catch(err){ console.error('Falha ao aplicar estado remoto', err); }
       }
     });
@@ -863,12 +816,12 @@ async function cloudConnect(){
       const data = cur.data();
       if (data.state){
         state = data.state;
-        ensureActiveSprint && ensureActiveSprint();
+        ensureActiveSprint();
         save();
         renderAll();
       }
     }else{
-      await setDoc(ref, { state, __lastWriteAt: Date.now(), __lastWriteBy: fb.user.uid });
+      await cloudSave(); // Save initial state if doc doesn't exist
     }
   }catch(err){
     console.error(err);
@@ -877,45 +830,32 @@ async function cloudConnect(){
 }
 
 async function cloudSave(){
+  if (!fb.connected || !fb.db || !fb.user) return;
   try{
-    if (!fb.connected || !fb.db || !fb.user) return;
-    const fsMod  = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js');
-    const ref = fsMod.doc(fb.db, 'boards', fb.boardId);
-    await fsMod.setDoc(ref, { state, __lastWriteAt: Date.now(), __lastWriteBy: fb.user.uid }, { merge: true });
-    if (typeof flashSaved === 'function') flashSaved('Sincronizado!');
+    const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js');
+    const ref = doc(fb.db, 'boards', fb.boardId);
+    // Use JSON stringify/parse to remove undefined values that Firestore dislikes
+    const cleanState = JSON.parse(JSON.stringify(state));
+    await setDoc(ref, { state: cleanState, __lastWriteAt: Date.now(), __lastWriteBy: fb.user.uid });
   }catch(err){
-    console.warn('cloudSave falhou (ok offline):', err);
+    console.warn('cloudSave falhou:', err);
   }
 }
 
-(function(){
-  const b = document.getElementById('cloudBtn');
-  if (b){ b.addEventListener('click', cloudConnect); }
-})();
+// Intercept original 'save' function to add cloud sync
+const originalSave = save;
+save = function() {
+  originalSave.apply(this, arguments);
+  cloudSave();
+};
 
-(function(){
-  if (typeof save === 'function'){
-    const __origSave = save;
-    save = function(){
-      const r = __origSave.apply(this, arguments);
-      try{ cloudSave(); }catch(e){}
-      return r;
-    }
-  }else{
-    setTimeout(()=>{
-      if (typeof save === 'function'){
-        const __origSave = save;
-        save = function(){
-          const r = __origSave.apply(this, arguments);
-          try{ cloudSave(); }catch(e){}
-          return r;
-        }
-      }
-    }, 1200);
-  }
-})();
+document.getElementById('saveBtn')?.addEventListener('click', () => {
+    save();
+    flashSaved('Salvo localmente!');
+});
+document.getElementById('cloudBtn')?.addEventListener('click', cloudConnect);
+
 // ======= /Cloud Sync =======
-
 </script>
 </body>
 </html>
