@@ -119,11 +119,10 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
         <button class="btn" id="importBtn" title="Importar JSON de backup">Importar</button>
         <input id="importFile" type="file" accept=".json,application/json" style="display:none">
         <button class="btn warn" id="resetBtn" title="Excluir sprint atual">Limpar</button>
-<button class="btn primary" id="saveBtn" title="Salvar alterações no navegador">Salvar</button>
-<button class="btn" id="cloudBtn" title="Conectar ao Cloud (Firebase)">Cloud</button>
-<span id="saveToast" class="pill ok" style="display:none">Salvo!</span>
-<span id="cloudStatus" class="pill" style="display:none">Conectado</span>
-
+        <button class="btn primary" id="saveBtn" title="Salvar alterações no navegador">Salvar</button>
+        <button class="btn" id="cloudBtn" title="Conectar ao Cloud (Firebase)">Cloud</button>
+        <span id="saveToast" class="pill ok" style="display:none">Salvo!</span>
+        <span id="cloudStatus" class="pill" style="display:none">Conectado</span>
       </div>
     </div>
   </header>
@@ -253,8 +252,6 @@ const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const fmtDate = iso => new Date(`${iso}T00:00:00`).toLocaleDateString('pt-BR');
 const addDays = (iso, n) => { const d = new Date(`${iso}T00:00:00`); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
-
-// ===== Helpers: active sprint + toast =====
 function ensureActiveSprint(){
   if (!state || !state.sprints || !state.sprints.length) return;
   const todayIso = new Date().toISOString().slice(0,10);
@@ -581,8 +578,7 @@ $('#et_delete').addEventListener('click', ()=>{
 
 $('#sprintSelect').addEventListener('change', e=>{
   const id = e.target.value; const idx = state.sprints.findIndex(s=>s.id===id);
-  if(idx>=0){ state.selected = idx; save(); ensureActiveSprint();
-renderAll(); }
+  if(idx>=0){ state.selected = idx; save(); ensureActiveSprint(); renderAll(); }
 });
 $('#epicFilter').addEventListener('change', ()=>renderBoard());
 
@@ -673,7 +669,8 @@ $('#importFile').addEventListener('change', async (e)=>{
     else if (Array.isArray(data?.state?.sprints)) sprints = data.state.sprints;
     else { alert('Arquivo não reconhecido. Esperado JSON com "sprints".'); return; }
     if (!sprints.length) { alert('Nenhuma sprint encontrada no arquivo.'); return; }
-    state.sprints = sprints; ensureActiveSprint(); save(); renderAll(); alert('Importação concluída!');}catch(err){ console.error(err); alert('Falha ao importar JSON: ' + (err?.message || err)); }
+    state.sprints = sprints; ensureActiveSprint(); save(); renderAll(); alert('Importação concluída!');
+  }catch(err){ console.error(err); alert('Falha ao importar JSON: ' + (err?.message || err)); }
   finally{ e.target.value = ''; }
 });
 
@@ -712,9 +709,9 @@ function renderEpicUIs(){
       save(); renderEpicUIs(); renderBoard();
     });
   });
+}
 
-  const ef = document.getElementById('epicFilter'); if (ef) ef.value = 'all';
-}function renderAll(){
+function renderAll(){
   renderSprintOptions();
   renderEpicUIs();
   renderHeader();
@@ -843,6 +840,37 @@ async function cloudSave(){
   }
 }
 
+(function(){
+  const b = document.getElementById('cloudBtn');
+  if (b){ b.addEventListener('click', cloudConnect); }
+})();
+
+(function(){
+  if (typeof save === 'function'){
+    const __origSave = save;
+    save = function(){
+      const r = __origSave.apply(this, arguments);
+      try{ cloudSave(); }catch(e){}
+      return r;
+    }
+  }else{
+    setTimeout(()=>{
+      if (typeof save === 'function'){
+        const __origSave = save;
+        save = function(){
+          const r = __origSave.apply(this, arguments);
+          try{ cloudSave(); }catch(e){}
+          return r;
+        }
+      }
+    }, 1200);
+  }
+})();
+// ======= /Cloud Sync =======
+
+</script>
+</body>
+</html>
 (function(){
   const b = document.getElementById('cloudBtn');
   if (b){ b.addEventListener('click', cloudConnect); }
