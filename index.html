@@ -183,7 +183,6 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
     </section>
   </main>
 
-  <!-- Modal: Nova Sprint -->
   <dialog id="sprintModal">
     <form method="dialog" id="sprintForm" style="min-width:320px;max-width:520px;padding:12px">
       <h3>Nova Sprint</h3>
@@ -201,7 +200,6 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
     </form>
   </dialog>
 
-  <!-- Modal: Editar Sprint -->
   <dialog id="editSprintModal">
     <form method="dialog" id="editSprintForm" style="min-width:320px;max-width:520px;padding:12px">
       <h3>Editar Sprint</h3>
@@ -219,7 +217,6 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
     </form>
   </dialog>
 
-  <!-- Modal: Editar Tarefa -->
   <dialog id="editTaskModal">
     <form method="dialog" id="editTaskForm" style="min-width:360px;max-width:640px;padding:16px">
       <h3>Editar tarefa</h3>
@@ -573,11 +570,13 @@ $('#et_delete').addEventListener('click', ()=>{
 
 // ================== Interações ==================
 
+
 // Save button handler
 (function(){
   const b = document.getElementById('saveBtn');
   if(b){ b.addEventListener('click', ()=>{ save(); flashSaved('Salvo!'); }); }
 })();
+
 
 $('#sprintSelect').addEventListener('change', e => {
   const id = e.target.value;
@@ -588,6 +587,18 @@ $('#sprintSelect').addEventListener('change', e => {
     save(); // Salvar nova seleção
     renderAll();
   }
+
+
+// Save button handler
+(function(){
+  const b = document.getElementById('saveBtn');
+  if(b){ b.addEventListener('click', ()=>{ save(); flashSaved('Salvo!'); }); }
+})();
+
+$('#sprintSelect').addEventListener('change', e=>{
+  const id = e.target.value; const idx = state.sprints.findIndex(s=>s.id===id);
+  if(idx>=0){ state.selected = idx; save(); ensureActiveSprint(); renderAll(); }
+
 });
 $('#epicFilter').addEventListener('change', ()=>renderBoard());
 
@@ -672,6 +683,32 @@ $('#importFile').addEventListener('change', async (e)=>{
   try{
     const text = await file.text();
     const data = JSON.parse(text);
+
+    
+    if (data.sprints && Array.isArray(data.sprints)) {
+      state = {
+        sprints: data.sprints,
+        selected: data.selected || 0
+      };
+    } else if (Array.isArray(data)) {
+      state = {
+        sprints: data,
+        selected: 0
+      };
+    } else {
+      throw new Error('Formato inválido');
+    }
+    
+    save();
+    renderAll();
+    
+  } catch (err) {
+    console.error('Erro na importação:', err);
+    alert('Falha ao importar o arquivo');
+  } finally {
+    e.target.value = '';
+  }
+
     let sprints = [];
     if (Array.isArray(data)) sprints = data;
     else if (Array.isArray(data?.sprints)) sprints = data.sprints;
@@ -681,6 +718,8 @@ $('#importFile').addEventListener('change', async (e)=>{
     state.sprints = sprints; ensureActiveSprint(); save(); renderAll(); alert('Importação concluída!');
   }catch(err){ console.error(err); alert('Falha ao importar JSON: ' + (err?.message || err)); }
   finally{ e.target.value = ''; }
+
+
 });
 
 $('#resetBtn').addEventListener('click', ()=>{
@@ -858,28 +897,6 @@ async function cloudSave(){
   if (typeof save === 'function'){
     const __origSave = save;
     save = function(){
-      const r = __origSave.apply(this, arguments);
-      try{ cloudSave(); }catch(e){}
-      return r;
-    }
-  }else{
-    setTimeout(()=>{
-      if (typeof save === 'function'){
-        const __origSave = save;
-        save = function(){
-          const r = __origSave.apply(this, arguments);
-          try{ cloudSave(); }catch(e){}
-          return r;
-        }
-      }
-    }, 1200);
-  }
-})();
-// ======= /Cloud Sync =======
-
-</script>
-</body>
-</html>
       const r = __origSave.apply(this, arguments);
       try{ cloudSave(); }catch(e){}
       return r;
