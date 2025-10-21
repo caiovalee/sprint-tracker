@@ -354,8 +354,8 @@ const LS_BACKUP_KEY = 'sprint-tracker-backup';
 let state = { sprints: [], selected: 0 };
 let isApplyingRemoteUpdate = false; // NOVO: Flag para evitar loop
 
-// CORRIGIDO: Função save com backup automático
-function saveLocal(skipCloud = false){ 
+// CORRIGIDO: Função save com backup automático e disponível globalmente
+window.saveLocal = function(skipCloud = false){ 
   try {
     // Fazer backup antes de salvar
     const currentData = localStorage.getItem(LS_KEY);
@@ -368,7 +368,7 @@ function saveLocal(skipCloud = false){
     console.log('💾 Salvo no localStorage:', state.sprints.length, 'sprints');
     
     // Se não for update remoto e não deve pular cloud, salvar no cloud
-    if (!skipCloud && !isApplyingRemoteUpdate && fb.connected) {
+    if (!skipCloud && !isApplyingRemoteUpdate && window.fb && window.fb.connected) {
       clearTimeout(window.cloudSaveTimeout);
       window.cloudSaveTimeout = setTimeout(() => {
         cloudSave();
@@ -379,6 +379,9 @@ function saveLocal(skipCloud = false){
     alert('⚠️ Erro ao salvar dados localmente! Veja o console.');
   }
 }
+
+// Alias para compatibilidade
+const saveLocal = window.saveLocal;
 
 // CORRIGIDO: Validar estado após carregar
 function validateState() {
@@ -1234,7 +1237,8 @@ let fb = {
 };
 
 // Verifica se já tem credenciais salvas e conecta automaticamente
-async function autoConnect() {
+window.autoConnect = async function() {
+  const fb = window.fb;
   const savedCfg = localStorage.getItem('fb_cfg');
   const savedBoard = localStorage.getItem('fb_board');
   
@@ -1243,7 +1247,7 @@ async function autoConnect() {
     fb.autoConnected = true;
     try {
       const cfg = JSON.parse(savedCfg);
-      await cloudConnectWithConfig(cfg, savedBoard, true);
+      await window.cloudConnectWithConfig(cfg, savedBoard, true);
     } catch(e) {
       console.warn('Falha na conexão automática:', e);
       fb.autoConnected = false;
@@ -1251,8 +1255,10 @@ async function autoConnect() {
   }
 }
 
+const autoConnect = window.autoConnect;
+
 // Mostrar modal de configuração
-function showCloudConfigModal() {
+window.showCloudConfigModal = function() {
   const modal = document.getElementById('cloudConfigModal');
   const cfgInput = document.getElementById('cloudCfgInput');
   const boardInput = document.getElementById('cloudBoardInput');
@@ -1288,6 +1294,8 @@ function showCloudConfigModal() {
   modal.showModal();
 }
 
+const showCloudConfigModal = window.showCloudConfigModal;
+
 // Handler do formulário de cloud config
 document.getElementById('cloudConfigForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -1310,7 +1318,7 @@ document.getElementById('cloudConfigForm')?.addEventListener('submit', async (e)
     submitBtn.textContent = '🔄 Conectando...';
     
     document.getElementById('cloudConfigModal').close();
-    await cloudConnectWithConfig(cfg, boardInput, false);
+    await window.cloudConnectWithConfig(cfg, boardInput, false);
     
   } catch(e) {
     submitBtn.disabled = false;
@@ -1325,7 +1333,8 @@ document.getElementById('cloudConfigForm')?.addEventListener('submit', async (e)
   }
 });
 
-async function cloudConnectWithConfig(cfg, board, isAuto = false){
+window.cloudConnectWithConfig = async function(cfg, board, isAuto = false){
+  const fb = window.fb;
   try{
     console.log('🔄 Conectando ao Firebase...');
     const status = document.getElementById('cloudStatus');
@@ -1499,8 +1508,11 @@ async function cloudConnectWithConfig(cfg, board, isAuto = false){
   }
 }
 
+const cloudConnectWithConfig = window.cloudConnectWithConfig;
+
 // Salvar no Cloud
-async function cloudSave(){
+window.cloudSave = async function(){
+  const fb = window.fb;
   if (!fb.connected || !fb.db || !fb.user || fb.saving) {
     console.log('⏸️ Cloud save ignorado (não conectado ou já salvando)');
     return;
@@ -1546,8 +1558,10 @@ async function cloudSave(){
   }
 }
 
+const cloudSave = window.cloudSave; // Alias local
+
 // Botões
-document.getElementById('cloudBtn')?.addEventListener('click', showCloudConfigModal);
+document.getElementById('cloudBtn')?.addEventListener('click', window.showCloudConfigModal);
 
 // Tentar conectar automaticamente ao carregar
 setTimeout(() => {
@@ -1565,7 +1579,7 @@ window.forceCloudConnect = function() {
   }
   
   try {
-    cloudConnect(JSON.parse(cfg), board, false);
+    window.cloudConnectWithConfig(JSON.parse(cfg), board, false);
   } catch(e) {
     alert('❌ Erro ao conectar: ' + e.message);
   }
