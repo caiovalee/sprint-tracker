@@ -112,7 +112,7 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
   <header>
     <div class="wrap row-between">
       <div class="row">
-        <h1 id="sprintTitle">🏁 Sprint</h1>
+        <h1 id="sprintTitle">🚀 Sprint</h1>
         <button class="btn ghost" id="editSprintBtn" title="Editar sprint">✎</button>
         <span id="dateBadge" class="pill">—</span>
       </div>
@@ -179,7 +179,7 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
     </section>
 
     <section class="kanban">
-      <div class="col" data-col="todo"><h4>📁 A fazer (<span class="muted" id="todoCount">0</span>)</h4><div class="dropzone" id="todo"></div></div>
+      <div class="col" data-col="todo"><h4>📝 A fazer (<span class="muted" id="todoCount">0</span>)</h4><div class="dropzone" id="todo"></div></div>
       <div class="col" data-col="doing"><h4>🧱 Em andamento (<span class="muted" id="doingCount">0</span>)</h4><div class="dropzone" id="doing"></div></div>
       <div class="col" data-col="done"><h4>✅ Concluída (<span class="muted" id="doneCount">0</span>)</h4><div class="dropzone" id="done"></div></div>
       <div class="col" data-col="notdone"><h4 style="color:#ff7b7b">❌ Não concluída (<span class="muted" id="notDoneCount">0</span>)</h4><div class="dropzone" id="notdone"></div></div>
@@ -254,38 +254,7 @@ const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const fmtDate = iso => new Date(`${iso}T00:00:00`).toLocaleDateString('pt-BR');
 const addDays = (iso, n) => { const d = new Date(`${iso}T00:00:00`); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
-function ensureActiveSprint(){
-  if (!state || !state.sprints || !state.sprints.length) return;
-  const todayIso = new Date().toISOString().slice(0,10);
-  const cur = state.sprints[state.selected] || null;
-  const isCurActive = cur && (cur.start||'') <= todayIso && (cur.end||'') >= todayIso;
-  if (!isCurActive){
-    let idx = state.sprints.findIndex(s => (s.start||'') <= todayIso && (s.end||'') >= todayIso);
-    if (idx < 0){
-      // mais recente já iniciada
-      let best = -1;
-      for (let i=0;i<state.sprints.length;i++){
-        const s = state.sprints[i];
-        if ((s.start||'') <= todayIso){
-          if (best < 0 || (state.sprints[best].start||'') < (s.start||'')) best = i;
-        }
-      }
-      if (best >= 0) idx = best;
-    }
-    if (idx < 0){
-      // próxima futura
-      let best = -1;
-      for (let i=0;i<state.sprints.length;i++){
-        const s = state.sprints[i];
-        if ((s.start||'') > todayIso){
-          if (best < 0 || (s.start||'') < (state.sprints[best].start||'')) best = i;
-        }
-      }
-      if (best >= 0) idx = best;
-    }
-    if (idx >= 0) state.selected = idx;
-  }
-}
+
 function flashSaved(msg){
   const el = document.getElementById('saveToast');
   if(!el) return;
@@ -293,18 +262,67 @@ function flashSaved(msg){
   el.style.display = 'inline-flex';
   setTimeout(()=>{ el.style.display='none'; }, 1400);
 }
-// ===== /Helpers =====
 
 function escapeHtml(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 
 // ================== Estado (LocalStorage) ==================
 const LS_KEY = 'sprint-tracker-v2-offline';
 let state = { sprints: [], selected: 0 };
-function save(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
-function load(){
-  try{ const raw = localStorage.getItem(LS_KEY); if(raw) state = JSON.parse(raw)||state; }catch{}
-  if(!state || !state.sprints || !state.sprints.length) createInitial();
+
+// CORRIGIDO: Função save que sempre funciona, mesmo sem cloud
+function saveLocal(){ 
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(state)); 
+    console.log('💾 Salvo no localStorage:', state.sprints.length, 'sprints');
+  } catch(e) {
+    console.error('Erro ao salvar:', e);
+  }
 }
+
+// CORRIGIDO: Validar estado após carregar
+function validateState() {
+  if (!state || typeof state !== 'object') {
+    console.warn('Estado inválido, criando novo');
+    state = { sprints: [], selected: 0 };
+    return false;
+  }
+  if (!Array.isArray(state.sprints)) {
+    console.warn('sprints não é array, corrigindo');
+    state.sprints = [];
+  }
+  if (typeof state.selected !== 'number' || state.selected < 0) {
+    state.selected = 0;
+  }
+  // Garantir que selected está dentro dos limites
+  if (state.selected >= state.sprints.length) {
+    state.selected = Math.max(0, state.sprints.length - 1);
+  }
+  // Garantir que cada sprint tem estrutura básica
+  state.sprints.forEach(s => {
+    if (!s.id) s.id = crypto.randomUUID();
+    if (!s.name) s.name = 'Sprint';
+    if (!Array.isArray(s.tasks)) s.tasks = [];
+    if (!Array.isArray(s.epics)) s.epics = [];
+  });
+  return true;
+}
+
+function load(){
+  try{ 
+    const raw = localStorage.getItem(LS_KEY); 
+    if(raw) {
+      state = JSON.parse(raw) || { sprints: [], selected: 0 };
+      console.log('📂 Carregado do localStorage:', state.sprints.length, 'sprints');
+    }
+  }catch(e){
+    console.error('Erro ao carregar:', e);
+  }
+  
+  if(!validateState() || !state.sprints.length) {
+    createInitial();
+  }
+}
+
 load();
 
 // ================== Mini Calendário ==================
@@ -347,20 +365,35 @@ function minicalRender(containerId){
 }
 
 // ================== Render ==================
-function currentSprint(){ return state.sprints[state.selected]; }
+function currentSprint(){ 
+  if (!state.sprints || state.sprints.length === 0) return null;
+  if (state.selected < 0 || state.selected >= state.sprints.length) {
+    state.selected = 0;
+  }
+  return state.sprints[state.selected]; 
+}
 
 function renderSprintOptions(){
-  const sp = currentSprint(); const selectedId = sp ? sp.id : null;
-  $('#sprintSelect').innerHTML = state.sprints.map((s, idx) => `<option value="${idx}" ${idx===state.selected?'selected':''}>${escapeHtml(s.name)}</option>`).join('');
+  const sp = currentSprint();
+  const html = state.sprints.map((s, idx) => 
+    `<option value="${idx}" ${idx===state.selected?'selected':''}>${escapeHtml(s.name || 'Sprint')}</option>`
+  ).join('');
+  $('#sprintSelect').innerHTML = html;
+  console.log('📋 Renderizadas', state.sprints.length, 'sprints, selecionada:', state.selected);
 }
 
 function renderHeader(){
-  const sp = currentSprint(); if(!sp) return;
+  const sp = currentSprint(); 
+  if(!sp) {
+    $('#sprintTitle').textContent = 'Sprint';
+    $('#dateBadge').textContent = '—';
+    return;
+  }
   const total = Math.max(1, Math.ceil((new Date(sp.end) - new Date(sp.start)) / 864e5));
   const left = Math.max(0, Math.ceil((new Date(sp.end) - new Date()) / 864e5));
   const ratio = left / total;
   let cls = 'ok'; if (ratio <= 1/3) cls = 'danger'; else if (ratio <= 2/3) cls = 'warn';
-  $('#sprintTitle').textContent = sp.name;
+  $('#sprintTitle').textContent = sp.name || 'Sprint';
   const badge = $('#dateBadge');
   badge.className = `pill ${cls}`;
   const small = window.innerWidth <= 520;
@@ -384,21 +417,25 @@ function calcTotals(tasks){
 }
 
 function renderStats(){
-  const sp = currentSprint(); const tasks = sp.tasks||[]; const totals = calcTotals(tasks);
+  const sp = currentSprint(); 
+  if (!sp) return;
+  
+  const tasks = sp.tasks||[]; 
+  const totals = calcTotals(tasks);
   const {Aline, Caio} = totals.byAssignee;
-  // Simple progress bars (existing summary)
+  
   const alinePct = Aline.total? Math.round((Aline.done/Aline.total)*100):0;
   const caioPct  = Caio.total? Math.round((Caio.done/Caio.total)*100):0;
   $('#progressAlineBar').style.width = `${alinePct}%`; $('#progressAlinePct').textContent = `${alinePct}%`;
   $('#progressCaioBar').style.width = `${caioPct}%`; $('#progressCaioPct').textContent = `${caioPct}%`;
   $('#concluidoAline').textContent = `Concluído Aline: ${Aline.done} pts`;
   $('#concluidoCaio').textContent = `Concluído Caio: ${Caio.done} pts`;
-  // Column counters
+  
   $('#todoCount').textContent  = tasks.filter(t=>t.status==='todo').length;
   $('#doingCount').textContent = tasks.filter(t=>t.status==='doing').length;
   $('#doneCount').textContent  = tasks.filter(t=>t.status==='done').length;
   $('#notDoneCount').textContent = tasks.filter(t=>t.status==='notdone').length;
-  // Detailed cards (like screenshot)
+  
   const makeCard = (b) => {
     const pctDone = b.total? Math.round((b.done/b.total)*100):0;
     const pctNot  = b.total? Math.round((b.notdone/b.total)*100):0;
@@ -434,26 +471,32 @@ function getDragAfterElement(container, y){
   }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 function persistOrder(status){
-  const sp = currentSprint();
+  const sp = currentSprint(); if (!sp) return;
   const ids = $$(`#${status} .task`).map(el=>el.dataset.id);
   sp.tasks.forEach(t=>{ if(t.status===status) t._order = ids.indexOf(t.id); });
-  save(); // order persisted
+  saveLocal();
 }
 function moveTask(id,newStatus){
-  const sp = currentSprint(); const t = sp.tasks.find(x=>x.id===id); if(!t) return;
+  const sp = currentSprint(); 
+  if (!sp) return;
+  const t = sp.tasks.find(x=>x.id===id); 
+  if(!t) return;
   t.status = newStatus;
   if(newStatus==='doing' && !t.startedAt) t.startedAt = new Date().toISOString().slice(0,10);
   if(newStatus!=='doing') delete t.startedAt;
   if(newStatus==='done' && !t.doneAt) t.doneAt = new Date().toISOString().slice(0,10);
   if(newStatus!=='done' && t.doneAt) delete t.doneAt;
   if(newStatus==='notdone' && t.doneAt) delete t.doneAt;
-  save();
+  saveLocal();
   renderStats();
 }
 
 function renderBoard(){
   $$('.dropzone').forEach(col=>col.innerHTML='');
-  const sp = currentSprint(); const epFilter = $('#epicFilter').value;
+  const sp = currentSprint(); 
+  if (!sp) return;
+  
+  const epFilter = $('#epicFilter').value;
   const tasks = (sp.tasks||[]).filter(t => epFilter==='all' || t.epicId===epFilter);
   tasks.sort((a,b)=>(a._order||0)-(b._order||0));
   tasks.forEach(task => {
@@ -467,7 +510,6 @@ function renderBoard(){
       const diff = Math.ceil(Math.abs(new Date()-new Date(`${task.startedAt}T00:00:00`))/864e5);
       daysHTML = `<span class="badge warn" style="margin-left:auto">Há ${diff} dia(s)</span>`;
     }
-    // checklist progress
     const total = Array.isArray(task.checklist) ? task.checklist.length : 0;
     const done = total ? task.checklist.filter(i=>i.done).length : 0;
     const pct  = total ? Math.round((done/total)*100) : 0;
@@ -496,7 +538,10 @@ function renderBoard(){
 // ======= Edição de tarefa (modal) =======
 let et_currentId = null;
 function openEdit(id){
-  const sp = currentSprint(); const t = sp.tasks.find(x=>x.id===id); if(!t) return;
+  const sp = currentSprint(); 
+  if (!sp) return;
+  const t = sp.tasks.find(x=>x.id===id); 
+  if(!t) return;
   et_currentId = id;
   $('#et_title').value = t.title || '';
   $('#et_assignee').value = t.assignee || 'Aline';
@@ -516,7 +561,7 @@ function renderChecklistModal(t){
   const total = t.checklist.length || 0;
   const done = t.checklist.filter(i=>i.done).length;
   const pct = total? Math.round((done/total)*100):0;
-  $('#et_checkMeta').textContent = `Checklist (${done}/${total} – ${pct}%)`;
+  $('#et_checkMeta').textContent = `Checklist (${done}/${total} — ${pct}%)`;
   t.checklist.forEach((item, idx)=>{
     const row = document.createElement('div');
     row.className = 'row'; row.style.justifyContent='space-between';
@@ -535,7 +580,10 @@ function renderChecklistModal(t){
   }));
 }
 $('#et_addItem').addEventListener('click', ()=>{
-  const sp = currentSprint(); const t = sp.tasks.find(x=>x.id===et_currentId); if(!t) return;
+  const sp = currentSprint(); 
+  if (!sp) return;
+  const t = sp.tasks.find(x=>x.id===et_currentId); 
+  if(!t) return;
   const txt = String($('#et_newItem').value||'').trim(); if(!txt) return;
   if(!Array.isArray(t.checklist)) t.checklist = [];
   t.checklist.push({ text: txt, done: false });
@@ -544,41 +592,56 @@ $('#et_addItem').addEventListener('click', ()=>{
 });
 $('#et_save').addEventListener('click', (e)=>{
   e.preventDefault();
-  const sp = currentSprint(); const t = sp.tasks.find(x=>x.id===et_currentId); if(!t) return;
+  const sp = currentSprint(); 
+  if (!sp) return;
+  const t = sp.tasks.find(x=>x.id===et_currentId); 
+  if(!t) return;
   t.title = String($('#et_title').value||'').trim();
   t.assignee = $('#et_assignee').value;
   t.points = Number($('#et_points').value||0);
   const newStatus = $('#et_status').value;
   if(newStatus !== t.status){
-    moveTask(t.id, newStatus); // Use moveTask to handle status-related dates
+    moveTask(t.id, newStatus);
   }
   t.epicId = $('#et_epic').value || '';
   t.tags = String($('#et_tags').value||'').split(',').map(s=>s.trim()).filter(Boolean);
   t.notes = $('#et_notes').value || '';
   $('#editTaskModal').close();
-  save(); renderBoard(); renderStats();
+  saveLocal(); 
+  renderBoard(); 
+  renderStats();
 });
 $('#et_delete').addEventListener('click', ()=>{
   if(!confirm('Excluir esta tarefa?')) return;
-  const sp = currentSprint(); sp.tasks = (sp.tasks||[]).filter(x=>x.id!==et_currentId);
+  const sp = currentSprint(); 
+  if (!sp) return;
+  sp.tasks = (sp.tasks||[]).filter(x=>x.id!==et_currentId);
   $('#editTaskModal').close();
-  save(); renderBoard(); renderStats();
+  saveLocal(); 
+  renderBoard(); 
+  renderStats();
 });
 
 // ================== Interações ==================
+// CORRIGIDO: Trocar de sprint de forma segura
 $('#sprintSelect').addEventListener('change', e=>{
   const idx = Number(e.target.value);
+  console.log('🔄 Trocando para sprint', idx);
   if(idx >= 0 && idx < state.sprints.length){
     state.selected = idx;
-    save();
+    saveLocal();
     renderAll();
+    flashSaved('Sprint alterada!');
   }
 });
+
 $('#epicFilter').addEventListener('change', ()=>renderBoard());
 
 $('#taskForm').addEventListener('submit', e=>{
   e.preventDefault();
-  const fd = new FormData(e.target); const sp = currentSprint();
+  const fd = new FormData(e.target); 
+  const sp = currentSprint();
+  if(!sp) return;
   if(!sp.tasks) sp.tasks = [];
   const newTask = {
     id: crypto.randomUUID(),
@@ -593,7 +656,10 @@ $('#taskForm').addEventListener('submit', e=>{
   if(newTask.status === 'doing') newTask.startedAt = new Date().toISOString().slice(0,10);
   sp.tasks.push(newTask);
   e.target.reset();
-  save(); renderBoard(); renderStats();
+  saveLocal(); 
+  renderBoard(); 
+  renderStats();
+  flashSaved('Tarefa adicionada!');
 });
 
 $('#addSprintBtn').addEventListener('click', ()=>{
@@ -605,19 +671,29 @@ $('#addSprintBtn').addEventListener('click', ()=>{
   $('#sprintModal').showModal();
   setTimeout(()=>{ minicalRender('minicalCreateStart'); minicalRender('minicalCreateEnd'); },0);
 });
+
 $('#sprintForm').addEventListener('submit', e=>{
   e.preventDefault();
   const sd = $('#startDate').value; const ed = $('#endDate').value;
   if (sd && ed && new Date(sd) > new Date(ed)) { alert('A data de FIM não pode ser anterior à data de INÍCIO.'); return; }
-  const f = new FormData(e.target); const prev = currentSprint();
+  const f = new FormData(e.target); 
+  const prev = currentSprint();
   const newSprint = {
-    id: crypto.randomUUID(), name: String(f.get('name')||'Sprint').trim(),
-    start: String(f.get('start')||''), end: String(f.get('end')||''),
+    id: crypto.randomUUID(), 
+    name: String(f.get('name')||'Sprint').trim(),
+    start: String(f.get('start')||''), 
+    end: String(f.get('end')||''),
     epics: prev?.epics ? JSON.parse(JSON.stringify(prev.epics)) : [],
-    tasks: [], createdAt: Date.now()
+    tasks: [], 
+    createdAt: Date.now()
   };
-  state.sprints.push(newSprint); state.selected = state.sprints.length-1;
-  $('#sprintModal').close(); save(); renderAll();
+  state.sprints.push(newSprint); 
+  state.selected = state.sprints.length-1;
+  $('#sprintModal').close(); 
+  saveLocal(); 
+  renderAll();
+  flashSaved('Sprint criada!');
+  console.log('✨ Nova sprint criada:', newSprint.name);
 });
 
 $('#editSprintBtn').addEventListener('click', ()=>{
@@ -628,49 +704,98 @@ $('#editSprintBtn').addEventListener('click', ()=>{
   $('#editSprintModal').showModal();
   setTimeout(()=>{ minicalRender('minicalEditStart'); minicalRender('minicalEditEnd'); },0);
 });
+
 $('#editSprintForm').addEventListener('submit', e=>{
   e.preventDefault();
   const sd = $('#editStartDate').value; const ed = $('#editEndDate').value;
   if (sd && ed && new Date(sd) > new Date(ed)) { alert('A data de FIM não pode ser anterior à data de INÍCIO.'); return; }
-  const sp = currentSprint(); const f = new FormData(e.target);
+  const sp = currentSprint(); 
+  if (!sp) return;
+  const f = new FormData(e.target);
   sp.name = String(f.get('name')||sp.name).trim();
   sp.start = String(f.get('start')||sp.start);
   sp.end   = String(f.get('end')||sp.end);
-  $('#editSprintModal').close(); save(); renderAll();
+  $('#editSprintModal').close(); 
+  saveLocal(); 
+  renderAll();
+  flashSaved('Sprint editada!');
 });
 
 $('#addEpicBtn').addEventListener('click', ()=>{
-  const input = $('#newEpicName'); const name = String(input.value||'').trim(); if(!name) return;
-  const sp = currentSprint(); if(!sp.epics) sp.epics = [];
+  const input = $('#newEpicName'); 
+  const name = String(input.value||'').trim(); 
+  if(!name) return;
+  const sp = currentSprint(); 
+  if(!sp) return;
+  if(!sp.epics) sp.epics = [];
   if(sp.epics.some(e=>String(e.name).trim().toLowerCase()===name.toLowerCase())) return alert('Já existe um épico com esse nome.');
-  sp.epics.push({id: crypto.randomUUID(), name}); input.value=''; save(); renderEpicUIs();
+  sp.epics.push({id: crypto.randomUUID(), name}); 
+  input.value=''; 
+  saveLocal(); 
+  renderEpicUIs();
+  flashSaved('Épico adicionado!');
 });
 
 $('#exportBtn').addEventListener('click', ()=>{
   const data = JSON.stringify(state, null, 2);
   const blob = new Blob([data], {type:'application/json'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'sprints-backup.json'; a.click();
+  const a = document.createElement('a'); 
+  a.href = URL.createObjectURL(blob); 
+  a.download = 'sprints-backup.json'; 
+  a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+  flashSaved('Backup exportado!');
 });
+
 $('#importBtn').addEventListener('click', ()=> $('#importFile').click());
+
+// CORRIGIDO: Importação mais robusta
 $('#importFile').addEventListener('change', async (e)=>{
   const file = e.target.files?.[0]; if(!file) return;
   try{
     const text = await file.text();
     const data = JSON.parse(text);
     let sprints = [];
-    if (Array.isArray(data)) sprints = data;
-    else if (Array.isArray(data?.sprints)) sprints = data.sprints;
-    else if (Array.isArray(data?.state?.sprints)) sprints = data.state.sprints;
-    else { alert('Arquivo não reconhecido. Esperado JSON com "sprints".'); return; }
-    if (!sprints.length) { alert('Nenhuma sprint encontrada no arquivo.'); return; }
+    
+    // Tentar diferentes formatos
+    if (Array.isArray(data)) {
+      sprints = data;
+    } else if (Array.isArray(data?.sprints)) {
+      sprints = data.sprints;
+    } else if (Array.isArray(data?.state?.sprints)) {
+      sprints = data.state.sprints;
+    } else {
+      alert('Arquivo não reconhecido. Esperado JSON com "sprints".');
+      return;
+    }
+    
+    if (!sprints.length) {
+      alert('Nenhuma sprint encontrada no arquivo.');
+      return;
+    }
+    
+    console.log('📥 Importando', sprints.length, 'sprints');
+    
+    // Substituir estado
     state.sprints = sprints;
     state.selected = 0;
-    ensureActiveSprint();
-    save(); renderAll();
-    alert('Importação concluída!');
-  }catch(err){ console.error(err); alert('Falha ao importar JSON: ' + (err?.message || err)); }
-  finally{ e.target.value = ''; }
+    
+    // Validar e salvar
+    validateState();
+    saveLocal();
+    
+    // Renderizar tudo
+    renderAll();
+    
+    alert(`Importação concluída! ${sprints.length} sprint(s) importada(s).`);
+    flashSaved('Importado com sucesso!');
+  }catch(err){ 
+    console.error('Erro na importação:', err); 
+    alert('Falha ao importar JSON: ' + (err?.message || err)); 
+  }
+  finally{ 
+    e.target.value = ''; 
+  }
 });
 
 $('#resetBtn').addEventListener('click', ()=>{
@@ -679,47 +804,81 @@ $('#resetBtn').addEventListener('click', ()=>{
   if(confirm(`Excluir a sprint "${sp.name}"?`)){
     state.sprints.splice(state.selected,1);
     if(state.selected>=state.sprints.length) state.selected = state.sprints.length-1;
-    save(); renderAll();
+    saveLocal(); 
+    renderAll();
+    flashSaved('Sprint excluída!');
   }
 });
 
-// Atalhos ←/→ (ignorando quando digitando)
+// Botão Salvar manual
+$('#saveBtn').addEventListener('click', () => {
+  saveLocal();
+  flashSaved('Salvo localmente!');
+});
+
+// Atalhos ←/→
 window.addEventListener('keydown', (e) => {
   const tag = (document.activeElement?.tagName || '').toLowerCase();
   if (tag === 'input' || tag === 'textarea' || e.altKey || e.ctrlKey || e.metaKey) return;
   if (e.key === 'ArrowLeft') {
-    if (state.selected > 0) { state.selected -= 1; save(); renderAll(); }
+    if (state.selected > 0) { 
+      state.selected -= 1; 
+      saveLocal(); 
+      renderAll();
+      flashSaved('Sprint anterior');
+    }
   } else if (e.key === 'ArrowRight') {
-    if (state.selected < state.sprints.length - 1) { state.selected += 1; save(); renderAll(); }
+    if (state.selected < state.sprints.length - 1) { 
+      state.selected += 1; 
+      saveLocal(); 
+      renderAll();
+      flashSaved('Próxima sprint');
+    }
   }
 });
 
 // ================== Render All ==================
 function renderEpicUIs(){
-  const sp = currentSprint(); const epics = sp.epics||[];
+  const sp = currentSprint(); 
+  if (!sp) return;
+  
+  const epics = sp.epics||[];
   const epicOptions = epics.map(e=>`<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
   $('#epicFilter').innerHTML = `<option value="all">Todos os épicos</option>${epicOptions}`;
   $('#epicSelect').innerHTML = `<option value="">Épico…</option>${epicOptions}`;
   $('#epicList').innerHTML = epics.map(e=>`<span class="badge">${escapeHtml(e.name)} <button class="btn ghost" data-action="del-epic" data-id="${e.id}">×</button></span>`).join('');
   $('#epicList').querySelectorAll('[data-action="del-epic"]').forEach(btn=>{
     btn.addEventListener('click',()=>{
-      const sp = currentSprint(); sp.epics = (sp.epics||[]).filter(x=>x.id!==btn.dataset.id);
+      const sp = currentSprint(); 
+      if (!sp) return;
+      sp.epics = (sp.epics||[]).filter(x=>x.id!==btn.dataset.id);
       (sp.tasks||[]).forEach(t=>{ if(t.epicId===btn.dataset.id) t.epicId=''; });
-      save(); renderEpicUIs(); renderBoard();
+      saveLocal(); 
+      renderEpicUIs(); 
+      renderBoard();
     });
   });
 }
 
 function renderAll(){
-  if(!currentSprint()) {
-    if(state.sprints.length > 0) state.selected = 0;
-    else return; // Don't render if no sprints
+  const sp = currentSprint();
+  if(!sp) {
+    console.warn('⚠️ Nenhuma sprint disponível para renderizar');
+    if(state.sprints.length > 0) {
+      state.selected = 0;
+    } else {
+      return;
+    }
   }
+  
+  console.log('🎨 Renderizando sprint:', sp?.name, '(índice:', state.selected, ')');
+  
   renderSprintOptions();
   renderEpicUIs();
   renderHeader();
   renderBoard();
   renderStats();
+  
   // DnD zones
   $$('.dropzone').forEach(zone=>{
     zone.addEventListener('dragover', e=>{
@@ -747,20 +906,33 @@ function createInitial(){
     start: todayISO,
     end: addDays(todayISO, 14),
     createdAt: Date.now(),
-    epics:[{id:crypto.randomUUID(),name:'Saúde'},{id:crypto.randomUUID(),name:'Casa'},{id:crypto.randomUUID(),name:'Trabalho'}],
+    epics:[
+      {id:crypto.randomUUID(),name:'Saúde'},
+      {id:crypto.randomUUID(),name:'Casa'},
+      {id:crypto.randomUUID(),name:'Trabalho'}
+    ],
     tasks: [
       { id:crypto.randomUUID(), title:'Configurar o tracker', epicId:'', tags:['setup'], assignee:'Caio', points:5, status:'todo', notes:'', checklist:[] }
     ]
   }];
-  state.selected = 0; save();
+  state.selected = 0; 
+  saveLocal();
+  console.log('🆕 Estado inicial criado');
 }
 
+// CORRIGIDO: Inicialização
+console.log('🚀 Iniciando Sprint Tracker...');
 renderAll();
-// Re-render header on resize (debounced)
-let __rT; window.addEventListener('resize', ()=>{ clearTimeout(__rT); __rT = setTimeout(renderHeader, 120); });
-</script>
-<script type="module">
 
+// Re-render header on resize (debounced)
+let __rT; 
+window.addEventListener('resize', ()=>{ 
+  clearTimeout(__rT); 
+  __rT = setTimeout(renderHeader, 120); 
+});
+</script>
+
+<script type="module">
 // ======= Cloud Sync (Firebase Firestore) =======
 let fb = { app:null, db:null, auth:null, user:null, boardId:null, connected:false, unsub:null };
 
@@ -803,8 +975,8 @@ async function cloudConnect(){
       if (data.state){
         try{
           state = data.state;
-          ensureActiveSprint();
-          save(); // Save to local storage too
+          validateState();
+          saveLocal();
           renderAll();
           flashSaved('Sincronizado!');
         }catch(err){ console.error('Falha ao aplicar estado remoto', err); }
@@ -816,13 +988,15 @@ async function cloudConnect(){
       const data = cur.data();
       if (data.state){
         state = data.state;
-        ensureActiveSprint();
-        save();
+        validateState();
+        saveLocal();
         renderAll();
       }
     }else{
-      await cloudSave(); // Save initial state if doc doesn't exist
+      await cloudSave();
     }
+    
+    alert('Conectado ao Cloud com sucesso!');
   }catch(err){
     console.error(err);
     alert('Erro ao conectar ao Cloud. Veja o console.');
@@ -834,28 +1008,30 @@ async function cloudSave(){
   try{
     const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js');
     const ref = doc(fb.db, 'boards', fb.boardId);
-    // Use JSON stringify/parse to remove undefined values that Firestore dislikes
     const cleanState = JSON.parse(JSON.stringify(state));
     await setDoc(ref, { state: cleanState, __lastWriteAt: Date.now(), __lastWriteBy: fb.user.uid });
+    console.log('☁️ Salvo no Cloud');
   }catch(err){
     console.warn('cloudSave falhou:', err);
   }
 }
 
-// Intercept original 'save' function to add cloud sync
-const originalSave = save;
-save = function() {
+// CORRIGIDO: Observar mudanças no estado e sincronizar
+let saveTimeout;
+const originalSave = window.saveLocal;
+window.saveLocal = function() {
   originalSave.apply(this, arguments);
-  cloudSave();
+  
+  // Debounce cloud save
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    if (fb.connected) {
+      cloudSave();
+    }
+  }, 500);
 };
 
-document.getElementById('saveBtn')?.addEventListener('click', () => {
-    save();
-    flashSaved('Salvo localmente!');
-});
 document.getElementById('cloudBtn')?.addEventListener('click', cloudConnect);
-
-// ======= /Cloud Sync =======
 </script>
 </body>
 </html>
