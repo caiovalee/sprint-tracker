@@ -122,6 +122,8 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
         <button class="btn" id="addSprintBtn">+ Nova Sprint</button>
         <button class="btn" id="exportBtn" title="Exportar JSON (Backup local)">💾 Backup</button>
         <button class="btn" id="importBtn" title="Importar JSON de backup">📁 Importar</button>
+        <button class="btn" id="recoverBtn" title="Recuperar dados perdidos" style="background:#3a2a18">🔄 Recuperar</button>
+        <button class="btn" id="diagBtn" title="Diagnóstico de conexão" style="background:#2a3a3a">🔍 Diagnóstico</button>
         <input id="importFile" type="file" accept=".json,application/json" style="display:none">
         <button class="btn" id="cloudBtn" title="Configurar sincronização em tempo real">🌐 Cloud</button>
         <button class="btn warn" id="resetBtn" title="Excluir sprint atual">Limpar</button>
@@ -266,15 +268,24 @@ function escapeHtml(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'
 
 // ================== Estado (LocalStorage) ==================
 const LS_KEY = 'sprint-tracker-v2-offline';
+const LS_BACKUP_KEY = 'sprint-tracker-backup';
 let state = { sprints: [], selected: 0 };
 
-// CORRIGIDO: Função save que sempre funciona, mesmo sem cloud
+// CORRIGIDO: Função save com backup automático
 function saveLocal(){ 
   try {
+    // Fazer backup antes de salvar
+    const currentData = localStorage.getItem(LS_KEY);
+    if (currentData) {
+      localStorage.setItem(LS_BACKUP_KEY, currentData);
+    }
+    
+    // Salvar novo estado
     localStorage.setItem(LS_KEY, JSON.stringify(state)); 
     console.log('💾 Salvo no localStorage:', state.sprints.length, 'sprints');
   } catch(e) {
     console.error('Erro ao salvar:', e);
+    alert('⚠️ Erro ao salvar dados localmente! Veja o console.');
   }
 }
 
@@ -306,20 +317,56 @@ function validateState() {
   return true;
 }
 
+// NOVO: Tentar recuperar de backup
+function tryRecoverFromBackup() {
+  try {
+    const backup = localStorage.getItem(LS_BACKUP_KEY);
+    if (backup) {
+      console.log('🔄 Tentando recuperar do backup...');
+      const recovered = JSON.parse(backup);
+      if (recovered && recovered.sprints && recovered.sprints.length > 0) {
+        state = recovered;
+        console.log('✅ Recuperado do backup!', state.sprints.length, 'sprints');
+        saveLocal();
+        return true;
+      }
+    }
+  } catch(e) {
+    console.error('Falha ao recuperar backup:', e);
+  }
+  return false;
+}
+
 function load(){
   try{ 
     const raw = localStorage.getItem(LS_KEY); 
     if(raw) {
       state = JSON.parse(raw) || { sprints: [], selected: 0 };
       console.log('📂 Carregado do localStorage:', state.sprints.length, 'sprints');
+      
+      // Se não tem sprints, tentar recuperar do backup
+      if (!state.sprints || state.sprints.length === 0) {
+        console.warn('⚠️ Nenhuma sprint encontrada! Tentando backup...');
+        if (!tryRecoverFromBackup()) {
+          console.log('💡 Criando estado inicial...');
+          createInitial();
+        }
+      }
+    } else {
+      console.log('📦 Primeira vez - tentando backup primeiro...');
+      if (!tryRecoverFromBackup()) {
+        createInitial();
+      }
     }
   }catch(e){
     console.error('Erro ao carregar:', e);
+    console.log('🔄 Tentando recuperar do backup...');
+    if (!tryRecoverFromBackup()) {
+      createInitial();
+    }
   }
   
-  if(!validateState() || !state.sprints.length) {
-    createInitial();
-  }
+  validateState();
 }
 
 load();
@@ -740,10 +787,115 @@ $('#exportBtn').addEventListener('click', ()=>{
   const blob = new Blob([data], {type:'application/json'});
   const a = document.createElement('a'); 
   a.href = URL.createObjectURL(blob); 
-  a.download = 'sprints-backup.json'; 
+  const timestamp = new Date().toISOString().slice(0,16).replace(/:/g,'-');
+  a.download = `sprint-backup-${timestamp}.json`; 
   a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
   flashSaved('Backup exportado!');
+});
+
+$('#recoverBtn').addEventListener('click', ()=>{
+  const options = [];
+  
+  // Opção 1: Backup automático
+  const backup = localStorage.getItem(LS_BACKUP_KEY);
+  if (backup) {
+    try {
+      const data = JSON.parse(backup);
+      if (data.sprints && data.sprints.length > 0) {
+        options.push({
+          name: `Backup Automático (${data.sprints.length} sprint(s))`,
+          data: data
+        });
+      }
+    } catch(e) {}
+  }
+  
+  // Opção 2: Buscar outras chaves
+  for(let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key !== LS_KEY && key !== LS_BACKUP_KEY && (key.includes('sprint') || key.includes('tracker'))) {
+      try {
+        const data = JSON.parse(localStorage.getItem(key));
+        if (data.sprints && data.sprints.length > 0) {
+          options.push({
+            name: `${key} (${data.sprints.length} sprint(s))`,
+            data: data
+          });
+        }
+      } catch(e) {}
+    }
+  }
+  
+  if (options.length === 0) {
+    alert('❌ Nenhum backup encontrado.\n\n' +
+          'Dicas:\n' +
+          '1. Se vocês usavam Cloud/Firebase, clique em "🌐 Cloud" para reconectar\n' +
+          '2. Se tem arquivo de backup (.json), use "📁 Importar"\n' +
+          '3. Verifique no computador da sua namorada se tem os dados');
+    return;
+  }
+  
+  const msg = '🔄 Backups encontrados:\n\n' + 
+              options.map((o, i) => `${i + 1}. ${o.name}`).join('\n') +
+              '\n\nDigite o número do backup para recuperar (ou 0 para cancelar):';
+  
+  const choice = prompt(msg);
+  const idx = parseInt(choice) - 1;
+  
+  if (idx >= 0 && idx < options.length) {
+    if (confirm(`⚠️ Isso vai substituir os dados atuais.\n\nDeseja continuar?`)) {
+      state = options[idx].data;
+      validateState();
+      saveLocal();
+      renderAll();
+      alert('✅ Dados recuperados com sucesso!');
+      flashSaved('Recuperado!');
+    }
+  }
+});
+
+$('#diagBtn').addEventListener('click', ()=>{
+  const cfg = localStorage.getItem('fb_cfg');
+  const board = localStorage.getItem('fb_board');
+  
+  let msg = '🔍 DIAGNÓSTICO DE CONEXÃO\n\n';
+  msg += '📊 Estado Local:\n';
+  msg += `  - Sprints: ${state.sprints.length}\n`;
+  msg += `  - Tarefas total: ${state.sprints.reduce((sum, s) => sum + (s.tasks?.length || 0), 0)}\n\n`;
+  
+  msg += '💾 Storage:\n';
+  msg += `  - Dados principais: ${localStorage.getItem(LS_KEY) ? '✅ OK' : '❌ Vazio'}\n`;
+  msg += `  - Backup automático: ${localStorage.getItem(LS_BACKUP_KEY) ? '✅ OK' : '❌ Vazio'}\n\n`;
+  
+  msg += '🌐 Firebase:\n';
+  msg += `  - Credenciais salvas: ${cfg ? '✅ Sim' : '❌ Não'}\n`;
+  msg += `  - Board ID salvo: ${board ? '✅ ' + board : '❌ Não'}\n`;
+  msg += `  - Status conexão: ${fb.connected ? '✅ Conectado' : '❌ Desconectado'}\n`;
+  msg += `  - User ID: ${fb.user ? fb.user.uid.slice(0, 12) + '...' : '❌ Não autenticado'}\n\n`;
+  
+  if (!fb.connected && cfg && board) {
+    msg += '💡 SOLUÇÃO:\n';
+    msg += 'Você tem credenciais salvas mas não está conectado.\n';
+    msg += 'Clique em "🌐 Cloud" para reconectar!\n\n';
+  } else if (!cfg) {
+    msg += '💡 SOLUÇÃO:\n';
+    msg += '1. Acesse: https://console.firebase.google.com/\n';
+    msg += '2. Pegue suas credenciais (firebaseConfig)\n';
+    msg += '3. Clique em "🌐 Cloud" e cole as credenciais\n\n';
+  }
+  
+  msg += '🔧 Comandos úteis no console:\n';
+  msg += '  • Forçar conexão: autoConnect()\n';
+  msg += '  • Ver dados: state\n';
+  msg += '  • Salvar: saveLocal()\n';
+  
+  alert(msg);
+  
+  // Também mostrar no console
+  console.log('='.repeat(50));
+  console.log(msg);
+  console.log('='.repeat(50));
 });
 
 $('#importBtn').addEventListener('click', ()=> $('#importFile').click());
@@ -915,6 +1067,38 @@ function createInitial(){
 
 // CORRIGIDO: Inicialização
 console.log('🚀 Iniciando Sprint Tracker...');
+console.log('📊 Diagnóstico:');
+console.log('  - Sprints carregadas:', state.sprints.length);
+console.log('  - Sprint selecionada:', state.selected);
+if (state.sprints.length > 0) {
+  state.sprints.forEach((s, i) => {
+    console.log(`  - Sprint ${i}: "${s.name}" (${s.tasks?.length || 0} tarefas)`);
+  });
+}
+
+// Verificar backups
+const backup = localStorage.getItem(LS_BACKUP_KEY);
+if (backup) {
+  try {
+    const data = JSON.parse(backup);
+    console.log('💾 Backup disponível:', data.sprints?.length || 0, 'sprint(s)');
+  } catch(e) {}
+}
+
+// Status Firebase
+const cfg = localStorage.getItem('fb_cfg');
+const board = localStorage.getItem('fb_board');
+console.log('');
+console.log('🌐 Firebase:');
+console.log('  - Credenciais salvas:', cfg ? '✅' : '❌');
+console.log('  - Board ID salvo:', board || '❌');
+
+console.log('');
+console.log('🔧 Comandos disponíveis no console:');
+console.log('  - forceCloudConnect() → Forçar conexão ao Firebase');
+console.log('  - state → Ver dados atuais');
+console.log('  - saveLocal() → Salvar manualmente');
+
 renderAll();
 
 // Re-render header on resize (debounced)
@@ -965,15 +1149,37 @@ async function cloudConnect(config = null, boardId = null, isAuto = false){
     // Se não passou config, perguntar ao usuário
     if (!cfg) {
       const previousCfg = localStorage.getItem('fb_cfg') || '';
-      const cfgRaw = prompt('Cole o firebaseConfig (JSON do Firebase Console > Project settings > SDK setup):', previousCfg);
-      if(!cfgRaw) return;
-      try{ cfg = JSON.parse(cfgRaw); }catch(e){ alert('JSON inválido.'); return; }
+      
+      const helpText = previousCfg ? 
+        'Cole o firebaseConfig do Firebase Console\n(ou deixe em branco para usar o salvo):' :
+        'Cole o firebaseConfig do Firebase Console:\n\n' +
+        '1. Acesse: https://console.firebase.google.com/\n' +
+        '2. Clique em ⚙️ → "Configurações do projeto"\n' +
+        '3. Role até "Seus apps" → Clique em </> (Web)\n' +
+        '4. Copie TODO o objeto { apiKey: "...", ... }\n\n' +
+        'Cole aqui:';
+      
+      const cfgRaw = prompt(helpText, previousCfg);
+      if(cfgRaw === null) return; // Cancelou
+      if(cfgRaw === '' && previousCfg) {
+        // Usar o salvo
+        try { cfg = JSON.parse(previousCfg); } catch(e) { alert('Config salvo inválido!'); return; }
+      } else {
+        try{ cfg = JSON.parse(cfgRaw); }catch(e){ alert('❌ JSON inválido!\n\nVerifique se copiou corretamente.'); return; }
+      }
     }
     
     if (!board) {
       const prevBoard = localStorage.getItem('fb_board') || 'casal-1';
-      board = prompt('Informe um Board ID único para vocês (ex.: casal-aline-caio):', prevBoard);
+      board = prompt('Informe um Board ID único para vocês dois.\n\n⚠️ IMPORTANTE: Ambos devem usar o MESMO Board ID!\n\nExemplo: casal-aline-caio', prevBoard);
       if(!board) return;
+    }
+
+    console.log('🔄 Conectando ao Firebase...');
+    const status = document.getElementById('cloudStatus');
+    if(status){ 
+      status.textContent = '🔄 Conectando...'; 
+      status.className = "pill warn"; 
     }
 
     // Salvar credenciais
@@ -996,6 +1202,7 @@ async function cloudConnect(config = null, boardId = null, isAuto = false){
     fb.auth = getAuth(fb.app);
     
     // Login anônimo
+    console.log('🔐 Autenticando...');
     await signInAnonymously(fb.auth);
     fb.user = fb.auth.currentUser;
     fb.boardId = board;
@@ -1004,7 +1211,6 @@ async function cloudConnect(config = null, boardId = null, isAuto = false){
     console.log('✅ Conectado ao Cloud! Board:', fb.boardId, 'User:', fb.user.uid.slice(0,8));
 
     // Atualizar UI
-    const status = document.getElementById('cloudStatus');
     if(status){ 
       status.textContent = `🌐 ${fb.boardId}`; 
       status.className = "pill ok"; 
@@ -1015,6 +1221,8 @@ async function cloudConnect(config = null, boardId = null, isAuto = false){
 
     // Cancelar listener anterior se existir
     if (fb.unsub) fb.unsub();
+    
+    console.log('👂 Iniciando listener em tempo real...');
     
     // LISTENER EM TEMPO REAL - quando o Firebase detecta mudança
     fb.unsub = onSnapshot(ref, (snap)=>{
@@ -1049,17 +1257,35 @@ async function cloudConnect(config = null, boardId = null, isAuto = false){
       fb.connected = false;
       const status = document.getElementById('cloudStatus');
       if(status){ 
-        status.textContent = '❌ Erro'; 
+        status.textContent = '❌ Erro: ' + error.code; 
         status.className = "pill danger"; 
+      }
+      
+      if (error.code === 'permission-denied') {
+        alert('❌ ERRO: Permissão negada!\n\n' +
+              'Solução:\n' +
+              '1. Acesse: https://console.firebase.google.com/\n' +
+              '2. Firestore Database → Regras\n' +
+              '3. Cole este código:\n\n' +
+              'rules_version = \'2\';\n' +
+              'service cloud.firestore {\n' +
+              '  match /databases/{database}/documents {\n' +
+              '    match /boards/{boardId} {\n' +
+              '      allow read, write: if request.auth != null;\n' +
+              '    }\n' +
+              '  }\n' +
+              '}\n\n' +
+              '4. Clique em "Publicar"');
       }
     });
 
     // Carregar estado inicial do Firebase
+    console.log('📦 Carregando estado do Cloud...');
     const cur = await getDoc(ref);
     if (cur.exists()){
       const data = cur.data();
       if (data.state){
-        console.log('📦 Carregando estado do Cloud...');
+        console.log('📥 Estado encontrado no Cloud!');
         state = data.state;
         validateState();
         saveLocal();
@@ -1073,9 +1299,13 @@ async function cloudConnect(config = null, boardId = null, isAuto = false){
     }
     
     if (!isAuto) {
-      alert('✅ Conectado ao Cloud!\n\nAgora vocês dois verão as mudanças em tempo real.\n\nBoard ID: ' + fb.boardId);
+      alert('✅ Conectado ao Cloud com sucesso!\n\n' +
+            '🌐 Board ID: ' + fb.boardId + '\n\n' +
+            'Agora vocês dois verão as mudanças em TEMPO REAL!\n\n' +
+            '💡 Certifique-se de que sua namorada use o MESMO Board ID.');
     } else {
       console.log('✅ Reconectado automaticamente');
+      flashSaved('Conectado ao Cloud!');
     }
     
   }catch(err){
@@ -1087,7 +1317,13 @@ async function cloudConnect(config = null, boardId = null, isAuto = false){
       status.className = "pill danger"; 
     }
     if (!isAuto) {
-      alert('❌ Erro ao conectar ao Cloud:\n\n' + err.message + '\n\nVerifique:\n1. firebaseConfig correto\n2. Firestore habilitado\n3. Regras de segurança configuradas');
+      alert('❌ Erro ao conectar ao Cloud:\n\n' + 
+            err.message + '\n\n' +
+            'Verifique:\n' +
+            '1. firebaseConfig está correto\n' +
+            '2. Firestore está habilitado no projeto\n' +
+            '3. Regras de segurança estão configuradas\n\n' +
+            'Detalhes no console (F12)');
     }
   }
 }
@@ -1161,7 +1397,24 @@ document.getElementById('cloudBtn')?.addEventListener('click', () => cloudConnec
 // Tentar conectar automaticamente ao carregar
 setTimeout(() => {
   autoConnect();
-}, 500);
+}, 1000);
+
+// Função global para forçar conexão (pode ser usada no console)
+window.forceCloudConnect = function() {
+  const cfg = localStorage.getItem('fb_cfg');
+  const board = localStorage.getItem('fb_board');
+  
+  if (!cfg || !board) {
+    alert('❌ Não há credenciais salvas.\n\nClique em "🌐 Cloud" para configurar.');
+    return;
+  }
+  
+  try {
+    cloudConnect(JSON.parse(cfg), board, false);
+  } catch(e) {
+    alert('❌ Erro ao conectar: ' + e.message);
+  }
+};
 
 // Monitorar conexão
 window.addEventListener('online', () => {
