@@ -477,40 +477,42 @@ if (!window.SprintApp) {
         }
       });
       
-      document.getElementById('exportBtn').addEventListener('click', function() {
-        const data = JSON.stringify(app.state, null, 2);
-        const blob = new Blob([data], {type:'application/json'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        const ts = new Date().toISOString().slice(0,16).replace(/:/g,'-');
-        a.download = `sprint-backup-${ts}.json`;
-        a.click();
-      });
-      
-      document.getElementById('importBtn').addEventListener('click', function() {
-        document.getElementById('importFile').click();
-      });
-      
-      document.getElementById('importFile').addEventListener('change', async function(e) {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        try {
-          const text = await file.text();
-          const data = JSON.parse(text);
-          let sprints = Array.isArray(data) ? data : (data.sprints || data.state?.sprints || []);
-          if (!sprints.length) return alert('Nenhuma sprint encontrada');
-          app.state.sprints = sprints;
-          app.state.selected = 0;
-          app.validateState();
-          app.save();
-          app.render();
-          alert(`✅ ${sprints.length} sprint(s) importada(s)!`);
-        } catch(err) {
-          alert('Erro ao importar: ' + err.message);
-        } finally {
-          e.target.value = '';
-        }
-      });
+document.getElementById('importFile').addEventListener('change', async function(e) {
+  const file = e.target.files?.;
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    
+    // Suportar diferentes formatos de backup
+    let sprints = [];
+    let selected = 0;
+    
+    if (Array.isArray(data)) {
+      // Formato: array direto de sprints
+      sprints = data;
+    } else if (data.state && data.state.sprints) {
+      // Formato: {state: {sprints: [...], selected: 0}}
+      sprints = data.state.sprints;
+      selected = data.state.selected || 0;
+    } else if (data.sprints) {
+      // Formato: {sprints: [...], selected: 0}
+      sprints = data.sprints;
+      selected = data.selected || 0;
+    }
+    
+    if (!sprints.length) {
+      return alert('❌ Nenhuma sprint encontrada no backup.\n\nVerifique se o arquivo está correto.');
+    }
+    
+    // Atualizar o estado
+    app.state.sprints = sprints;
+    app.state.selected = selected;
+    
+    // Validar e salvar
+    app.validateState();
+ 
+
       
       console.log('✅ Event listeners configurados');
     },
