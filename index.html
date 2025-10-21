@@ -120,14 +120,13 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
         <select id="sprintSelect" title="Selecionar sprint"></select>
         <select id="epicFilter" title="Filtrar por épico"><option value="all">Todos os épicos</option></select>
         <button class="btn" id="addSprintBtn">+ Nova Sprint</button>
-        <button class="btn" id="exportBtn" title="Exportar JSON (Backup)">Backup</button>
-        <button class="btn" id="importBtn" title="Importar JSON de backup">Importar</button>
+        <button class="btn" id="exportBtn" title="Exportar JSON (Backup local)">💾 Backup</button>
+        <button class="btn" id="importBtn" title="Importar JSON de backup">📁 Importar</button>
         <input id="importFile" type="file" accept=".json,application/json" style="display:none">
-        <button class="btn" id="cloudBtn" title="Conectar ao Cloud">Cloud</button>
+        <button class="btn" id="cloudBtn" title="Configurar sincronização em tempo real">🌐 Cloud</button>
         <button class="btn warn" id="resetBtn" title="Excluir sprint atual">Limpar</button>
-        <button class="btn primary" id="saveBtn" title="Salvar alterações no navegador">Salvar</button>
         <span id="saveToast" class="pill ok" style="display:none">Salvo!</span>
-        <span id="cloudStatus" class="pill" style="display:none">Conectado</span>
+        <span id="cloudStatus" class="pill warn" style="display:inline-flex">⚠️ Offline</span>
       </div>
     </div>
   </header>
@@ -810,12 +809,6 @@ $('#resetBtn').addEventListener('click', ()=>{
   }
 });
 
-// Botão Salvar manual
-$('#saveBtn').addEventListener('click', () => {
-  saveLocal();
-  flashSaved('Salvo localmente!');
-});
-
 // Atalhos ←/→
 window.addEventListener('keydown', (e) => {
   const tag = (document.activeElement?.tagName || '').toLowerCase();
@@ -933,105 +926,261 @@ window.addEventListener('resize', ()=>{
 </script>
 
 <script type="module">
-// ======= Cloud Sync (Firebase Firestore) =======
-let fb = { app:null, db:null, auth:null, user:null, boardId:null, connected:false, unsub:null };
+// ======= Cloud Sync (Firebase Firestore) - MODO ONLINE =======
+let fb = { 
+  app: null, 
+  db: null, 
+  auth: null, 
+  user: null, 
+  boardId: null, 
+  connected: false, 
+  unsub: null,
+  saving: false,
+  autoConnected: false
+};
 
-async function cloudConnect(){
+// Verifica se já tem credenciais salvas e conecta automaticamente
+async function autoConnect() {
+  const savedCfg = localStorage.getItem('fb_cfg');
+  const savedBoard = localStorage.getItem('fb_board');
+  
+  if (savedCfg && savedBoard && !fb.autoConnected) {
+    console.log('🔄 Tentando conectar automaticamente...');
+    fb.autoConnected = true;
+    try {
+      const cfg = JSON.parse(savedCfg);
+      await cloudConnect(cfg, savedBoard, true);
+    } catch(e) {
+      console.warn('Falha na conexão automática:', e);
+      fb.autoConnected = false;
+    }
+  }
+}
+
+async function cloudConnect(config = null, boardId = null, isAuto = false){
   try{
-    const previousCfg = localStorage.getItem('fb_cfg') || '';
-    const cfgRaw = prompt('Cole o firebaseConfig (JSON do Firebase Console > Project settings > SDK setup):', previousCfg);
-    if(!cfgRaw) return;
-    let cfg;
-    try{ cfg = JSON.parse(cfgRaw); }catch(e){ alert('JSON inválido.'); return; }
+    let cfg = config;
+    let board = boardId;
+    
+    // Se não passou config, perguntar ao usuário
+    if (!cfg) {
+      const previousCfg = localStorage.getItem('fb_cfg') || '';
+      const cfgRaw = prompt('Cole o firebaseConfig (JSON do Firebase Console > Project settings > SDK setup):', previousCfg);
+      if(!cfgRaw) return;
+      try{ cfg = JSON.parse(cfgRaw); }catch(e){ alert('JSON inválido.'); return; }
+    }
+    
+    if (!board) {
+      const prevBoard = localStorage.getItem('fb_board') || 'casal-1';
+      board = prompt('Informe um Board ID único para vocês (ex.: casal-aline-caio):', prevBoard);
+      if(!board) return;
+    }
 
-    const prevBoard = localStorage.getItem('fb_board') || 'casal-1';
-    const boardId = prompt('Informe um Board ID (ex.: casal-1):', prevBoard);
-    if(!boardId) return;
-
-    localStorage.setItem('fb_cfg', cfgRaw);
-    localStorage.setItem('fb_board', boardId);
+    // Salvar credenciais
+    if (!isAuto) {
+      localStorage.setItem('fb_cfg', JSON.stringify(cfg));
+      localStorage.setItem('fb_board', board);
+    }
 
     const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js');
     const { getFirestore, doc, getDoc, setDoc, onSnapshot } = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js');
     const { getAuth, signInAnonymously } = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js');
 
-    if (fb.app) { /* Already initialized */ } else { fb.app = initializeApp(cfg); }
+    // Inicializar Firebase (só uma vez)
+    if (!fb.app) { 
+      fb.app = initializeApp(cfg); 
+      console.log('🔥 Firebase inicializado');
+    }
+    
     fb.db = getFirestore(fb.app);
     fb.auth = getAuth(fb.app);
+    
+    // Login anônimo
     await signInAnonymously(fb.auth);
     fb.user = fb.auth.currentUser;
-    fb.boardId = boardId;
+    fb.boardId = board;
     fb.connected = true;
 
+    console.log('✅ Conectado ao Cloud! Board:', fb.boardId, 'User:', fb.user.uid.slice(0,8));
+
+    // Atualizar UI
     const status = document.getElementById('cloudStatus');
-    if(status){ status.textContent = `Cloud: ${fb.boardId}`; status.className = "pill ok"; status.style.display = 'inline-flex'; }
+    if(status){ 
+      status.textContent = `🌐 ${fb.boardId}`; 
+      status.className = "pill ok"; 
+      status.style.display = 'inline-flex'; 
+    }
 
     const ref = doc(fb.db, 'boards', fb.boardId);
 
+    // Cancelar listener anterior se existir
     if (fb.unsub) fb.unsub();
+    
+    // LISTENER EM TEMPO REAL - quando o Firebase detecta mudança
     fb.unsub = onSnapshot(ref, (snap)=>{
+      if (!snap.exists()) {
+        console.log('📄 Documento não existe ainda, será criado');
+        return;
+      }
+      
       const data = snap.data();
-      if (!data || data.__lastWriteBy === fb.user?.uid) return;
+      
+      // Ignorar se foi este usuário que salvou (evita loop)
+      if (data.__lastWriteBy === fb.user?.uid) {
+        console.log('⏭️ Ignorando update próprio');
+        return;
+      }
+      
+      // Aplicar estado remoto
       if (data.state){
         try{
+          console.log('📥 Recebendo update remoto de:', data.__lastWriteBy?.slice(0,8));
           state = data.state;
           validateState();
-          saveLocal();
+          saveLocal(); // Salvar localmente também
           renderAll();
-          flashSaved('Sincronizado!');
-        }catch(err){ console.error('Falha ao aplicar estado remoto', err); }
+          flashSaved('📡 Atualizado!');
+        }catch(err){ 
+          console.error('❌ Erro ao aplicar estado remoto:', err); 
+        }
+      }
+    }, (error) => {
+      console.error('❌ Erro no listener:', error);
+      fb.connected = false;
+      const status = document.getElementById('cloudStatus');
+      if(status){ 
+        status.textContent = '❌ Erro'; 
+        status.className = "pill danger"; 
       }
     });
 
+    // Carregar estado inicial do Firebase
     const cur = await getDoc(ref);
     if (cur.exists()){
       const data = cur.data();
       if (data.state){
+        console.log('📦 Carregando estado do Cloud...');
         state = data.state;
         validateState();
         saveLocal();
         renderAll();
+        if (!isAuto) flashSaved('Carregado do Cloud!');
       }
-    }else{
+    } else {
+      // Documento não existe, criar com estado atual
+      console.log('💾 Criando documento inicial no Cloud...');
       await cloudSave();
     }
     
-    alert('Conectado ao Cloud com sucesso!');
+    if (!isAuto) {
+      alert('✅ Conectado ao Cloud!\n\nAgora vocês dois verão as mudanças em tempo real.\n\nBoard ID: ' + fb.boardId);
+    } else {
+      console.log('✅ Reconectado automaticamente');
+    }
+    
   }catch(err){
-    console.error(err);
-    alert('Erro ao conectar ao Cloud. Veja o console.');
+    console.error('❌ Erro ao conectar:', err);
+    fb.connected = false;
+    const status = document.getElementById('cloudStatus');
+    if(status){ 
+      status.textContent = '❌ Offline'; 
+      status.className = "pill danger"; 
+    }
+    if (!isAuto) {
+      alert('❌ Erro ao conectar ao Cloud:\n\n' + err.message + '\n\nVerifique:\n1. firebaseConfig correto\n2. Firestore habilitado\n3. Regras de segurança configuradas');
+    }
   }
 }
 
+// Salvar no Cloud
 async function cloudSave(){
-  if (!fb.connected || !fb.db || !fb.user) return;
+  if (!fb.connected || !fb.db || !fb.user || fb.saving) {
+    console.log('⏸️ Cloud save ignorado (não conectado ou já salvando)');
+    return;
+  }
+  
+  fb.saving = true;
+  
   try{
     const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js');
     const ref = doc(fb.db, 'boards', fb.boardId);
+    
+    // Limpar undefined values (Firestore não aceita)
     const cleanState = JSON.parse(JSON.stringify(state));
-    await setDoc(ref, { state: cleanState, __lastWriteAt: Date.now(), __lastWriteBy: fb.user.uid });
-    console.log('☁️ Salvo no Cloud');
+    
+    await setDoc(ref, { 
+      state: cleanState, 
+      __lastWriteAt: Date.now(), 
+      __lastWriteBy: fb.user.uid 
+    });
+    
+    console.log('☁️ Salvo no Cloud às', new Date().toLocaleTimeString());
+    
+    // Feedback visual
+    const status = document.getElementById('cloudStatus');
+    if(status){ 
+      const originalText = status.textContent;
+      status.textContent = '💾 Salvando...'; 
+      setTimeout(() => {
+        status.textContent = originalText;
+      }, 800);
+    }
+    
   }catch(err){
-    console.warn('cloudSave falhou:', err);
+    console.error('❌ cloudSave falhou:', err);
+    fb.connected = false;
+    const status = document.getElementById('cloudStatus');
+    if(status){ 
+      status.textContent = '❌ Erro ao salvar'; 
+      status.className = "pill danger"; 
+    }
+  } finally {
+    fb.saving = false;
   }
 }
 
-// CORRIGIDO: Observar mudanças no estado e sincronizar
-let saveTimeout;
-const originalSave = window.saveLocal;
+// INTERCEPTAR saveLocal para também salvar no cloud
+let cloudSaveTimeout;
+const originalSaveLocal = window.saveLocal;
 window.saveLocal = function() {
-  originalSave.apply(this, arguments);
+  // Salvar localmente primeiro (rápido)
+  originalSaveLocal.apply(this, arguments);
   
-  // Debounce cloud save
-  clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(() => {
-    if (fb.connected) {
+  // Salvar no cloud com debounce (evitar excesso de writes)
+  if (fb.connected) {
+    clearTimeout(cloudSaveTimeout);
+    cloudSaveTimeout = setTimeout(() => {
       cloudSave();
-    }
-  }, 500);
+    }, 300); // 300ms de debounce
+  }
 };
 
-document.getElementById('cloudBtn')?.addEventListener('click', cloudConnect);
+// Botões
+document.getElementById('cloudBtn')?.addEventListener('click', () => cloudConnect());
+
+// Tentar conectar automaticamente ao carregar
+setTimeout(() => {
+  autoConnect();
+}, 500);
+
+// Monitorar conexão
+window.addEventListener('online', () => {
+  console.log('🌐 Internet restaurada');
+  if (!fb.connected) {
+    autoConnect();
+  }
+});
+
+window.addEventListener('offline', () => {
+  console.warn('📡 Sem internet - modo offline');
+  const status = document.getElementById('cloudStatus');
+  if(status){ 
+    status.textContent = '📡 Offline'; 
+    status.className = "pill warn"; 
+  }
+});
+
+// ======= /Cloud Sync =======
 </script>
 </body>
 </html>
