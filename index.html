@@ -5,18 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Sprint Tracker</title>
 <style>
-:root{
-  --bg:#0f1220; --panel:#171a2b; --muted:#9aa3b2; --text:#e8ecf5;
-  --accent:#6ee7b7; --accent2:#60a5fa; --danger:#f87171; --warn:#fbbf24;
-  --card:#1e2338; --border:#2b3151;
-}
+:root{--bg:#0f1220;--panel:#171a2b;--muted:#9aa3b2;--text:#e8ecf5;--accent:#6ee7b7;--accent2:#60a5fa;--danger:#f87171;--warn:#fbbf24;--card:#1e2338;--border:#2b3151}
 *{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,system-ui,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;
-     background: radial-gradient(120% 80% at 100% 10%,#112033 0%,transparent 60%),
-                 radial-gradient(90% 80% at 0% 100%,#182036 0%,transparent 60%),
-                 var(--bg); color:var(--text)}
-header{position:sticky;top:0;z-index:5;background:linear-gradient(180deg,rgba(15,18,32,.95),rgba(15,18,32,.85));
-       backdrop-filter:saturate(140%) blur(8px);border-bottom:1px solid var(--border);padding:16px 0}
+body{margin:0;font-family:-apple-system,system-ui,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;background:radial-gradient(120% 80% at 100% 10%,#112033 0%,transparent 60%),radial-gradient(90% 80% at 0% 100%,#182036 0%,transparent 60%),var(--bg);color:var(--text)}
+header{position:sticky;top:0;z-index:5;background:linear-gradient(180deg,rgba(15,18,32,.95),rgba(15,18,32,.85));backdrop-filter:saturate(140%) blur(8px);border-bottom:1px solid var(--border);padding:16px 0}
 .wrap{max-width:1400px;margin:0 auto;padding:14px}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .row-between{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
@@ -43,11 +35,7 @@ main .wrap{display:grid;grid-template-columns:1fr;gap:14px}
 .dropzone{display:flex;flex-direction:column;gap:8px;min-height:220px}
 .task{background:#121a2f;border:1px solid var(--border);border-radius:12px;padding:10px}
 .task.done{opacity:.8}
-.task.done .title,
-.task[data-status="done"] .title {
-  text-decoration: line-through;
-  opacity: 0.8;
-}
+.task.done .title,.task[data-status="done"] .title{text-decoration:line-through;opacity:0.8}
 .pill{padding:8px 14px;border:1px solid var(--border);border-radius:999px;color:var(--muted);font-size:0.9rem;white-space:nowrap}
 .pill.ok{border-color:#2e7d32;color:#a5d6a7;background:rgba(46,125,50,.12)}
 .pill.warn{border-color:#7c5f1a;color:#f5d08a;background:rgba(245,158,11,.12)}
@@ -61,11 +49,11 @@ main .wrap{display:grid;grid-template-columns:1fr;gap:14px}
 .bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
 .n{font-weight:700}
 .muted{color:var(--muted)}
-.task .title{font-weight:700; font-size:1rem}
-.task.done-like .title{text-decoration:line-through; opacity:.8}
-.task .notes{color:var(--muted); margin-top:6px; white-space:pre-line; font-size:0.86rem; line-height:1.3}
+.task .title{font-weight:700;font-size:1rem}
+.task.done-like .title{text-decoration:line-through;opacity:.8}
+.task .notes{color:var(--muted);margin-top:6px;white-space:pre-line;font-size:0.86rem;line-height:1.3}
 .task .footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
-.task .footer .mini{color:var(--muted); font-size:0.86rem}
+.task .footer .mini{color:var(--muted);font-size:0.86rem}
 dialog{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:16px;max-height:90vh;overflow-y:auto}
 dialog::backdrop{background:rgba(0,0,0,.6)}
 .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
@@ -73,60 +61,16 @@ details{margin:12px 0;padding:12px;background:var(--card);border-radius:10px;bor
 details summary{cursor:pointer;font-weight:600;color:var(--accent);list-style:none}
 details summary::-webkit-details-marker{display:none}
 details[open] summary{margin-bottom:8px}
-/* Mini calendário */
 .minical{display:inline-block;border:1px solid var(--border);border-radius:10px;padding:8px;margin-top:6px}
 .minical header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;color:var(--muted)}
 .minical table{border-collapse:collapse}
 .minical th,.minical td{width:28px;height:24px;text-align:center}
 .minical td button{width:24px;height:24px;border:1px solid transparent;background:transparent;color:var(--text);border-radius:6px;cursor:pointer}
 .minical td button.sel{border-color:#3b82f6;background:rgba(59,130,246,.15)}
-
-/* --- Mobile tweaks (responsive) --- */
-@media (max-width: 900px){
-  .wrap{padding:12px}
-  header{padding:12px 0}
-  .panel{padding:14px}
-  .statsGrid{grid-template-columns:1fr}
-  .header-top{margin-bottom:10px}
-}
-@media (max-width: 768px){
-  h1{font-size:1.4rem}
-  .btn{padding:7px 10px;font-size:0.9rem}
-  select{font-size:0.9rem;padding:7px}
-  .header-actions{gap:6px}
-  .divider{display:none}
-}
-@media (max-width: 520px){
-  header{padding:10px 0}
-  .wrap{padding:10px}
-  .header-top{flex-wrap:wrap;gap:8px;margin-bottom:8px}
-  .header-actions{gap:5px}
-  .row{gap:6px}
-  .btn{padding:6px 8px;border-radius:10px;font-size:0.85rem}
-  select,input,textarea{font-size:0.95rem;padding:7px 9px}
-  h1{font-size:1.25rem}
-  #dateBadge{font-size:0.82rem;padding:5px 9px}
-  #cloudStatus{font-size:0.82rem;padding:5px 9px}
-  .panel{border-radius:14px;padding:12px}
-  .kanban .col{min-height:140px;padding:10px}
-  .task{padding:10px;border-radius:12px}
-  .task .title{font-size:0.95rem}
-  .task .notes{font-size:0.80rem; line-height:1.3}
-  .task .footer .mini{font-size:0.80rem}
-  .pill{padding:4px 8px;font-size:0.80rem}
-  dialog{width:95vw !important;max-width:95vw !important;padding:16px !important;margin:auto}
-  #cloudConfigModal form{width:100% !important;padding:16px !important}
-  #cloudCfgInput{min-height:120px !important;font-size:0.75rem !important}
-  details{padding:10px}
-  details summary{font-size:0.9rem}
-}
-@media (max-width: 360px){
-  h1{font-size:1.15rem}
-  #dateBadge{font-size:0.76rem}
-  #cloudStatus{font-size:0.76rem}
-}
-
-/* Stats cards like screenshot */
+@media (max-width: 900px){.wrap{padding:12px}header{padding:12px 0}.panel{padding:14px}.statsGrid{grid-template-columns:1fr}.header-top{margin-bottom:10px}}
+@media (max-width: 768px){h1{font-size:1.4rem}.btn{padding:7px 10px;font-size:0.9rem}select{font-size:0.9rem;padding:7px}.header-actions{gap:6px}.divider{display:none}}
+@media (max-width: 520px){header{padding:10px 0}.wrap{padding:10px}.header-top{flex-wrap:wrap;gap:8px;margin-bottom:8px}.header-actions{gap:5px}.row{gap:6px}.btn{padding:6px 8px;border-radius:10px;font-size:0.85rem}select,input,textarea{font-size:0.95rem;padding:7px 9px}h1{font-size:1.25rem}#dateBadge{font-size:0.82rem;padding:5px 9px}#cloudStatus{font-size:0.82rem;padding:5px 9px}.panel{border-radius:14px;padding:12px}.kanban .col{min-height:140px;padding:10px}.task{padding:10px;border-radius:12px}.task .title{font-size:0.95rem}.task .notes{font-size:0.80rem;line-height:1.3}.task .footer .mini{font-size:0.80rem}.pill{padding:4px 8px;font-size:0.80rem}dialog{width:95vw !important;max-width:95vw !important;padding:16px !important;margin:auto}#cloudConfigModal form{width:100% !important;padding:16px !important}#cloudCfgInput{min-height:120px !important;font-size:0.75rem !important}details{padding:10px}details summary{font-size:0.9rem}}
+@media (max-width: 360px){h1{font-size:1.15rem}#dateBadge{font-size:0.76rem}#cloudStatus{font-size:0.76rem}}
 .statsGrid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px}
 @media (min-width:900px){.statsGrid{grid-template-columns:1fr 1fr}}
 .statCard{background:#11172d;border:1px solid var(--border);border-radius:14px;padding:14px}
@@ -331,1278 +275,417 @@ details[open] summary{margin-bottom:8px}
     </form>
   </dialog>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.3/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.3/firebase-firestore-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.3/firebase-auth-compat.min.js"></script>
+
 <script>
-// ================== Helpers ==================
-const $ = s => document.querySelector(s);
-const $$ = s => Array.from(document.querySelectorAll(s));
-const fmtDate = iso => new Date(`${iso}T00:00:00`).toLocaleDateString('pt-BR');
-const addDays = (iso, n) => { const d = new Date(`${iso}T00:00:00`); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
-
-function flashSaved(msg){
-  const el = document.getElementById('saveToast');
-  if(!el) return;
-  el.textContent = msg || 'Salvo!';
-  el.style.display = 'inline-flex';
-  setTimeout(()=>{ el.style.display='none'; }, 1400);
-}
-
-function escapeHtml(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
-
-// ================== Estado (LocalStorage) ==================
-const LS_KEY = 'sprint-tracker-v2-offline';
-const LS_BACKUP_KEY = 'sprint-tracker-backup';
-let state = { sprints: [], selected: 0 };
-let isApplyingRemoteUpdate = false; // NOVO: Flag para evitar loop
-
-// CORRIGIDO: Função save com backup automático e disponível globalmente
-window.saveLocal = function(skipCloud = false){ 
-  try {
-    // Fazer backup antes de salvar
-    const currentData = localStorage.getItem(LS_KEY);
-    if (currentData) {
-      localStorage.setItem(LS_BACKUP_KEY, currentData);
-    }
+// IMPORTANTE: Este arquivo só inicializa UMA VEZ
+if (!window.SprintApp) {
+  console.log('🚀 Iniciando Sprint Tracker...');
+  
+  window.SprintApp = {
+    state: {sprints:[], selected:0},
+    fb: {app:null,db:null,auth:null,user:null,boardId:null,connected:false,unsub:null,saving:false},
+    LS_KEY: 'sprint-tracker-v2-offline',
+    LS_BACKUP_KEY: 'sprint-tracker-backup',
     
-    // Salvar novo estado
-    localStorage.setItem(LS_KEY, JSON.stringify(state)); 
-    console.log('💾 Salvo no localStorage:', state.sprints.length, 'sprints');
+    init() {
+      this.load();
+      this.setupUI();
+      this.setupEvents();
+      this.render();
+      setTimeout(() => this.autoConnect(), 1000);
+    },
     
-    // Se não for update remoto e não deve pular cloud, salvar no cloud
-    if (!skipCloud && !isApplyingRemoteUpdate && window.fb && window.fb.connected) {
-      clearTimeout(window.cloudSaveTimeout);
-      window.cloudSaveTimeout = setTimeout(() => {
-        cloudSave();
-      }, 800); // Aumentado para 800ms para evitar salvamentos excessivos
-    }
-  } catch(e) {
-    console.error('Erro ao salvar:', e);
-    alert('⚠️ Erro ao salvar dados localmente! Veja o console.');
-  }
-}
-
-// Alias para compatibilidade
-const saveLocal = window.saveLocal;
-
-// CORRIGIDO: Validar estado após carregar
-function validateState() {
-  if (!state || typeof state !== 'object') {
-    console.warn('Estado inválido, criando novo');
-    state = { sprints: [], selected: 0 };
-    return false;
-  }
-  if (!Array.isArray(state.sprints)) {
-    console.warn('sprints não é array, corrigindo');
-    state.sprints = [];
-  }
-  if (typeof state.selected !== 'number' || state.selected < 0) {
-    state.selected = 0;
-  }
-  // Garantir que selected está dentro dos limites
-  if (state.selected >= state.sprints.length) {
-    state.selected = Math.max(0, state.sprints.length - 1);
-  }
-  // Garantir que cada sprint tem estrutura básica
-  state.sprints.forEach(s => {
-    if (!s.id) s.id = crypto.randomUUID();
-    if (!s.name) s.name = 'Sprint';
-    if (!Array.isArray(s.tasks)) s.tasks = [];
-    if (!Array.isArray(s.epics)) s.epics = [];
-  });
-  return true;
-}
-
-// NOVO: Tentar recuperar de backup
-function tryRecoverFromBackup() {
-  try {
-    const backup = localStorage.getItem(LS_BACKUP_KEY);
-    if (backup) {
-      console.log('🔄 Tentando recuperar do backup...');
-      const recovered = JSON.parse(backup);
-      if (recovered && recovered.sprints && recovered.sprints.length > 0) {
-        state = recovered;
-        console.log('✅ Recuperado do backup!', state.sprints.length, 'sprints');
-        saveLocal();
-        return true;
-      }
-    }
-  } catch(e) {
-    console.error('Falha ao recuperar backup:', e);
-  }
-  return false;
-}
-
-function load(){
-  try{ 
-    const raw = localStorage.getItem(LS_KEY); 
-    if(raw) {
-      state = JSON.parse(raw) || { sprints: [], selected: 0 };
-      console.log('📂 Carregado do localStorage:', state.sprints.length, 'sprints');
-      
-      // Se não tem sprints, tentar recuperar do backup
-      if (!state.sprints || state.sprints.length === 0) {
-        console.warn('⚠️ Nenhuma sprint encontrada! Tentando backup...');
-        if (!tryRecoverFromBackup()) {
-          console.log('💡 Criando estado inicial...');
-          createInitial();
-        }
-      }
-    } else {
-      console.log('📦 Primeira vez - tentando backup primeiro...');
-      if (!tryRecoverFromBackup()) {
-        createInitial();
-      }
-    }
-  }catch(e){
-    console.error('Erro ao carregar:', e);
-    console.log('🔄 Tentando recuperar do backup...');
-    if (!tryRecoverFromBackup()) {
-      createInitial();
-    }
-  }
-  
-  validateState();
-}
-
-load();
-
-// ================== Mini Calendário ==================
-function minicalRender(containerId){
-  const el = document.getElementById(containerId); if(!el) return;
-  const forInput = document.getElementById(el.dataset.for); if(!forInput) return;
-  const base = forInput.value ? new Date(forInput.value+'T00:00:00') : new Date();
-  const year = base.getFullYear(); const month = base.getMonth();
-  const start = new Date(year, month, 1);
-  const end = new Date(year, month+1, 0);
-  const weeks = ['D','S','T','Q','Q','S','S'];
-  let h = '<header><button data-nav="-1" class="btn ghost">‹</button><span>'+start.toLocaleString('pt-BR',{month:'long',year:'numeric'})+'</span><button data-nav="1" class="btn ghost">›</button></header>';
-  h += '<table><thead><tr>'+weeks.map(w=>'<th class="muted">'+w+'</th>').join('')+'</tr></thead><tbody>';
-  const pad = start.getDay();
-  let day=1, rows='';
-  for(let r=0;r<6;r++){
-    let t='<tr>';
-    for(let c=0;c<7;c++){
-      if (r===0 && c<pad) t+='<td></td>';
-      else if (day> end.getDate()) t+='<td></td>';
-      else{
-        const dstr = new Date(year,month,day).toISOString().slice(0,10);
-        const sel = (forInput.value===dstr)?' sel':'';
-        t += `<td><button data-day="${dstr}" class="${sel}">${day}</button></td>`;
-        day++;
-      }
-    }
-    t+='</tr>'; rows+=t; if(day> end.getDate()) break;
-  }
-  h += rows + '</tbody></table>';
-  el.innerHTML = h;
-  el.querySelectorAll('button[data-day]').forEach(b=> b.addEventListener('click',()=>{ forInput.value = b.dataset.day; minicalRender(containerId);}));
-  el.querySelectorAll('button[data-nav]').forEach(b=> b.addEventListener('click',()=>{
-    const offset = Number(b.dataset.nav);
-    const cur = forInput.value ? new Date(forInput.value+'T00:00:00') : new Date();
-    cur.setMonth(cur.getMonth()+offset);
-    forInput.value = cur.toISOString().slice(0,10);
-    minicalRender(containerId);
-  }));
-}
-
-// ================== Render ==================
-function currentSprint(){ 
-  if (!state.sprints || state.sprints.length === 0) return null;
-  if (state.selected < 0 || state.selected >= state.sprints.length) {
-    state.selected = 0;
-  }
-  return state.sprints[state.selected]; 
-}
-
-function renderSprintOptions(){
-  const sp = currentSprint();
-  const html = state.sprints.map((s, idx) => 
-    `<option value="${idx}" ${idx===state.selected?'selected':''}>${escapeHtml(s.name || 'Sprint')}</option>`
-  ).join('');
-  $('#sprintSelect').innerHTML = html;
-  console.log('📋 Renderizadas', state.sprints.length, 'sprints, selecionada:', state.selected);
-}
-
-function renderHeader(){
-  const sp = currentSprint(); 
-  if(!sp) {
-    $('#sprintTitle').textContent = 'Sprint';
-    $('#dateBadge').textContent = '—';
-    return;
-  }
-  const total = Math.max(1, Math.ceil((new Date(sp.end) - new Date(sp.start)) / 864e5));
-  const left = Math.max(0, Math.ceil((new Date(sp.end) - new Date()) / 864e5));
-  const ratio = left / total;
-  let cls = 'ok'; 
-  if (ratio <= 1/3) cls = 'danger'; 
-  else if (ratio <= 2/3) cls = 'warn';
-  
-  $('#sprintTitle').textContent = sp.name || 'Sprint';
-  const badge = $('#dateBadge');
-  badge.className = `pill ${cls}`;
-  
-  // Formato melhorado da data
-  const startDate = new Date(sp.start + 'T00:00:00');
-  const endDate = new Date(sp.end + 'T00:00:00');
-  
-  const formatShort = (d) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-  const formatLong = (d) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
-  
-  const isSmall = window.innerWidth <= 768;
-  
-  if (isSmall) {
-    badge.textContent = `${formatShort(startDate)} → ${formatShort(endDate)} • ${left}d`;
-  } else {
-    badge.textContent = `${formatLong(startDate)} → ${formatLong(endDate)} • ${left}/${total} dias`;
-  }
-}
-
-function calcTotals(tasks){
-  const fib = n => Number(n)||0;
-  const byAssignee = { Aline:{who:'Aline',total:0,done:0,notdone:0}, Caio:{who:'Caio',total:0,done:0,notdone:0} };
-  (tasks||[]).forEach(t=>{
-    const a = byAssignee[t.assignee]; const pts = fib(t.points);
-    if(a){ a.total+=pts; if(t.status==='done') a.done+=pts; if(t.status==='notdone') a.notdone+=pts; }
-  });
-  return { total: byAssignee.Aline.total + byAssignee.Caio.total, byAssignee };
-}
-
-function renderStats(){
-  const sp = currentSprint(); 
-  if (!sp) return;
-  
-  const tasks = sp.tasks||[]; 
-  const totals = calcTotals(tasks);
-  const {Aline, Caio} = totals.byAssignee;
-  
-  const alinePct = Aline.total? Math.round((Aline.done/Aline.total)*100):0;
-  const caioPct  = Caio.total? Math.round((Caio.done/Caio.total)*100):0;
-  $('#progressAlineBar').style.width = `${alinePct}%`; $('#progressAlinePct').textContent = `${alinePct}%`;
-  $('#progressCaioBar').style.width = `${caioPct}%`; $('#progressCaioPct').textContent = `${caioPct}%`;
-  $('#concluidoAline').textContent = `Concluído Aline: ${Aline.done} pts`;
-  $('#concluidoCaio').textContent = `Concluído Caio: ${Caio.done} pts`;
-  
-  $('#todoCount').textContent  = tasks.filter(t=>t.status==='todo').length;
-  $('#doingCount').textContent = tasks.filter(t=>t.status==='doing').length;
-  $('#doneCount').textContent  = tasks.filter(t=>t.status==='done').length;
-  $('#notDoneCount').textContent = tasks.filter(t=>t.status==='notdone').length;
-  
-  const makeCard = (b) => {
-    const pctDone = b.total? Math.round((b.done/b.total)*100):0;
-    const pctNot  = b.total? Math.round((b.notdone/b.total)*100):0;
-    const share   = totals.total? Math.round((b.total/totals.total)*100):0;
-    return `<div class="statCard">
-      <div class="muted">${b.who}</div>
-      <h4 class="n">Planejados: ${b.total} pts</h4>
-      <div class="muted">Entregues: ${b.done} pts · Não concl.: ${b.notdone} pts</div>
-      <div class="miniLabel">Progresso</div>
-      <div class="progress"><div class="bar" style="width:${pctDone}%"></div></div>
-      <div class="muted">Conclusão: ${pctDone}%</div>
-      <div class="miniLabel">Não concluídas</div>
-      <div class="progress"><div class="bar" style="width:${pctNot}%"></div></div>
-      <div class="muted">${pctNot}% dos pontos</div>
-      <div class="miniLabel">Participação</div>
-      <div class="progress"><div class="bar" style="width:${share}%"></div></div>
-      <div class="muted">${share}% dos pontos</div>
-    </div>`;
-  };
-  $('#statsCards').innerHTML = [makeCard(Aline), makeCard(Caio)].join('');
-}
-
-function makeDraggable(card){
-  card.addEventListener('dragstart',()=>card.classList.add('dragging'));
-  card.addEventListener('dragend',()=>card.classList.remove('dragging'));
-}
-function getDragAfterElement(container, y){
-  const draggables = [...container.querySelectorAll('.task:not(.dragging)')];
-  return draggables.reduce((closest, child) => {
-    const box = child.getBoundingClientRect();
-    const offset = y - box.top - box.height / 2;
-    return (offset < 0 && offset > closest.offset) ? { offset, element: child } : closest;
-  }, { offset: Number.NEGATIVE_INFINITY }).element;
-}
-function persistOrder(status){
-  const sp = currentSprint(); if (!sp) return;
-  const ids = $$(`#${status} .task`).map(el=>el.dataset.id);
-  sp.tasks.forEach(t=>{ if(t.status===status) t._order = ids.indexOf(t.id); });
-  saveLocal();
-}
-function moveTask(id,newStatus){
-  const sp = currentSprint(); 
-  if (!sp) return;
-  const t = sp.tasks.find(x=>x.id===id); 
-  if(!t) return;
-  t.status = newStatus;
-  if(newStatus==='doing' && !t.startedAt) t.startedAt = new Date().toISOString().slice(0,10);
-  if(newStatus!=='doing') delete t.startedAt;
-  if(newStatus==='done' && !t.doneAt) t.doneAt = new Date().toISOString().slice(0,10);
-  if(newStatus!=='done' && t.doneAt) delete t.doneAt;
-  if(newStatus==='notdone' && t.doneAt) delete t.doneAt;
-  saveLocal();
-  renderStats();
-}
-
-function renderBoard(){
-  $$('.dropzone').forEach(col=>col.innerHTML='');
-  const sp = currentSprint(); 
-  if (!sp) return;
-  
-  const epFilter = $('#epicFilter').value;
-  const tasks = (sp.tasks||[]).filter(t => epFilter==='all' || t.epicId===epFilter);
-  tasks.sort((a,b)=>(a._order||0)-(b._order||0));
-  tasks.forEach(task => {
-    const card = document.createElement('article');
-    const doneLike = (task.status==='done' || task.status==='notdone');
-    card.className = `task${task.status==='done'?' done':''}${doneLike?' done-like':''}`;
-    card.draggable = true; card.dataset.id = task.id;
-    const epicName = (sp.epics || []).find(e=>e.id===task.epicId)?.name || 'Sem épico';
-    const tagsHTML = (task.tags||[]).map(tag=>`<span class="badge tag">${escapeHtml(tag)}</span>`).join('');
-    let daysHTML=''; if(task.status==='doing' && task.startedAt){
-      const diff = Math.ceil(Math.abs(new Date()-new Date(`${task.startedAt}T00:00:00`))/864e5);
-      daysHTML = `<span class="badge warn" style="margin-left:auto">Há ${diff} dia(s)</span>`;
-    }
-    const total = Array.isArray(task.checklist) ? task.checklist.length : 0;
-    const done = total ? task.checklist.filter(i=>i.done).length : 0;
-    const pct  = total ? Math.round((done/total)*100) : 0;
-
-    const notesPreview = task.notes ? `<div class="notes">${escapeHtml(task.notes).slice(0,180)}</div>` : '';
-
-    card.innerHTML = `<div class="row-between"><div class="title">${escapeHtml(task.title)}</div>${daysHTML}</div>
-      <div class="row" style="gap:6px;margin-top:4px;flex-wrap:wrap">
-        <span class="badge epic">${escapeHtml(epicName)}</span>
-        <span class="badge points">${escapeHtml(String(task.points))} pts</span>
-        <span class="badge">👤 ${escapeHtml(task.assignee)}</span>
-        ${tagsHTML}
-      </div>
-      ${notesPreview}
-      <div class="footer">
-        <div class="mini">Checklist</div>
-        <div class="mini">${done}/${total} (${pct}%)</div>
-      </div>
-      <div class="progress"><div class="bar" style="width:${pct}%"></div></div>`;
-    makeDraggable(card);
-    card.addEventListener('dblclick',()=>openEdit(task.id));
-    $(`#${task.status}`).appendChild(card);
-  });
-}
-
-// ======= Edição de tarefa (modal) =======
-let et_currentId = null;
-function openEdit(id){
-  const sp = currentSprint(); 
-  if (!sp) return;
-  const t = sp.tasks.find(x=>x.id===id); 
-  if(!t) return;
-  et_currentId = id;
-  $('#et_title').value = t.title || '';
-  $('#et_assignee').value = t.assignee || 'Aline';
-  $('#et_points').value = String(t.points || 0);
-  $('#et_status').value = t.status || 'todo';
-  const epOpts = (sp.epics||[]).map(e=>`<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
-  $('#et_epic').innerHTML = `<option value="">Épico…</option>${epOpts}`;
-  $('#et_epic').value = t.epicId || '';
-  $('#et_tags').value = (t.tags||[]).join(', ');
-  $('#et_notes').value = t.notes || '';
-  if(!Array.isArray(t.checklist)) t.checklist = [];
-  renderChecklistModal(t);
-  $('#editTaskModal').showModal();
-}
-function renderChecklistModal(t){
-  const host = $('#et_checklist'); host.innerHTML='';
-  const total = t.checklist.length || 0;
-  const done = t.checklist.filter(i=>i.done).length;
-  const pct = total? Math.round((done/total)*100):0;
-  $('#et_checkMeta').textContent = `Checklist (${done}/${total} — ${pct}%)`;
-  t.checklist.forEach((item, idx)=>{
-    const row = document.createElement('div');
-    row.className = 'row'; row.style.justifyContent='space-between';
-    row.innerHTML = `<label class="row" style="gap:8px;align-items:center;flex:1">
-        <input type="checkbox" ${item.done?'checked':''} data-idx="${idx}">
-        <span class="itemText" style="${item.done?'text-decoration:line-through;opacity:.7':''}">${escapeHtml(item.text||'')}</span>
-      </label>
-      <button class="btn" data-del="${idx}" type="button">×</button>`;
-    host.appendChild(row);
-  });
-  host.querySelectorAll('input[type="checkbox"]').forEach(ch => ch.addEventListener('change', e=>{
-    const i = Number(e.target.dataset.idx); t.checklist[i].done = e.target.checked; renderChecklistModal(t);
-  }));
-  host.querySelectorAll('button[data-del]').forEach(btn => btn.addEventListener('click', ()=>{
-    const i = Number(btn.dataset.del); t.checklist.splice(i,1); renderChecklistModal(t);
-  }));
-}
-$('#et_addItem').addEventListener('click', ()=>{
-  const sp = currentSprint(); 
-  if (!sp) return;
-  const t = sp.tasks.find(x=>x.id===et_currentId); 
-  if(!t) return;
-  const txt = String($('#et_newItem').value||'').trim(); if(!txt) return;
-  if(!Array.isArray(t.checklist)) t.checklist = [];
-  t.checklist.push({ text: txt, done: false });
-  $('#et_newItem').value = '';
-  renderChecklistModal(t);
-});
-$('#et_save').addEventListener('click', (e)=>{
-  e.preventDefault();
-  const sp = currentSprint(); 
-  if (!sp) return;
-  const t = sp.tasks.find(x=>x.id===et_currentId); 
-  if(!t) return;
-  t.title = String($('#et_title').value||'').trim();
-  t.assignee = $('#et_assignee').value;
-  t.points = Number($('#et_points').value||0);
-  const newStatus = $('#et_status').value;
-  if(newStatus !== t.status){
-    moveTask(t.id, newStatus);
-  }
-  t.epicId = $('#et_epic').value || '';
-  t.tags = String($('#et_tags').value||'').split(',').map(s=>s.trim()).filter(Boolean);
-  t.notes = $('#et_notes').value || '';
-  $('#editTaskModal').close();
-  saveLocal(); 
-  renderBoard(); 
-  renderStats();
-});
-$('#et_delete').addEventListener('click', ()=>{
-  if(!confirm('Excluir esta tarefa?')) return;
-  const sp = currentSprint(); 
-  if (!sp) return;
-  sp.tasks = (sp.tasks||[]).filter(x=>x.id!==et_currentId);
-  $('#editTaskModal').close();
-  saveLocal(); 
-  renderBoard(); 
-  renderStats();
-});
-
-// ================== Interações ==================
-// CORRIGIDO: Trocar de sprint de forma segura
-$('#sprintSelect').addEventListener('change', e=>{
-  const idx = Number(e.target.value);
-  console.log('🔄 Trocando para sprint', idx);
-  if(idx >= 0 && idx < state.sprints.length){
-    state.selected = idx;
-    saveLocal();
-    renderAll();
-    flashSaved('Sprint alterada!');
-  }
-});
-
-$('#epicFilter').addEventListener('change', ()=>renderBoard());
-
-$('#taskForm').addEventListener('submit', e=>{
-  e.preventDefault();
-  const fd = new FormData(e.target); 
-  const sp = currentSprint();
-  if(!sp) return;
-  if(!sp.tasks) sp.tasks = [];
-  const newTask = {
-    id: crypto.randomUUID(),
-    title: String(fd.get('title')||'').trim(),
-    epicId: String(fd.get('epicId')||''),
-    tags: String(fd.get('tags')||'').split(',').map(s=>s.trim()).filter(Boolean),
-    assignee: String(fd.get('assignee')||'Aline'),
-    points: Number(fd.get('points')||0),
-    status: String(fd.get('status')||'todo'),
-    notes:'', checklist: []
-  };
-  if(newTask.status === 'doing') newTask.startedAt = new Date().toISOString().slice(0,10);
-  sp.tasks.push(newTask);
-  e.target.reset();
-  saveLocal(); 
-  renderBoard(); 
-  renderStats();
-  flashSaved('Tarefa adicionada!');
-});
-
-$('#addSprintBtn').addEventListener('click', ()=>{
-  const last = state.sprints[state.sprints.length-1];
-  const todayISO = new Date().toISOString().slice(0,10);
-  $('#newSprintName').value = `Sprint ${state.sprints.length+1}`;
-  $('#startDate').value = last ? last.end : todayISO;
-  $('#endDate').value = last ? addDays(last.end||todayISO, 14) : addDays(todayISO, 14);
-  $('#sprintModal').showModal();
-  setTimeout(()=>{ minicalRender('minicalCreateStart'); minicalRender('minicalCreateEnd'); },0);
-});
-
-$('#sprintForm').addEventListener('submit', e=>{
-  e.preventDefault();
-  const sd = $('#startDate').value; const ed = $('#endDate').value;
-  if (sd && ed && new Date(sd) > new Date(ed)) { alert('A data de FIM não pode ser anterior à data de INÍCIO.'); return; }
-  const f = new FormData(e.target); 
-  const prev = currentSprint();
-  const newSprint = {
-    id: crypto.randomUUID(), 
-    name: String(f.get('name')||'Sprint').trim(),
-    start: String(f.get('start')||''), 
-    end: String(f.get('end')||''),
-    epics: prev?.epics ? JSON.parse(JSON.stringify(prev.epics)) : [],
-    tasks: [], 
-    createdAt: Date.now()
-  };
-  state.sprints.push(newSprint); 
-  state.selected = state.sprints.length-1;
-  $('#sprintModal').close(); 
-  saveLocal(); 
-  renderAll();
-  flashSaved('Sprint criada!');
-  console.log('✨ Nova sprint criada:', newSprint.name);
-});
-
-$('#editSprintBtn').addEventListener('click', ()=>{
-  const sp = currentSprint(); if(!sp) return;
-  $('#editSprintName').value = sp.name||'';
-  $('#editStartDate').value = sp.start||'';
-  $('#editEndDate').value = sp.end||'';
-  $('#editSprintModal').showModal();
-  setTimeout(()=>{ minicalRender('minicalEditStart'); minicalRender('minicalEditEnd'); },0);
-});
-
-$('#editSprintForm').addEventListener('submit', e=>{
-  e.preventDefault();
-  const sd = $('#editStartDate').value; const ed = $('#editEndDate').value;
-  if (sd && ed && new Date(sd) > new Date(ed)) { alert('A data de FIM não pode ser anterior à data de INÍCIO.'); return; }
-  const sp = currentSprint(); 
-  if (!sp) return;
-  const f = new FormData(e.target);
-  sp.name = String(f.get('name')||sp.name).trim();
-  sp.start = String(f.get('start')||sp.start);
-  sp.end   = String(f.get('end')||sp.end);
-  $('#editSprintModal').close(); 
-  saveLocal(); 
-  renderAll();
-  flashSaved('Sprint editada!');
-});
-
-$('#addEpicBtn').addEventListener('click', ()=>{
-  const input = $('#newEpicName'); 
-  const name = String(input.value||'').trim(); 
-  if(!name) return;
-  const sp = currentSprint(); 
-  if(!sp) return;
-  if(!sp.epics) sp.epics = [];
-  if(sp.epics.some(e=>String(e.name).trim().toLowerCase()===name.toLowerCase())) return alert('Já existe um épico com esse nome.');
-  sp.epics.push({id: crypto.randomUUID(), name}); 
-  input.value=''; 
-  saveLocal(); 
-  renderEpicUIs();
-  flashSaved('Épico adicionado!');
-});
-
-$('#exportBtn').addEventListener('click', ()=>{
-  const data = JSON.stringify(state, null, 2);
-  const blob = new Blob([data], {type:'application/json'});
-  const a = document.createElement('a'); 
-  a.href = URL.createObjectURL(blob); 
-  const timestamp = new Date().toISOString().slice(0,16).replace(/:/g,'-');
-  a.download = `sprint-backup-${timestamp}.json`; 
-  a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
-  flashSaved('Backup exportado!');
-});
-
-$('#recoverBtn').addEventListener('click', ()=>{
-  const options = [];
-  
-  // Opção 1: Backup automático
-  const backup = localStorage.getItem(LS_BACKUP_KEY);
-  if (backup) {
-    try {
-      const data = JSON.parse(backup);
-      if (data.sprints && data.sprints.length > 0) {
-        options.push({
-          name: `Backup Automático (${data.sprints.length} sprint(s))`,
-          data: data
-        });
-      }
-    } catch(e) {}
-  }
-  
-  // Opção 2: Buscar outras chaves
-  for(let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key !== LS_KEY && key !== LS_BACKUP_KEY && (key.includes('sprint') || key.includes('tracker'))) {
+    load() {
       try {
-        const data = JSON.parse(localStorage.getItem(key));
-        if (data.sprints && data.sprints.length > 0) {
-          options.push({
-            name: `${key} (${data.sprints.length} sprint(s))`,
-            data: data
-          });
+        const raw = localStorage.getItem(this.LS_KEY);
+        if (raw) {
+          this.state = JSON.parse(raw);
+          console.log('📂 Carregado:', this.state.sprints.length, 'sprints');
+        } else {
+          this.createInitial();
         }
-      } catch(e) {}
-    }
-  }
-  
-  if (options.length === 0) {
-    alert('❌ Nenhum backup encontrado.\n\n' +
-          'Dicas:\n' +
-          '1. Se vocês usavam Cloud/Firebase, clique em "🌐 Cloud" para reconectar\n' +
-          '2. Se tem arquivo de backup (.json), use "📁 Importar"\n' +
-          '3. Verifique no computador da sua namorada se tem os dados');
-    return;
-  }
-  
-  const msg = '🔄 Backups encontrados:\n\n' + 
-              options.map((o, i) => `${i + 1}. ${o.name}`).join('\n') +
-              '\n\nDigite o número do backup para recuperar (ou 0 para cancelar):';
-  
-  const choice = prompt(msg);
-  const idx = parseInt(choice) - 1;
-  
-  if (idx >= 0 && idx < options.length) {
-    if (confirm(`⚠️ Isso vai substituir os dados atuais.\n\nDeseja continuar?`)) {
-      state = options[idx].data;
-      validateState();
-      saveLocal();
-      renderAll();
-      alert('✅ Dados recuperados com sucesso!');
-      flashSaved('Recuperado!');
-    }
-  }
-});
-
-$('#diagBtn').addEventListener('click', ()=>{
-  const cfg = localStorage.getItem('fb_cfg');
-  const board = localStorage.getItem('fb_board');
-  
-  let msg = '🔍 DIAGNÓSTICO DE CONEXÃO\n\n';
-  msg += '📊 Estado Local:\n';
-  msg += `  - Sprints: ${state.sprints.length}\n`;
-  msg += `  - Tarefas total: ${state.sprints.reduce((sum, s) => sum + (s.tasks?.length || 0), 0)}\n\n`;
-  
-  msg += '💾 Storage:\n';
-  msg += `  - Dados principais: ${localStorage.getItem(LS_KEY) ? '✅ OK' : '❌ Vazio'}\n`;
-  msg += `  - Backup automático: ${localStorage.getItem(LS_BACKUP_KEY) ? '✅ OK' : '❌ Vazio'}\n\n`;
-  
-  msg += '🌐 Firebase:\n';
-  msg += `  - Credenciais salvas: ${cfg ? '✅ Sim' : '❌ Não'}\n`;
-  msg += `  - Board ID salvo: ${board ? '✅ ' + board : '❌ Não'}\n`;
-  msg += `  - Status conexão: ${fb.connected ? '✅ Conectado' : '❌ Desconectado'}\n`;
-  msg += `  - User ID: ${fb.user ? fb.user.uid.slice(0, 12) + '...' : '❌ Não autenticado'}\n\n`;
-  
-  if (!fb.connected && cfg && board) {
-    msg += '💡 SOLUÇÃO:\n';
-    msg += 'Você tem credenciais salvas mas não está conectado.\n';
-    msg += 'Clique em "🌐 Cloud" para reconectar!\n\n';
-  } else if (!cfg) {
-    msg += '💡 SOLUÇÃO:\n';
-    msg += '1. Clique no botão "🌐 Cloud"\n';
-    msg += '2. Cole suas credenciais do Firebase\n';
-    msg += '3. Escolha um Board ID único\n';
-    msg += '4. Ambos usam o MESMO Board ID!\n\n';
-  } else if (fb.connected) {
-    msg += '✅ TUDO OK!\n';
-    msg += 'Você está conectado e sincronizando.\n';
-    msg += 'Qualquer mudança será vista em tempo real!\n\n';
-  }
-  
-  msg += '📱 Dispositivo:\n';
-  msg += `  - User Agent: ${navigator.userAgent.includes('Mobile') ? '📱 Mobile' : '💻 Desktop'}\n`;
-  msg += `  - Largura tela: ${window.innerWidth}px\n\n`;
-  
-  msg += '🔧 Comandos úteis no console:\n';
-  msg += '  • Forçar conexão: autoConnect()\n';
-  msg += '  • Ver dados: state\n';
-  msg += '  • Salvar: saveLocal()\n';
-  
-  alert(msg);
-  
-  // Também mostrar no console
-  console.log('='.repeat(50));
-  console.log(msg);
-  console.log('='.repeat(50));
-});
-
-$('#importBtn').addEventListener('click', ()=> $('#importFile').click());
-
-// CORRIGIDO: Importação mais robusta
-$('#importFile').addEventListener('change', async (e)=>{
-  const file = e.target.files?.[0]; if(!file) return;
-  try{
-    const text = await file.text();
-    const data = JSON.parse(text);
-    let sprints = [];
+      } catch(e) {
+        console.error('Erro ao carregar:', e);
+        this.createInitial();
+      }
+      this.validateState();
+    },
     
-    // Tentar diferentes formatos
-    if (Array.isArray(data)) {
-      sprints = data;
-    } else if (Array.isArray(data?.sprints)) {
-      sprints = data.sprints;
-    } else if (Array.isArray(data?.state?.sprints)) {
-      sprints = data.state.sprints;
-    } else {
-      alert('Arquivo não reconhecido. Esperado JSON com "sprints".');
-      return;
-    }
+    validateState() {
+      if (!Array.isArray(this.state.sprints)) this.state.sprints = [];
+      if (typeof this.state.selected !== 'number') this.state.selected = 0;
+      if (this.state.selected >= this.state.sprints.length) this.state.selected = 0;
+      this.state.sprints.forEach(s => {
+        if (!s.id) s.id = crypto.randomUUID();
+        if (!s.name) s.name = 'Sprint';
+        if (!Array.isArray(s.tasks)) s.tasks = [];
+        if (!Array.isArray(s.epics)) s.epics = [];
+      });
+    },
     
-    if (!sprints.length) {
-      alert('Nenhuma sprint encontrada no arquivo.');
-      return;
-    }
+    createInitial() {
+      const today = new Date().toISOString().slice(0,10);
+      const addDays = (iso, n) => {
+        const d = new Date(iso+'T00:00:00');
+        d.setDate(d.getDate()+n);
+        return d.toISOString().slice(0,10);
+      };
+      this.state = {
+        sprints: [{
+          id: crypto.randomUUID(),
+          name: 'Sprint 1',
+          start: today,
+          end: addDays(today, 14),
+          epics: [
+            {id:crypto.randomUUID(), name:'Saúde'},
+            {id:crypto.randomUUID(), name:'Casa'},
+            {id:crypto.randomUUID(), name:'Trabalho'}
+          ],
+          tasks: [{
+            id:crypto.randomUUID(),
+            title:'Configurar o tracker',
+            epicId:'',
+            tags:['setup'],
+            assignee:'Caio',
+            points:5,
+            status:'todo',
+            notes:'',
+            checklist:[]
+          }]
+        }],
+        selected: 0
+      };
+      this.save();
+      console.log('🆕 Estado inicial criado');
+    },
     
-    console.log('📥 Importando', sprints.length, 'sprints');
+    save(skipCloud) {
+      try {
+        const current = localStorage.getItem(this.LS_KEY);
+        if (current) localStorage.setItem(this.LS_BACKUP_KEY, current);
+        localStorage.setItem(this.LS_KEY, JSON.stringify(this.state));
+        console.log('💾 Salvo:', this.state.sprints.length, 'sprints');
+        
+        if (!skipCloud && this.fb.connected && !this.fb.saving) {
+          clearTimeout(this.fb.saveTimeout);
+          this.fb.saveTimeout = setTimeout(() => this.cloudSave(), 800);
+        }
+      } catch(e) {
+        console.error('Erro ao salvar:', e);
+      }
+    },
     
-    // Substituir estado
-    state.sprints = sprints;
-    state.selected = 0;
+    setupUI() {
+      // Inicializar modais
+      document.querySelectorAll('dialog').forEach(d => {
+        if (!d.showModal) d.style.display = 'none';
+      });
+    },
     
-    // Validar e salvar
-    validateState();
-    saveLocal();
+    setupEvents() {
+      const app = this;
+      
+      document.getElementById('sprintSelect').addEventListener('change', function(e) {
+        const idx = Number(e.target.value);
+        if (idx >= 0 && idx < app.state.sprints.length) {
+          app.state.selected = idx;
+          app.save();
+          app.render();
+        }
+      });
+      
+      document.getElementById('taskForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const sp = app.currentSprint();
+        if (!sp) return;
+        sp.tasks.push({
+          id: crypto.randomUUID(),
+          title: String(fd.get('title')||'').trim(),
+          epicId: String(fd.get('epicId')||''),
+          tags: String(fd.get('tags')||'').split(',').map(s=>s.trim()).filter(Boolean),
+          assignee: String(fd.get('assignee')||'Aline'),
+          points: Number(fd.get('points')||0),
+          status: String(fd.get('status')||'todo'),
+          notes: '',
+          checklist: []
+        });
+        e.target.reset();
+        app.save();
+        app.render();
+      });
+      
+      document.getElementById('addSprintBtn').addEventListener('click', function() {
+        const last = app.state.sprints[app.state.sprints.length-1];
+        const today = new Date().toISOString().slice(0,10);
+        const addDays = (iso, n) => {
+          const d = new Date(iso+'T00:00:00');
+          d.setDate(d.getDate()+n);
+          return d.toISOString().slice(0,10);
+        };
+        document.getElementById('newSprintName').value = `Sprint ${app.state.sprints.length+1}`;
+        document.getElementById('startDate').value = last ? last.end : today;
+        document.getElementById('endDate').value = last ? addDays(last.end||today, 14) : addDays(today, 14);
+        document.getElementById('sprintModal').showModal();
+      });
+      
+      document.getElementById('sprintForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const prev = app.currentSprint();
+        app.state.sprints.push({
+          id: crypto.randomUUID(),
+          name: String(fd.get('name')||'Sprint').trim(),
+          start: String(fd.get('start')||''),
+          end: String(fd.get('end')||''),
+          epics: prev?.epics ? JSON.parse(JSON.stringify(prev.epics)) : [],
+          tasks: []
+        });
+        app.state.selected = app.state.sprints.length - 1;
+        document.getElementById('sprintModal').close();
+        app.save();
+        app.render();
+      });
+      
+      document.getElementById('cloudBtn').addEventListener('click', function() {
+        const modal = document.getElementById('cloudConfigModal');
+        const savedCfg = localStorage.getItem('fb_cfg');
+        const savedBoard = localStorage.getItem('fb_board') || 'casal-1';
+        if (savedCfg) {
+          try {
+            document.getElementById('cloudCfgInput').value = JSON.stringify(JSON.parse(savedCfg), null, 2);
+          } catch(e) {}
+        }
+        document.getElementById('cloudBoardInput').value = savedBoard;
+        modal.showModal();
+      });
+      
+      document.getElementById('cloudConfigForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const cfg = document.getElementById('cloudCfgInput').value.trim();
+        const board = document.getElementById('cloudBoardInput').value.trim();
+        if (!cfg || !board) return alert('Preencha todos os campos!');
+        try {
+          const config = JSON.parse(cfg);
+          document.getElementById('cloudConfigModal').close();
+          await app.cloudConnect(config, board);
+        } catch(e) {
+          alert('JSON inválido!');
+        }
+      });
+      
+      document.getElementById('exportBtn').addEventListener('click', function() {
+        const data = JSON.stringify(app.state, null, 2);
+        const blob = new Blob([data], {type:'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        const ts = new Date().toISOString().slice(0,16).replace(/:/g,'-');
+        a.download = `sprint-backup-${ts}.json`;
+        a.click();
+      });
+      
+      document.getElementById('importBtn').addEventListener('click', function() {
+        document.getElementById('importFile').click();
+      });
+      
+      document.getElementById('importFile').addEventListener('change', async function(e) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+          const text = await file.text();
+          const data = JSON.parse(text);
+          let sprints = Array.isArray(data) ? data : (data.sprints || data.state?.sprints || []);
+          if (!sprints.length) return alert('Nenhuma sprint encontrada');
+          app.state.sprints = sprints;
+          app.state.selected = 0;
+          app.validateState();
+          app.save();
+          app.render();
+          alert(`✅ ${sprints.length} sprint(s) importada(s)!`);
+        } catch(err) {
+          alert('Erro ao importar: ' + err.message);
+        } finally {
+          e.target.value = '';
+        }
+      });
+      
+      console.log('✅ Event listeners configurados');
+    },
     
-    // Renderizar tudo
-    renderAll();
+    currentSprint() {
+      if (!this.state.sprints.length) return null;
+      if (this.state.selected >= this.state.sprints.length) this.state.selected = 0;
+      return this.state.sprints[this.state.selected];
+    },
     
-    alert(`Importação concluída! ${sprints.length} sprint(s) importada(s).`);
-    flashSaved('Importado com sucesso!');
-  }catch(err){ 
-    console.error('Erro na importação:', err); 
-    alert('Falha ao importar JSON: ' + (err?.message || err)); 
-  }
-  finally{ 
-    e.target.value = ''; 
-  }
-});
-
-$('#resetBtn').addEventListener('click', ()=>{
-  const sp = currentSprint(); if(!sp) return;
-  if(state.sprints.length<=1) return alert('Não é possível excluir a última sprint.');
-  if(confirm(`Excluir a sprint "${sp.name}"?`)){
-    state.sprints.splice(state.selected,1);
-    if(state.selected>=state.sprints.length) state.selected = state.sprints.length-1;
-    saveLocal(); 
-    renderAll();
-    flashSaved('Sprint excluída!');
-  }
-});
-
-// Atalhos ←/→
-window.addEventListener('keydown', (e) => {
-  const tag = (document.activeElement?.tagName || '').toLowerCase();
-  if (tag === 'input' || tag === 'textarea' || e.altKey || e.ctrlKey || e.metaKey) return;
-  if (e.key === 'ArrowLeft') {
-    if (state.selected > 0) { 
-      state.selected -= 1; 
-      saveLocal(); 
-      renderAll();
-      flashSaved('Sprint anterior');
-    }
-  } else if (e.key === 'ArrowRight') {
-    if (state.selected < state.sprints.length - 1) { 
-      state.selected += 1; 
-      saveLocal(); 
-      renderAll();
-      flashSaved('Próxima sprint');
-    }
-  }
-});
-
-// ================== Render All ==================
-function renderEpicUIs(){
-  const sp = currentSprint(); 
-  if (!sp) return;
-  
-  const epics = sp.epics||[];
-  const epicOptions = epics.map(e=>`<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
-  $('#epicFilter').innerHTML = `<option value="all">Todos os épicos</option>${epicOptions}`;
-  $('#epicSelect').innerHTML = `<option value="">Épico…</option>${epicOptions}`;
-  $('#epicList').innerHTML = epics.map(e=>`<span class="badge">${escapeHtml(e.name)} <button class="btn ghost" data-action="del-epic" data-id="${e.id}">×</button></span>`).join('');
-  $('#epicList').querySelectorAll('[data-action="del-epic"]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const sp = currentSprint(); 
+    render() {
+      const sp = this.currentSprint();
       if (!sp) return;
-      sp.epics = (sp.epics||[]).filter(x=>x.id!==btn.dataset.id);
-      (sp.tasks||[]).forEach(t=>{ if(t.epicId===btn.dataset.id) t.epicId=''; });
-      saveLocal(); 
-      renderEpicUIs(); 
-      renderBoard();
-    });
-  });
-}
-
-function renderAll(){
-  const sp = currentSprint();
-  if(!sp) {
-    console.warn('⚠️ Nenhuma sprint disponível para renderizar');
-    if(state.sprints.length > 0) {
-      state.selected = 0;
-    } else {
-      return;
-    }
-  }
-  
-  console.log('🎨 Renderizando sprint:', sp?.name, '(índice:', state.selected, ')');
-  
-  renderSprintOptions();
-  renderEpicUIs();
-  renderHeader();
-  renderBoard();
-  renderStats();
-  
-  // DnD zones
-  $$('.dropzone').forEach(zone=>{
-    zone.addEventListener('dragover', e=>{
-      e.preventDefault();
-      const after = getDragAfterElement(zone, e.clientY);
-      const dragging = $('.task.dragging');
-      if(dragging) zone.insertBefore(dragging, after);
-    });
-    zone.addEventListener('drop', e=>{
-      e.preventDefault();
-      const dragging = $('.task.dragging'); if(!dragging) return;
-      const newStatus = zone.parentElement.dataset.col;
-      moveTask(dragging.dataset.id, newStatus);
-      persistOrder(newStatus);
-      renderBoard();
-    });
-  });
-}
-
-function createInitial(){
-  const todayISO = new Date().toISOString().slice(0,10);
-  state.sprints = [{
-    id: crypto.randomUUID(),
-    name:'Sprint 1',
-    start: todayISO,
-    end: addDays(todayISO, 14),
-    createdAt: Date.now(),
-    epics:[
-      {id:crypto.randomUUID(),name:'Saúde'},
-      {id:crypto.randomUUID(),name:'Casa'},
-      {id:crypto.randomUUID(),name:'Trabalho'}
-    ],
-    tasks: [
-      { id:crypto.randomUUID(), title:'Configurar o tracker', epicId:'', tags:['setup'], assignee:'Caio', points:5, status:'todo', notes:'', checklist:[] }
-    ]
-  }];
-  state.selected = 0; 
-  saveLocal();
-  console.log('🆕 Estado inicial criado');
-}
-
-// CORRIGIDO: Inicialização
-console.log('🚀 Iniciando Sprint Tracker...');
-console.log('📊 Diagnóstico:');
-console.log('  - Sprints carregadas:', state.sprints.length);
-console.log('  - Sprint selecionada:', state.selected);
-if (state.sprints.length > 0) {
-  state.sprints.forEach((s, i) => {
-    console.log(`  - Sprint ${i}: "${s.name}" (${s.tasks?.length || 0} tarefas)`);
-  });
-}
-
-// Verificar backups
-const backup = localStorage.getItem(LS_BACKUP_KEY);
-if (backup) {
-  try {
-    const data = JSON.parse(backup);
-    console.log('💾 Backup disponível:', data.sprints?.length || 0, 'sprint(s)');
-  } catch(e) {}
-}
-
-// Status Firebase
-const cfg = localStorage.getItem('fb_cfg');
-const board = localStorage.getItem('fb_board');
-console.log('');
-console.log('🌐 Firebase:');
-console.log('  - Credenciais salvas:', cfg ? '✅' : '❌');
-console.log('  - Board ID salvo:', board || '❌');
-
-console.log('');
-console.log('🔧 Comandos disponíveis no console:');
-console.log('  - forceCloudConnect() → Forçar conexão ao Firebase');
-console.log('  - state → Ver dados atuais');
-console.log('  - saveLocal() → Salvar manualmente');
-
-renderAll();
-
-// Re-render header on resize (debounced)
-let __rT; 
-window.addEventListener('resize', ()=>{ 
-  clearTimeout(__rT); 
-  __rT = setTimeout(renderHeader, 120); 
-});
-</script>
-
-<script type="module">
-// ======= Cloud Sync (Firebase Firestore) - MODO ONLINE =======
-let fb = { 
-  app: null, 
-  db: null, 
-  auth: null, 
-  user: null, 
-  boardId: null, 
-  connected: false, 
-  unsub: null,
-  saving: false,
-  autoConnected: false
-};
-
-// Verifica se já tem credenciais salvas e conecta automaticamente
-window.autoConnect = async function() {
-  const fb = window.fb;
-  const savedCfg = localStorage.getItem('fb_cfg');
-  const savedBoard = localStorage.getItem('fb_board');
-  
-  if (savedCfg && savedBoard && !fb.autoConnected) {
-    console.log('🔄 Tentando conectar automaticamente...');
-    fb.autoConnected = true;
-    try {
-      const cfg = JSON.parse(savedCfg);
-      await window.cloudConnectWithConfig(cfg, savedBoard, true);
-    } catch(e) {
-      console.warn('Falha na conexão automática:', e);
-      fb.autoConnected = false;
-    }
-  }
-}
-
-const autoConnect = window.autoConnect;
-
-// Mostrar modal de configuração
-window.showCloudConfigModal = function() {
-  const modal = document.getElementById('cloudConfigModal');
-  const cfgInput = document.getElementById('cloudCfgInput');
-  const boardInput = document.getElementById('cloudBoardInput');
-  
-  // Verificar suporte a dialog
-  if (typeof modal.showModal !== 'function') {
-    // Fallback para navegadores muito antigos
-    alert('⚠️ Seu navegador não suporta a interface de configuração.\n\n' +
-          'Por favor, atualize seu navegador ou use:\n' +
-          '• Chrome/Edge (versão 37+)\n' +
-          '• Safari (versão 15.4+)\n' +
-          '• Firefox (versão 98+)');
-    return;
-  }
-  
-  // Preencher com valores salvos se existirem
-  const savedCfg = localStorage.getItem('fb_cfg');
-  const savedBoard = localStorage.getItem('fb_board') || 'casal-1';
-  
-  if (savedCfg) {
-    try {
-      const cfg = JSON.parse(savedCfg);
-      cfgInput.value = JSON.stringify(cfg, null, 2);
-    } catch(e) {
-      cfgInput.value = '';
-    }
-  } else {
-    cfgInput.value = '';
-  }
-  
-  boardInput.value = savedBoard;
-  
-  modal.showModal();
-}
-
-const showCloudConfigModal = window.showCloudConfigModal;
-
-// Handler do formulário de cloud config
-document.getElementById('cloudConfigForm')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const cfgInput = document.getElementById('cloudCfgInput').value.trim();
-  const boardInput = document.getElementById('cloudBoardInput').value.trim();
-  const submitBtn = e.target.querySelector('button[type="submit"]');
-  const originalText = submitBtn.textContent;
-  
-  if (!cfgInput || !boardInput) {
-    alert('⚠️ Preencha todos os campos!');
-    return;
-  }
-  
-  try {
-    const cfg = JSON.parse(cfgInput);
+      
+      // Sprint select
+      const opts = this.state.sprints.map((s, i) => 
+        `<option value="${i}" ${i===this.state.selected?'selected':''}>${this.escapeHtml(s.name)}</option>`
+      ).join('');
+      document.getElementById('sprintSelect').innerHTML = opts;
+      
+      // Header
+      const total = Math.max(1, Math.ceil((new Date(sp.end) - new Date(sp.start)) / 864e5));
+      const left = Math.max(0, Math.ceil((new Date(sp.end) - new Date()) / 864e5));
+      const ratio = left / total;
+      let cls = 'ok';
+      if (ratio <= 1/3) cls = 'danger';
+      else if (ratio <= 2/3) cls = 'warn';
+      
+      document.getElementById('sprintTitle').textContent = sp.name;
+      const badge = document.getElementById('dateBadge');
+      badge.className = `pill ${cls}`;
+      
+      const formatDate = (iso) => new Date(iso+'T00:00:00').toLocaleDateString('pt-BR', {day:'2-digit', month:'short'});
+      badge.textContent = `${formatDate(sp.start)} → ${formatDate(sp.end)} • ${left}/${total} dias`;
+      
+      // Stats
+      const fib = n => Number(n)||0;
+      const byAssignee = {
+        Aline: {total:0, done:0, notdone:0},
+        Caio: {total:0, done:0, notdone:0}
+      };
+      sp.tasks.forEach(t => {
+        const a = byAssignee[t.assignee];
+        const pts = fib(t.points);
+        if (a) {
+          a.total += pts;
+          if (t.status === 'done') a.done += pts;
+          if (t.status === 'notdone') a.notdone += pts;
+        }
+      });
+      
+      const alinePct = byAssignee.Aline.total ? Math.round((byAssignee.Aline.done/byAssignee.Aline.total)*100) : 0;
+      const caioPct = byAssignee.Caio.total ? Math.round((byAssignee.Caio.done/byAssignee.Caio.total)*100) : 0;
+      
+      document.getElementById('progressAlineBar').style.width = `${alinePct}%`;
+      document.getElementById('progressAlinePct').textContent = `${alinePct}%`;
+      document.getElementById('progressCaioBar').style.width = `${caioPct}%`;
+      document.getElementById('progressCaioPct').textContent = `${caioPct}%`;
+      document.getElementById('concluidoAline').textContent = `Concluído Aline: ${byAssignee.Aline.done} pts`;
+      document.getElementById('concluidoCaio').textContent = `Concluído Caio: ${byAssignee.Caio.done} pts`;
+      
+      // Counters
+      document.getElementById('todoCount').textContent = sp.tasks.filter(t=>t.status==='todo').length;
+      document.getElementById('doingCount').textContent = sp.tasks.filter(t=>t.status==='doing').length;
+      document.getElementById('doneCount').textContent = sp.tasks.filter(t=>t.status==='done').length;
+      document.getElementById('notDoneCount').textContent = sp.tasks.filter(t=>t.status==='notdone').length;
+      
+      console.log('✅ Renderizado');
+    },
     
-    // Mostrar loading
-    submitBtn.disabled = true;
-    submitBtn.textContent = '🔄 Conectando...';
+    escapeHtml(s) {
+      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    },
     
-    document.getElementById('cloudConfigModal').close();
-    await window.cloudConnectWithConfig(cfg, boardInput, false);
-    
-  } catch(e) {
-    submitBtn.disabled = false;
-    submitBtn.textContent = originalText;
-    
-    if (e instanceof SyntaxError) {
-      alert('❌ JSON inválido!\n\nVerifique se copiou o firebaseConfig corretamente.');
-    } else {
-      alert('❌ Erro ao conectar:\n\n' + e.message);
-    }
-    console.error('Erro ao conectar:', e);
-  }
-});
-
-window.cloudConnectWithConfig = async function(cfg, board, isAuto = false){
-  const fb = window.fb;
-  try{
-    console.log('🔄 Conectando ao Firebase...');
-    const status = document.getElementById('cloudStatus');
-    if(status){ 
-      status.textContent = '🔄 Conectando...'; 
-      status.className = "pill warn"; 
-    }
-
-    // Salvar credenciais
-    if (!isAuto) {
-      localStorage.setItem('fb_cfg', JSON.stringify(cfg));
-      localStorage.setItem('fb_board', board);
-    }
-
-    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js');
-    const { getFirestore, doc, getDoc, setDoc, onSnapshot } = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js');
-    const { getAuth, signInAnonymously } = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js');
-
-    // Inicializar Firebase (só uma vez)
-    if (!fb.app) { 
-      fb.app = initializeApp(cfg); 
-      console.log('🔥 Firebase inicializado');
-    }
-    
-    fb.db = getFirestore(fb.app);
-    fb.auth = getAuth(fb.app);
-    
-    // Login anônimo
-    console.log('🔐 Autenticando...');
-    await signInAnonymously(fb.auth);
-    fb.user = fb.auth.currentUser;
-    fb.boardId = board;
-    fb.connected = true;
-
-    console.log('✅ Conectado ao Cloud! Board:', fb.boardId, 'User:', fb.user.uid.slice(0,8));
-
-    // Atualizar UI
-    if(status){ 
-      status.textContent = `🌐 ${fb.boardId}`; 
-      status.className = "pill ok"; 
-      status.style.display = 'inline-flex'; 
-    }
-
-    const ref = doc(fb.db, 'boards', fb.boardId);
-
-    // Cancelar listener anterior se existir
-    if (fb.unsub) fb.unsub();
-    
-    console.log('👂 Iniciando listener em tempo real...');
-    
-    // LISTENER EM TEMPO REAL - quando o Firebase detecta mudança
-    fb.unsub = onSnapshot(ref, (snap)=>{
-      if (!snap.exists()) {
-        console.log('📄 Documento não existe ainda, será criado');
-        return;
+    async cloudConnect(cfg, board) {
+      try {
+        console.log('🔄 Conectando ao Firebase...');
+        localStorage.setItem('fb_cfg', JSON.stringify(cfg));
+        localStorage.setItem('fb_board', board);
+        
+        if (!this.fb.app) {
+          this.fb.app = firebase.initializeApp(cfg);
+        }
+        this.fb.db = firebase.firestore();
+        this.fb.auth = firebase.auth();
+        await this.fb.auth.signInAnonymously();
+        this.fb.user = this.fb.auth.currentUser;
+        this.fb.boardId = board;
+        this.fb.connected = true;
+        
+        const status = document.getElementById('cloudStatus');
+        status.textContent = `🌐 ${board}`;
+        status.className = 'pill ok';
+        
+        const ref = this.fb.db.collection('boards').doc(board);
+        
+        if (this.fb.unsub) this.fb.unsub();
+        
+        const app = this;
+        this.fb.unsub = ref.onSnapshot(snap => {
+          if (!snap.exists) return;
+          const data = snap.data();
+          if (data.__lastWriteBy === app.fb.user.uid) return;
+          if (data.state) {
+            app.state = data.state;
+            app.validateState();
+            app.save(true);
+            app.render();
+            console.log('📥 Atualizado do Cloud');
+          }
+        });
+        
+        const cur = await ref.get();
+        if (cur.exists) {
+          const data = cur.data();
+          if (data.state) {
+            this.state = data.state;
+            this.validateState();
+            this.save(true);
+            this.render();
+          }
+        } else {
+          await this.cloudSave();
+        }
+        
+        alert('✅ Conectado ao Cloud!\n\nBoard: ' + board);
+        console.log('✅ Cloud conectado');
+      } catch(err) {
+        console.error('❌ Erro:', err);
+        alert('Erro: ' + err.message);
       }
-      
-      const data = snap.data();
-      
-      // Ignorar se foi este usuário que salvou (evita loop)
-      if (data.__lastWriteBy === fb.user?.uid) {
-        console.log('⏭️ Ignorando update próprio');
-        return;
+    },
+    
+    async cloudSave() {
+      if (!this.fb.connected || this.fb.saving) return;
+      this.fb.saving = true;
+      try {
+        const ref = this.fb.db.collection('boards').doc(this.fb.boardId);
+        await ref.set({
+          state: JSON.parse(JSON.stringify(this.state)),
+          __lastWriteAt: Date.now(),
+          __lastWriteBy: this.fb.user.uid
+        });
+        console.log('☁️ Salvo no Cloud');
+      } catch(err) {
+        console.error('❌ Cloud save falhou:', err);
+      } finally {
+        this.fb.saving = false;
       }
-      
-      // Aplicar estado remoto
-      if (data.state){
-        try{
-          console.log('📥 Recebendo update remoto de:', data.__lastWriteBy?.slice(0,8));
-          
-          // IMPORTANTE: Marcar que estamos aplicando update remoto
-          isApplyingRemoteUpdate = true;
-          
-          state = data.state;
-          validateState();
-          saveLocal(true); // true = pular cloud save
-          renderAll();
-          flashSaved('📡 Sincronizado');
-          
-          // Desmarcar após um pequeno delay
-          setTimeout(() => {
-            isApplyingRemoteUpdate = false;
-          }, 100);
-        }catch(err){ 
-          console.error('❌ Erro ao aplicar estado remoto:', err);
-          isApplyingRemoteUpdate = false;
+    },
+    
+    async autoConnect() {
+      const cfg = localStorage.getItem('fb_cfg');
+      const board = localStorage.getItem('fb_board');
+      if (cfg && board) {
+        try {
+          await this.cloudConnect(JSON.parse(cfg), board);
+        } catch(e) {
+          console.warn('Falha na auto-conexão:', e);
         }
       }
-    }, (error) => {
-      console.error('❌ Erro no listener:', error);
-      fb.connected = false;
-      const status = document.getElementById('cloudStatus');
-      if(status){ 
-        status.textContent = '❌ Erro: ' + error.code; 
-        status.className = "pill danger"; 
-      }
-      
-      if (error.code === 'permission-denied') {
-        alert('❌ ERRO: Permissão negada!\n\n' +
-              'Solução:\n' +
-              '1. Acesse: https://console.firebase.google.com/\n' +
-              '2. Firestore Database → Regras\n' +
-              '3. Cole este código:\n\n' +
-              'rules_version = \'2\';\n' +
-              'service cloud.firestore {\n' +
-              '  match /databases/{database}/documents {\n' +
-              '    match /boards/{boardId} {\n' +
-              '      allow read, write: if request.auth != null;\n' +
-              '    }\n' +
-              '  }\n' +
-              '}\n\n' +
-              '4. Clique em "Publicar"');
-      }
-    });
-
-    // Carregar estado inicial do Firebase
-    console.log('📦 Carregando estado do Cloud...');
-    const cur = await getDoc(ref);
-    if (cur.exists()){
-      const data = cur.data();
-      if (data.state){
-        console.log('📥 Estado encontrado no Cloud!');
-        
-        // Marcar como update remoto para não disparar save no cloud
-        isApplyingRemoteUpdate = true;
-        
-        state = data.state;
-        validateState();
-        saveLocal(true); // true = pular cloud save
-        renderAll();
-        
-        if (!isAuto) flashSaved('Carregado do Cloud!');
-        
-        setTimeout(() => {
-          isApplyingRemoteUpdate = false;
-        }, 100);
-      }
-    } else {
-      // Documento não existe, criar com estado atual
-      console.log('💾 Criando documento inicial no Cloud...');
-      await cloudSave();
     }
-    
-    if (!isAuto) {
-      alert('✅ Conectado ao Cloud com sucesso!\n\n' +
-            '🌐 Board ID: ' + fb.boardId + '\n\n' +
-            'Agora vocês dois verão as mudanças em TEMPO REAL!\n\n' +
-            '💡 Certifique-se de que sua namorada use o MESMO Board ID.');
-    } else {
-      console.log('✅ Reconectado automaticamente');
-      flashSaved('Conectado ao Cloud!');
-    }
-    
-  }catch(err){
-    console.error('❌ Erro ao conectar:', err);
-    fb.connected = false;
-    const status = document.getElementById('cloudStatus');
-    if(status){ 
-      status.textContent = '❌ Offline'; 
-      status.className = "pill danger"; 
-    }
-    if (!isAuto) {
-      alert('❌ Erro ao conectar ao Cloud:\n\n' + 
-            err.message + '\n\n' +
-            'Verifique:\n' +
-            '1. firebaseConfig está correto\n' +
-            '2. Firestore está habilitado no projeto\n' +
-            '3. Regras de segurança estão configuradas\n\n' +
-            'Detalhes no console (F12)');
-    }
+  };
+  
+  // Inicializar quando DOM estiver pronto
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => window.SprintApp.init());
+  } else {
+    window.SprintApp.init();
   }
+  
+} else {
+  console.log('⚠️ Sprint Tracker já inicializado, apenas re-renderizando...');
+  if (window.SprintApp.render) window.SprintApp.render();
 }
-
-const cloudConnectWithConfig = window.cloudConnectWithConfig;
-
-// Salvar no Cloud
-window.cloudSave = async function(){
-  const fb = window.fb;
-  if (!fb.connected || !fb.db || !fb.user || fb.saving) {
-    console.log('⏸️ Cloud save ignorado (não conectado ou já salvando)');
-    return;
-  }
-  
-  fb.saving = true;
-  
-  try{
-    const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js');
-    const ref = doc(fb.db, 'boards', fb.boardId);
-    
-    // Limpar undefined values (Firestore não aceita)
-    const cleanState = JSON.parse(JSON.stringify(state));
-    
-    await setDoc(ref, { 
-      state: cleanState, 
-      __lastWriteAt: Date.now(), 
-      __lastWriteBy: fb.user.uid 
-    });
-    
-    console.log('☁️ Salvo no Cloud às', new Date().toLocaleTimeString());
-    
-    // Feedback visual discreto
-    const status = document.getElementById('cloudStatus');
-    if(status && status.textContent.includes('🌐')){ 
-      const originalText = status.textContent;
-      status.textContent = '💾 Salvando...'; 
-      setTimeout(() => {
-        status.textContent = originalText;
-      }, 600);
-    }
-    
-  }catch(err){
-    console.error('❌ cloudSave falhou:', err);
-    fb.connected = false;
-    const status = document.getElementById('cloudStatus');
-    if(status){ 
-      status.textContent = '❌ Erro ao salvar'; 
-      status.className = "pill danger"; 
-    }
-  } finally {
-    fb.saving = false;
-  }
-}
-
-const cloudSave = window.cloudSave; // Alias local
-
-// Botões
-document.getElementById('cloudBtn')?.addEventListener('click', window.showCloudConfigModal);
-
-// Tentar conectar automaticamente ao carregar
-setTimeout(() => {
-  autoConnect();
-}, 1000);
-
-// Função global para forçar conexão (pode ser usada no console)
-window.forceCloudConnect = function() {
-  const cfg = localStorage.getItem('fb_cfg');
-  const board = localStorage.getItem('fb_board');
-  
-  if (!cfg || !board) {
-    alert('❌ Não há credenciais salvas.\n\nClique em "🌐 Cloud" para configurar.');
-    return;
-  }
-  
-  try {
-    window.cloudConnectWithConfig(JSON.parse(cfg), board, false);
-  } catch(e) {
-    alert('❌ Erro ao conectar: ' + e.message);
-  }
-};
-
-// Monitorar conexão
-window.addEventListener('online', () => {
-  console.log('🌐 Internet restaurada');
-  if (!fb.connected) {
-    autoConnect();
-  }
-});
-
-window.addEventListener('offline', () => {
-  console.warn('📡 Sem internet - modo offline');
-  const status = document.getElementById('cloudStatus');
-  if(status){ 
-    status.textContent = '📡 Offline'; 
-    status.className = "pill warn"; 
-  }
-});
-
-// ======= /Cloud Sync =======
 </script>
 </body>
 </html>
