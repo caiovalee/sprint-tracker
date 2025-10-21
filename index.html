@@ -484,6 +484,8 @@ document.getElementById('importFile').addEventListener('change', async function(
     const text = await file.text();
     const data = JSON.parse(text);
     
+    console.log('📥 Importando backup:', data);
+    
     // Suportar diferentes formatos de backup
     let sprints = [];
     let selected = 0;
@@ -502,15 +504,24 @@ document.getElementById('importFile').addEventListener('change', async function(
     }
     
     if (!sprints.length) {
+      console.error('❌ Nenhuma sprint encontrada');
       return alert('❌ Nenhuma sprint encontrada no backup.\n\nVerifique se o arquivo está correto.');
     }
     
+    console.log(`✅ Encontrado: ${sprints.length} sprints, selected: ${selected}`);
+    
     // Atualizar o estado
     app.state.sprints = sprints;
-    app.state.selected = selected;
+    app.state.selected = Math.min(selected, sprints.length - 1);
     
     // Validar e salvar
     app.validateState();
+    app.save();  // Isso já vai chamar cloudSave se estiver conectado
+    app.render();
+    
+    const msg = `✅ ${sprints.length} sprint(s) importada(s) com sucesso!\n\nOs dados foram sincronizados ${app.fb.connected ? 'com o cloud ☁️' : 'localmente 💾'}.`;
+    alert(msg
+
  
 
       
