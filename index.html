@@ -66,9 +66,13 @@ main .wrap{display:grid;grid-template-columns:1fr;gap:14px}
 .task .notes{color:var(--muted); margin-top:6px; white-space:pre-line; font-size:0.86rem; line-height:1.3}
 .task .footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
 .task .footer .mini{color:var(--muted); font-size:0.86rem}
-dialog{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:16px}
-dialog::backdrop{background:rgba(0,0,0,.5)}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:16px;max-height:90vh;overflow-y:auto}
+dialog::backdrop{background:rgba(0,0,0,.6)}
 .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+details{margin:12px 0;padding:12px;background:var(--card);border-radius:10px;border:1px solid var(--border)}
+details summary{cursor:pointer;font-weight:600;color:var(--accent);list-style:none}
+details summary::-webkit-details-marker{display:none}
+details[open] summary{margin-bottom:8px}
 /* Mini calendário */
 .minical{display:inline-block;border:1px solid var(--border);border-radius:10px;padding:8px;margin-top:6px}
 .minical header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;color:var(--muted)}
@@ -110,6 +114,11 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
   .task .notes{font-size:0.80rem; line-height:1.3}
   .task .footer .mini{font-size:0.80rem}
   .pill{padding:4px 8px;font-size:0.80rem}
+  dialog{width:95vw !important;max-width:95vw !important;padding:16px !important;margin:auto}
+  #cloudConfigModal form{width:100% !important;padding:16px !important}
+  #cloudCfgInput{min-height:120px !important;font-size:0.75rem !important}
+  details{padding:10px}
+  details summary{font-size:0.9rem}
 }
 @media (max-width: 360px){
   h1{font-size:1.15rem}
@@ -265,6 +274,59 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
         <button class="btn warn" id="et_delete" type="button">Excluir</button>
         <button class="btn" type="button" onclick="document.getElementById('editTaskModal').close()">Cancelar</button>
         <button class="btn primary" id="et_save">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="cloudConfigModal">
+    <form method="dialog" id="cloudConfigForm" style="width:90vw;max-width:500px;padding:20px">
+      <h3 style="margin-top:0">🌐 Conectar ao Cloud</h3>
+      <p style="color:var(--muted);margin:8px 0 16px 0;line-height:1.5;font-size:0.95rem">
+        Configure a sincronização em tempo real com Firebase para vocês dois verem as mudanças instantaneamente.
+      </p>
+      
+      <label style="display:block;margin-bottom:16px">
+        <div style="font-weight:600;margin-bottom:6px;font-size:0.95rem">Firebase Config (JSON)</div>
+        <textarea id="cloudCfgInput" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...",...}' 
+                  style="width:100%;min-height:140px;font-family:monospace;font-size:0.8rem;line-height:1.4" required></textarea>
+        <div style="color:var(--muted);font-size:0.85rem;margin-top:6px;line-height:1.4">
+          Cole o objeto firebaseConfig completo do Firebase Console
+        </div>
+      </label>
+      
+      <label style="display:block;margin-bottom:16px">
+        <div style="font-weight:600;margin-bottom:6px;font-size:0.95rem">Board ID</div>
+        <input id="cloudBoardInput" type="text" placeholder="casal-aline-caio" 
+               style="width:100%" required>
+        <div style="color:var(--muted);font-size:0.85rem;margin-top:6px;line-height:1.4">
+          ⚠️ IMPORTANTE: Vocês dois devem usar o MESMO Board ID
+        </div>
+      </label>
+      
+      <details>
+        <summary style="user-select:none">📖 Como configurar Firebase?</summary>
+        <div style="margin-top:12px;color:var(--muted);font-size:0.88rem;line-height:1.7">
+          <strong style="color:var(--text)">1. Firebase Console</strong><br>
+          • Acesse: <span style="color:var(--accent)">console.firebase.google.com</span><br>
+          • Vá no seu projeto → ⚙️ Configurações<br>
+          • Role até "Seus apps"<br>
+          • Copie o <strong>firebaseConfig</strong> completo<br><br>
+          
+          <strong style="color:var(--text)">2. Habilite Authentication</strong><br>
+          • Menu lateral → Authentication<br>
+          • Clique em "Vamos começar"<br>
+          • Ative "Anônimo" (Anonymous) ✅<br><br>
+          
+          <strong style="color:var(--text)">3. Configure Firestore</strong><br>
+          • Menu lateral → Firestore Database<br>
+          • Crie o banco de dados<br>
+          • Em "Regras", permita read/write autenticado<br>
+        </div>
+      </details>
+      
+      <div class="modal-actions" style="margin-top:20px">
+        <button class="btn" type="button" onclick="document.getElementById('cloudConfigModal').close()">Cancelar</button>
+        <button class="btn primary" type="submit">🌐 Conectar</button>
       </div>
     </form>
   </dialog>
@@ -919,10 +981,19 @@ $('#diagBtn').addEventListener('click', ()=>{
     msg += 'Clique em "🌐 Cloud" para reconectar!\n\n';
   } else if (!cfg) {
     msg += '💡 SOLUÇÃO:\n';
-    msg += '1. Acesse: https://console.firebase.google.com/\n';
-    msg += '2. Pegue suas credenciais (firebaseConfig)\n';
-    msg += '3. Clique em "🌐 Cloud" e cole as credenciais\n\n';
+    msg += '1. Clique no botão "🌐 Cloud"\n';
+    msg += '2. Cole suas credenciais do Firebase\n';
+    msg += '3. Escolha um Board ID único\n';
+    msg += '4. Ambos usam o MESMO Board ID!\n\n';
+  } else if (fb.connected) {
+    msg += '✅ TUDO OK!\n';
+    msg += 'Você está conectado e sincronizando.\n';
+    msg += 'Qualquer mudança será vista em tempo real!\n\n';
   }
+  
+  msg += '📱 Dispositivo:\n';
+  msg += `  - User Agent: ${navigator.userAgent.includes('Mobile') ? '📱 Mobile' : '💻 Desktop'}\n`;
+  msg += `  - Largura tela: ${window.innerWidth}px\n\n`;
   
   msg += '🔧 Comandos úteis no console:\n';
   msg += '  • Forçar conexão: autoConnect()\n';
@@ -1172,7 +1243,7 @@ async function autoConnect() {
     fb.autoConnected = true;
     try {
       const cfg = JSON.parse(savedCfg);
-      await cloudConnect(cfg, savedBoard, true);
+      await cloudConnectWithConfig(cfg, savedBoard, true);
     } catch(e) {
       console.warn('Falha na conexão automática:', e);
       fb.autoConnected = false;
@@ -1180,40 +1251,82 @@ async function autoConnect() {
   }
 }
 
-async function cloudConnect(config = null, boardId = null, isAuto = false){
-  try{
-    let cfg = config;
-    let board = boardId;
-    
-    // Se não passou config, perguntar ao usuário
-    if (!cfg) {
-      const previousCfg = localStorage.getItem('fb_cfg') || '';
-      
-      const helpText = previousCfg ? 
-        'Cole o firebaseConfig do Firebase Console\n(ou deixe em branco para usar o salvo):' :
-        'Cole o firebaseConfig do Firebase Console:\n\n' +
-        '1. Acesse: https://console.firebase.google.com/\n' +
-        '2. Clique em ⚙️ → "Configurações do projeto"\n' +
-        '3. Role até "Seus apps" → Clique em </> (Web)\n' +
-        '4. Copie TODO o objeto { apiKey: "...", ... }\n\n' +
-        'Cole aqui:';
-      
-      const cfgRaw = prompt(helpText, previousCfg);
-      if(cfgRaw === null) return; // Cancelou
-      if(cfgRaw === '' && previousCfg) {
-        // Usar o salvo
-        try { cfg = JSON.parse(previousCfg); } catch(e) { alert('Config salvo inválido!'); return; }
-      } else {
-        try{ cfg = JSON.parse(cfgRaw); }catch(e){ alert('❌ JSON inválido!\n\nVerifique se copiou corretamente.'); return; }
-      }
+// Mostrar modal de configuração
+function showCloudConfigModal() {
+  const modal = document.getElementById('cloudConfigModal');
+  const cfgInput = document.getElementById('cloudCfgInput');
+  const boardInput = document.getElementById('cloudBoardInput');
+  
+  // Verificar suporte a dialog
+  if (typeof modal.showModal !== 'function') {
+    // Fallback para navegadores muito antigos
+    alert('⚠️ Seu navegador não suporta a interface de configuração.\n\n' +
+          'Por favor, atualize seu navegador ou use:\n' +
+          '• Chrome/Edge (versão 37+)\n' +
+          '• Safari (versão 15.4+)\n' +
+          '• Firefox (versão 98+)');
+    return;
+  }
+  
+  // Preencher com valores salvos se existirem
+  const savedCfg = localStorage.getItem('fb_cfg');
+  const savedBoard = localStorage.getItem('fb_board') || 'casal-1';
+  
+  if (savedCfg) {
+    try {
+      const cfg = JSON.parse(savedCfg);
+      cfgInput.value = JSON.stringify(cfg, null, 2);
+    } catch(e) {
+      cfgInput.value = '';
     }
-    
-    if (!board) {
-      const prevBoard = localStorage.getItem('fb_board') || 'casal-1';
-      board = prompt('Informe um Board ID único para vocês dois.\n\n⚠️ IMPORTANTE: Ambos devem usar o MESMO Board ID!\n\nExemplo: casal-aline-caio', prevBoard);
-      if(!board) return;
-    }
+  } else {
+    cfgInput.value = '';
+  }
+  
+  boardInput.value = savedBoard;
+  
+  modal.showModal();
+}
 
+// Handler do formulário de cloud config
+document.getElementById('cloudConfigForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const cfgInput = document.getElementById('cloudCfgInput').value.trim();
+  const boardInput = document.getElementById('cloudBoardInput').value.trim();
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  const originalText = submitBtn.textContent;
+  
+  if (!cfgInput || !boardInput) {
+    alert('⚠️ Preencha todos os campos!');
+    return;
+  }
+  
+  try {
+    const cfg = JSON.parse(cfgInput);
+    
+    // Mostrar loading
+    submitBtn.disabled = true;
+    submitBtn.textContent = '🔄 Conectando...';
+    
+    document.getElementById('cloudConfigModal').close();
+    await cloudConnectWithConfig(cfg, boardInput, false);
+    
+  } catch(e) {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+    
+    if (e instanceof SyntaxError) {
+      alert('❌ JSON inválido!\n\nVerifique se copiou o firebaseConfig corretamente.');
+    } else {
+      alert('❌ Erro ao conectar:\n\n' + e.message);
+    }
+    console.error('Erro ao conectar:', e);
+  }
+});
+
+async function cloudConnectWithConfig(cfg, board, isAuto = false){
+  try{
     console.log('🔄 Conectando ao Firebase...');
     const status = document.getElementById('cloudStatus');
     if(status){ 
@@ -1434,7 +1547,7 @@ async function cloudSave(){
 }
 
 // Botões
-document.getElementById('cloudBtn')?.addEventListener('click', () => cloudConnect());
+document.getElementById('cloudBtn')?.addEventListener('click', showCloudConfigModal);
 
 // Tentar conectar automaticamente ao carregar
 setTimeout(() => {
