@@ -1,225 +1,166 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-
+<html lang="pt-br">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Sprint Tracker</title>
-  <style>
-    :root {
-      --bg: #0f1220;
-      --panel: #171a2b;
-      --muted: #9aa3b2;
-      --text: #e8ecf5;
-      --accent: #6ee7b7;
-      --accent2: #60a5fa;
-      --danger: #f87171;
-      --warn: #fbbf24;
-      --card: #1e2338;
-      --border: #2b3151;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: apple-system, system-ui, "Segoe UI", Roboto, Ubuntu, Arial, sans-serif;
-      background: radial-gradient(120% 80% at 100% 10%, #112033 0, transparent 60%),
-        radial-gradient(90% 80% at 0 100%, #182036 0, transparent 60%), var(--bg);
-      color: var(--text);
-      padding: 0 16px;
-    }
-
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      background: linear-gradient(180deg, rgba(15,18,32,.95), rgba(15,18,32,.85));
-      backdrop-filter: saturate(140%) blur(8px);
-      border-bottom: 1px solid var(--border);
-      padding: 16px 0;
-    }
-
-    .wrap {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 0 14px;
-    }
-
-    .row {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .row-between {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-    }
-
-    button, select {
-      background: var(--panel);
-      color: var(--text);
-      border: none;
-      padding: 8px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    button:hover, select:hover {
-      background: var(--border);
-    }
-
-    table {
-      width: 100%;
-      border-spacing: 0;
-      margin-top: 24px;
-    }
-
-    th, td {
-      text-align: left;
-      padding: 8px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .pill {
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 0.9em;
-    }
-
-    .ok { background: var(--accent2); }
-    .warn { background: var(--warn); }
-    .danger { background: var(--danger); }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gestor de Sprint</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; }
+  h1 { text-align: center; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+  th { background: #eee; }
+  .sprint-info { margin-top: 10px; }
+  .date-badge { display: inline-block; background: #2176ae; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.9em; }
+  #importFile { margin-top: 10px; }
+</style>
 </head>
-
 <body>
-  <header>
-    <div class="wrap row-between">
-      <h1>Sprint Tracker</h1>
-      <div class="row">
-        <!-- Removido botão de import para uso manual -->
-        <select id="sprintSelect"></select>
-      </div>
-    </div>
-  </header>
+<h1>Gestor de Sprint</h1>
 
-  <div class="wrap">
-    <h2 id="sprintTitle"></h2>
-    <span id="dateBadge" class="pill ok"></span>
+<div class="sprint-info">
+  <select id="sprintSelect"></select>
+  <div id="dateBadge" class="date-badge"></div>
+</div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Título</th>
-          <th>Pontos</th>
-          <th>Responsável</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="tasksTable"></tbody>
-    </table>
-  </div>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Título</th>
+      <th>Pontos</th>
+      <th>Responsável</th>
+      <th>Concluído</th>
+    </tr>
+  </thead>
+  <tbody id="taskTableBody">
+    <!-- tarefas aqui -->
+  </tbody>
+</table>
 
-  <script>
-    const app = {
-      state: {
-        sprints: [
-          // Cole aqui o conteúdo de sprints-backup.json
-          // Exemplo:
-          {
-            "name": "Sprint 1",
-            "start": "2025-10-01",
-            "end": "2025-10-15",
-            "tasks": [
-              { "id": 1, "title": "Tarefa A", "points": 3, "assignee": "Caio", "done": false },
-              { "id": 2, "title": "Tarefa B", "points": 5, "assignee": "Aline", "done": true }
-              // … demais tarefas …
-            ]
-          }
+<!-- Input para importar backup (se necessário) -->
+<input type="file" id="importFile" />
+
+<script>
+  // Dados de sprint manualmente inseridos, crie seu backup aqui  
+  const data = {
+    sprints: [
+      {
+        "name": "Sprint 1",
+        "start": "2025-09-29",
+        "end": "2025-10-13",
+        "tasks": [
+          { "id": "1", "title": "Configurar ambiente", "points": 3, "assignee": "Caio", "status": "notdone" },
+          { "id": "2", "title": "Criar página inicial", "points": 5, "assignee": "Aline", "status": "done" }
         ],
-        selected: 0
+        "epics": [/* se houver */],
+        "createdAt": 1759182567548,
+        "id": "oWc7Iwk6s4pmoVMLEtOR"
       },
-
-      init() {
-        try {
-          console.log('✅ Event listeners configurados');
-        } catch (err) {
-          console.error('Falha na inicialização:', err);
-        }
-        this.render();
-      },
-
-      currentSprint() {
-        if (!this.state.sprints.length) return null;
-        if (this.state.selected >= this.state.sprints.length) this.state.selected = 0;
-        return this.state.sprints[this.state.selected];
-      },
-
-      render() {
-        const sp = this.currentSprint();
-        if (!sp) return;
-
-        // Sprint select
-        const opts = this.state.sprints.map((s, i) =>
-          `<option value="${i}" ${i===this.state.selected?'selected':''}>${this.escapeHtml(s.name)}</option>`
-        ).join('');
-        document.getElementById('sprintSelect').innerHTML = opts;
-
-        // Header
-        const total = Math.max(1, Math.ceil((new Date(sp.end) - new Date(sp.start)) / 864e5));
-        const left = Math.max(0, Math.ceil((new Date(sp.end) - new Date()) / 864e5));
-        const ratio = left / total;
-        let cls = 'ok';
-        if (ratio <= 1/3) cls = 'danger';
-        else if (ratio <= 2/3) cls = 'warn';
-
-        document.getElementById('sprintTitle').textContent = sp.name;
-        const badge = document.getElementById('dateBadge');
-        badge.className = `pill ${cls}`;
-        const formatDate = iso => new Date(iso+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
-        badge.textContent = `${formatDate(sp.start)} → ${formatDate(sp.end)} • ${left}/${total} dias`;
-
-        // Tasks
-        const fib = n => Number(n) || 0;
-        const byAssignee = { Aline: [], Caio: [] };
-        sp.tasks.forEach(t => {
-          byAssignee[t.assignee] = byAssignee[t.assignee] || [];
-          byAssignee[t.assignee].push(t);
-        });
-
-        const rows = sp.tasks.map(t => `
-          <tr>
-            <td>${t.id}</td>
-            <td>${this.escapeHtml(t.title)}</td>
-            <td>${fib(t.points)}</td>
-            <td>${this.escapeHtml(t.assignee)}</td>
-            <td>${t.done ? '✅' : '❌'}</td>
-          </tr>
-        `).join('');
-        document.getElementById('tasksTable').innerHTML = rows;
-      },
-
-      escapeHtml(str) {
-        return str.replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;' })[m]);
-      },
-
-      save() {
-        localStorage.setItem('sprintTrackerState', JSON.stringify(this.state));
+      {
+        "name": "Sprint 2",
+        "start": "2025-10-13",
+        "end": "2025-10-26",
+        "tasks": [
+          { "id": "3", "title": "Implementar login", "points": 8, "assignee": "João", "status": "notdone" },
+          { "id": "4", "title": "Criar dashboard", "points": 13, "assignee": "Maria", "status": "notdone" }
+        ],
+        "epics": [/* epics da sprint 2 */],
+        "createdAt": 1759182567548,
+        "id": "FtRFM9vWIKFMy7ujKU2r"
       }
-    };
+    ],
+    "selected": 0
+  };
 
-    // Inicializa
-    app.init();
-  </script>
+  // Para evitar erro do try sem catch, garantimos que nunca haverá try sem tratamento.  
+  // A seguir, inicializamos a aplicação:
+  const app = {
+    state: {
+      sprints: data.sprints,
+      selected: data.selected
+    },
+    save() {
+      // aqui você pode colocar código para salvar em localStorage, se desejar
+      localStorage.setItem('sprints', JSON.stringify(this.state.sprints));
+    },
+    load() {
+      // carregamento de backup local, se desejar
+      const backup = localStorage.getItem('sprints');
+      if (backup) {
+        this.state.sprints = JSON.parse(backup);
+      }
+    },
+    init() {
+      // monta o select das sprints
+      this.renderSprintOptions();
+      this.render();
+      // evento de troca de sprint
+      document.getElementById('sprintSelect').addEventListener('change', e => {
+        this.state.selected = parseInt(e.target.value);
+        this.render();
+      });
+      // evento arquivo importação
+      document.getElementById('importFile').addEventListener('change', e => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const jsonData = JSON.parse(reader.result);
+            if (jsonData && Array.isArray(jsonData.sprints)) {
+              this.state.sprints = jsonData.sprints;
+              this.state.selected = 0;
+              this.renderSprintOptions();
+              this.render();
+              alert('Backup importado com sucesso.');
+            } else {
+              alert('Arquivo inválido.');
+            }
+          } catch (err) {
+            alert('Erro ao ler o arquivo.');
+          }
+        };
+        reader.readAsText(file);
+      });
+    },
+    renderSprintOptions() {
+      const select = document.getElementById('sprintSelect');
+      select.innerHTML = '';
+      this.state.sprints.forEach((sprint, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = sprint.name || `Sprint ${index + 1}`;
+        select.appendChild(option);
+      });
+    },
+    render() {
+      const sprint = this.state.sprints[this.state.selected];
+      if (!sprint) return;
+      // exibir datas
+      const start = new Date(sprint.start);
+      const end = new Date(sprint.end);
+      document.getElementById('dateBadge').textContent = 
+        `De ${start.toLocaleDateString()} a ${end.toLocaleDateString()}`;
+      // preencher tarefas
+      const tbody = document.getElementById('taskTableBody');
+      tbody.innerHTML = '';
+      sprint.tasks.forEach(t => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${t.id}</td>
+          <td>${t.title}</td>
+          <td>${t.points}</td>
+          <td>${t.assignee}</td>
+          <td>${t.status === 'done' ? '✔️' : '❌'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+  };
+  // inicializa
+  app.init();
+
+</script>
 </body>
-
 </html>
