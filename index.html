@@ -1,704 +1,225 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sprint Tracker</title>
-<style>
-:root{--bg:#0f1220;--panel:#171a2b;--muted:#9aa3b2;--text:#e8ecf5;--accent:#6ee7b7;--accent2:#60a5fa;--danger:#f87171;--warn:#fbbf24;--card:#1e2338;--border:#2b3151}
-*{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,system-ui,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;background:radial-gradient(120% 80% at 100% 10%,#112033 0%,transparent 60%),radial-gradient(90% 80% at 0% 100%,#182036 0%,transparent 60%),var(--bg);color:var(--text)}
-header{position:sticky;top:0;z-index:5;background:linear-gradient(180deg,rgba(15,18,32,.95),rgba(15,18,32,.85));backdrop-filter:saturate(140%) blur(8px);border-bottom:1px solid var(--border);padding:16px 0}
-.wrap{max-width:1400px;margin:0 auto;padding:14px}
-.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.row-between{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.header-top{display:flex;gap:12px;align-items:center;margin-bottom:12px}
-.header-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.btn{padding:8px 14px;border:1px solid var(--border);background:#0f1427;color:var(--text);border-radius:12px;cursor:pointer;font-size:0.9rem;transition:all 0.2s}
-.btn:hover{background:#1a1f38;border-color:#3a4264}
-.btn.primary{background:#1d3a2d;border-color:#264e3c}
-.btn.primary:hover{background:#234731;border-color:#2d5d46}
-.btn.warn{background:#3a2a18;border-color:#574125}
-.btn.warn:hover{background:#4a3520;border-color:#6a512e}
-.btn.ghost{background:transparent;border-color:transparent}
-.btn.ghost:hover{background:rgba(255,255,255,0.05)}
-select,input,textarea{background:#0e1426;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px;transition:border-color 0.2s}
-select:focus,input:focus,textarea:focus{outline:none;border-color:#3a4264}
-.divider{width:1px;height:24px;background:var(--border);margin:0 4px;opacity:0.5}
-h1{margin:0}
-main .wrap{display:grid;grid-template-columns:1fr;gap:14px}
-.panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px}
-.kanban{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:14px}
-@media (min-width:900px){.kanban{grid-template-columns:repeat(4,1fr)}}
-.col{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px;min-height:260px}
-.col h4{margin:0 0 8px 0;color:var(--muted)}
-.dropzone{display:flex;flex-direction:column;gap:8px;min-height:220px}
-.task{background:#121a2f;border:1px solid var(--border);border-radius:12px;padding:10px}
-.task.done{opacity:.8}
-.task.done .title,.task[data-status="done"] .title{text-decoration:line-through;opacity:0.8}
-.pill{padding:8px 14px;border:1px solid var(--border);border-radius:999px;color:var(--muted);font-size:0.9rem;white-space:nowrap}
-.pill.ok{border-color:#2e7d32;color:#a5d6a7;background:rgba(46,125,50,.12)}
-.pill.warn{border-color:#7c5f1a;color:#f5d08a;background:rgba(245,158,11,.12)}
-.pill.danger{border-color:#7c1a1a;color:#f2aaaa;background:rgba(239,68,68,.12)}
-.badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:999px;padding:2px 8px;font-size:12px;color:var(--muted)}
-.badge.warn{border-color:#5a4918;color:#f7d36e}
-.badge.tag{border-color:#374467}
-.badge.points{border-color:#2e7d32;color:#a5d6a7;background:rgba(46,125,50,.12)}
-.badge.epic{border-color:#374467}
-.progress{height:8px;background:#0e1530;border-radius:999px;border:1px solid var(--border);overflow:hidden}
-.bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
-.n{font-weight:700}
-.muted{color:var(--muted)}
-.task .title{font-weight:700;font-size:1rem}
-.task.done-like .title{text-decoration:line-through;opacity:.8}
-.task .notes{color:var(--muted);margin-top:6px;white-space:pre-line;font-size:0.86rem;line-height:1.3}
-.task .footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
-.task .footer .mini{color:var(--muted);font-size:0.86rem}
-dialog{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:16px;max-height:90vh;overflow-y:auto}
-dialog::backdrop{background:rgba(0,0,0,.6)}
-.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
-details{margin:12px 0;padding:12px;background:var(--card);border-radius:10px;border:1px solid var(--border)}
-details summary{cursor:pointer;font-weight:600;color:var(--accent);list-style:none}
-details summary::-webkit-details-marker{display:none}
-details[open] summary{margin-bottom:8px}
-.minical{display:inline-block;border:1px solid var(--border);border-radius:10px;padding:8px;margin-top:6px}
-.minical header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;color:var(--muted)}
-.minical table{border-collapse:collapse}
-.minical th,.minical td{width:28px;height:24px;text-align:center}
-.minical td button{width:24px;height:24px;border:1px solid transparent;background:transparent;color:var(--text);border-radius:6px;cursor:pointer}
-.minical td button.sel{border-color:#3b82f6;background:rgba(59,130,246,.15)}
-@media (max-width: 900px){.wrap{padding:12px}header{padding:12px 0}.panel{padding:14px}.statsGrid{grid-template-columns:1fr}.header-top{margin-bottom:10px}}
-@media (max-width: 768px){h1{font-size:1.4rem}.btn{padding:7px 10px;font-size:0.9rem}select{font-size:0.9rem;padding:7px}.header-actions{gap:6px}.divider{display:none}}
-@media (max-width: 520px){header{padding:10px 0}.wrap{padding:10px}.header-top{flex-wrap:wrap;gap:8px;margin-bottom:8px}.header-actions{gap:5px}.row{gap:6px}.btn{padding:6px 8px;border-radius:10px;font-size:0.85rem}select,input,textarea{font-size:0.95rem;padding:7px 9px}h1{font-size:1.25rem}#dateBadge{font-size:0.82rem;padding:5px 9px}#cloudStatus{font-size:0.82rem;padding:5px 9px}.panel{border-radius:14px;padding:12px}.kanban .col{min-height:140px;padding:10px}.task{padding:10px;border-radius:12px}.task .title{font-size:0.95rem}.task .notes{font-size:0.80rem;line-height:1.3}.task .footer .mini{font-size:0.80rem}.pill{padding:4px 8px;font-size:0.80rem}dialog{width:95vw !important;max-width:95vw !important;padding:16px !important;margin:auto}#cloudConfigModal form{width:100% !important;padding:16px !important}#cloudCfgInput{min-height:120px !important;font-size:0.75rem !important}details{padding:10px}details summary{font-size:0.9rem}}
-@media (max-width: 360px){h1{font-size:1.15rem}#dateBadge{font-size:0.76rem}#cloudStatus{font-size:0.76rem}}
-.statsGrid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px}
-@media (min-width:900px){.statsGrid{grid-template-columns:1fr 1fr}}
-.statCard{background:#11172d;border:1px solid var(--border);border-radius:14px;padding:14px}
-.statCard h4{margin:0 0 4px 0}
-.miniLabel{margin-top:6px;color:var(--muted)}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sprint Tracker</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --panel: #171a2b;
+      --muted: #9aa3b2;
+      --text: #e8ecf5;
+      --accent: #6ee7b7;
+      --accent2: #60a5fa;
+      --danger: #f87171;
+      --warn: #fbbf24;
+      --card: #1e2338;
+      --border: #2b3151;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: apple-system, system-ui, "Segoe UI", Roboto, Ubuntu, Arial, sans-serif;
+      background: radial-gradient(120% 80% at 100% 10%, #112033 0, transparent 60%),
+        radial-gradient(90% 80% at 0 100%, #182036 0, transparent 60%), var(--bg);
+      color: var(--text);
+      padding: 0 16px;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: linear-gradient(180deg, rgba(15,18,32,.95), rgba(15,18,32,.85));
+      backdrop-filter: saturate(140%) blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 0;
+    }
+
+    .wrap {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 14px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .row-between {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    button, select {
+      background: var(--panel);
+      color: var(--text);
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover, select:hover {
+      background: var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-spacing: 0;
+      margin-top: 24px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .pill {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.9em;
+    }
+
+    .ok { background: var(--accent2); }
+    .warn { background: var(--warn); }
+    .danger { background: var(--danger); }
+  </style>
 </head>
+
 <body>
   <header>
-    <div class="wrap">
-      <div class="header-top">
-        <h1 id="sprintTitle">🚀 Sprint</h1>
-        <button class="btn ghost" id="editSprintBtn" title="Editar sprint">✎</button>
-        <span id="dateBadge" class="pill">—</span>
-        <span id="cloudStatus" class="pill warn" style="margin-left:auto">⚠️ Offline</span>
-      </div>
-      
-      <div class="header-actions">
-        <select id="sprintSelect" title="Selecionar sprint" style="min-width:140px"></select>
-        <select id="epicFilter" title="Filtrar por épico" style="min-width:160px"><option value="all">Todos os épicos</option></select>
-        <span class="divider"></span>
-        <button class="btn" id="addSprintBtn">+ Sprint</button>
-        <button class="btn" id="exportBtn" title="Exportar JSON (Backup local)">💾</button>
-        <button class="btn" id="importBtn" title="Importar JSON de backup">📁</button>
-        <input id="importFile" type="file" accept=".json,application/json" style="display:none">
-        <button class="btn" id="recoverBtn" title="Recuperar dados perdidos" style="background:#3a2a18">🔄</button>
-        <button class="btn" id="diagBtn" title="Diagnóstico de conexão" style="background:#2a3a3a">🔍</button>
-        <span class="divider"></span>
-        <button class="btn" id="cloudBtn" title="Configurar sincronização em tempo real">🌐 Cloud</button>
-        <button class="btn warn" id="resetBtn" title="Excluir sprint atual">🗑️</button>
-        <span id="saveToast" class="pill ok" style="display:none">Salvo!</span>
+    <div class="wrap row-between">
+      <h1>Sprint Tracker</h1>
+      <div class="row">
+        <!-- Removido botão de import para uso manual -->
+        <select id="sprintSelect"></select>
       </div>
     </div>
   </header>
 
-  <main class="wrap">
-    <section class="panel">
-      <div class="row" style="gap:14px;align-items:stretch;flex-wrap:wrap">
-        <form id="taskForm" class="panel" style="flex:.85;min-width:260px">
-          <h3>Adicionar tarefa</h3>
-          <div class="row" style="gap:8px;flex-wrap:wrap">
-            <input name="title" placeholder="Título da tarefa" style="flex:1" required />
-            <select name="epicId" id="epicSelect"><option value="">Épico…</option></select>
-          </div>
-          <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:6px">
-            <input name="tags" placeholder="tags (vírgulas)" style="flex:1" />
-            <select name="assignee"><option>Aline</option><option>Caio</option></select>
-            <select name="points"><option>1</option><option>2</option><option>3</option><option selected>5</option><option>8</option><option>13</option></select>
-            <select name="status"><option value="todo">A fazer</option><option value="doing">Em andamento</option><option value="done">Concluída</option><option value="notdone">Não concluída</option></select>
-            <button class="btn primary">Adicionar</button>
-          </div>
-        </form>
-        <div class="panel" style="flex:1.15;min-width:260px">
-          <h3>Resumo da sprint</h3>
+  <div class="wrap">
+    <h2 id="sprintTitle"></h2>
+    <span id="dateBadge" class="pill ok"></span>
 
-          <div>Progresso Aline</div>
-          <div class="progress"><div id="progressAlineBar" class="bar" style="width:0%"></div></div>
-          <div class="muted" id="progressAlinePct">0%</div>
-          <div style="margin-top:6px">Progresso Caio</div>
-          <div class="progress"><div id="progressCaioBar" class="bar" style="width:0%"></div></div>
-          <div class="muted" id="progressCaioPct">0%</div>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Título</th>
+          <th>Pontos</th>
+          <th>Responsável</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="tasksTable"></tbody>
+    </table>
+  </div>
 
-          <div id="statsCards" class="statsGrid"></div>
-
-          <div class="row" style="gap:8px;margin-top:10px">
-            <span id="concluidoAline" class="pill">Concluído Aline: 0 pts</span>
-            <span id="concluidoCaio" class="pill">Concluído Caio: 0 pts</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="panel">
-      <h3>Épicos</h3>
-      <div class="row" style="gap:8px;flex-wrap:wrap">
-        <input id="newEpicName" placeholder="Novo épico (ex.: Saúde)" style="flex:1;min-width:220px" />
-        <button class="btn" id="addEpicBtn">Adicionar épico</button>
-      </div>
-      <div id="epicList" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px"></div>
-    </section>
-
-    <section class="kanban">
-      <div class="col" data-col="todo"><h4>📝 A fazer (<span class="muted" id="todoCount">0</span>)</h4><div class="dropzone" id="todo"></div></div>
-      <div class="col" data-col="doing"><h4>🧱 Em andamento (<span class="muted" id="doingCount">0</span>)</h4><div class="dropzone" id="doing"></div></div>
-      <div class="col" data-col="done"><h4>✅ Concluída (<span class="muted" id="doneCount">0</span>)</h4><div class="dropzone" id="done"></div></div>
-      <div class="col" data-col="notdone"><h4 style="color:#ff7b7b">❌ Não concluída (<span class="muted" id="notDoneCount">0</span>)</h4><div class="dropzone" id="notdone"></div></div>
-    </section>
-  </main>
-
-  <dialog id="sprintModal">
-    <form method="dialog" id="sprintForm" style="min-width:320px;max-width:520px;padding:12px">
-      <h3>Nova Sprint</h3>
-      <label>Nome<input name="name" id="newSprintName" placeholder="Sprint X" style="width:100%;margin:6px 0" required></label>
-      <div class="row" style="gap:8px;margin:6px 0">
-        <label class="sr" for="startDate">Início</label> <input id="startDate" name="start" type="date" required>
-        <div id="minicalCreateStart" class="minical" data-for="startDate"></div>
-        <label class="sr" for="endDate">Fim</label> <input id="endDate" name="end" type="date" required>
-        <div id="minicalCreateEnd" class="minical" data-for="endDate"></div>
-      </div>
-      <div class="modal-actions">
-        <button class="btn" type="button" value="cancel" onclick="document.getElementById('sprintModal').close()">Cancelar</button>
-        <button class="btn primary" value="create">Criar</button>
-      </div>
-    </form>
-  </dialog>
-
-  <dialog id="editSprintModal">
-    <form method="dialog" id="editSprintForm" style="min-width:320px;max-width:520px;padding:12px">
-      <h3>Editar Sprint</h3>
-      <label>Nome<input name="name" id="editSprintName" placeholder="Sprint X" style="width:100%;margin:6px 0" required></label>
-      <div class="row" style="gap:8px;margin:6px 0">
-        <label class="sr" for="editStartDate">Início</label> <input id="editStartDate" name="start" type="date" required>
-        <div id="minicalEditStart" class="minical" data-for="editStartDate"></div>
-        <label class="sr" for="editEndDate">Fim</label> <input id="editEndDate" name="end" type="date" required>
-        <div id="minicalEditEnd" class="minical" data-for="editEndDate"></div>
-      </div>
-      <div class="modal-actions">
-        <button class="btn" type="button" value="cancel" onclick="document.getElementById('editSprintModal').close()">Cancelar</button>
-        <button class="btn primary" value="save">Salvar</button>
-      </div>
-    </form>
-  </dialog>
-
-  <dialog id="editTaskModal">
-    <form method="dialog" id="editTaskForm" style="min-width:360px;max-width:640px;padding:16px">
-      <h3>Editar tarefa</h3>
-      <input name="title" id="et_title" placeholder="Título" style="width:100%;margin:6px 0" required>
-      <div class="row" style="gap:8px;flex-wrap:wrap">
-        <select name="assignee" id="et_assignee"><option>Aline</option><option>Caio</option></select>
-        <select name="points" id="et_points"><option>1</option><option>2</option><option>3</option><option>5</option><option>8</option><option>13</option></select>
-        <select name="status" id="et_status">
-          <option value="todo">A fazer</option><option value="doing">Em andamento</option><option value="done">Concluída</option><option value="notdone">Não concluída</option>
-        </select>
-        <select name="epicId" id="et_epic"><option value="">Épico…</option></select>
-        <input name="tags" id="et_tags" placeholder="tags (vírgulas)" style="flex:1" />
-      </div>
-      <textarea id="et_notes" placeholder="Notas / descrição" style="width:100%;margin-top:8px;min-height:120px"></textarea>
-      <div id="et_checkMeta" class="miniLabel" style="font-weight:600;margin-top:10px">Checklist</div>
-      <div id="et_checklist" style="display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
-      <div class="row" style="gap:8px;margin-top:10px">
-        <input id="et_newItem" placeholder="Novo item do checklist..." style="flex:1">
-        <button class="btn" id="et_addItem" type="button">Adicionar item</button>
-      </div>
-      <div class="modal-actions">
-        <button class="btn warn" id="et_delete" type="button">Excluir</button>
-        <button class="btn" type="button" onclick="document.getElementById('editTaskModal').close()">Cancelar</button>
-        <button class="btn primary" id="et_save">Salvar</button>
-      </div>
-    </form>
-  </dialog>
-
-  <dialog id="cloudConfigModal">
-    <form method="dialog" id="cloudConfigForm" style="width:90vw;max-width:500px;padding:20px">
-      <h3 style="margin-top:0">🌐 Conectar ao Cloud</h3>
-      <p style="color:var(--muted);margin:8px 0 16px 0;line-height:1.5;font-size:0.95rem">
-        Configure a sincronização em tempo real com Firebase para vocês dois verem as mudanças instantaneamente.
-      </p>
-      
-      <label style="display:block;margin-bottom:16px">
-        <div style="font-weight:600;margin-bottom:6px;font-size:0.95rem">Firebase Config (JSON)</div>
-        <textarea id="cloudCfgInput" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...",...}' 
-                  style="width:100%;min-height:140px;font-family:monospace;font-size:0.8rem;line-height:1.4" required></textarea>
-        <div style="color:var(--muted);font-size:0.85rem;margin-top:6px;line-height:1.4">
-          Cole o objeto firebaseConfig completo do Firebase Console
-        </div>
-      </label>
-      
-      <label style="display:block;margin-bottom:16px">
-        <div style="font-weight:600;margin-bottom:6px;font-size:0.95rem">Board ID</div>
-        <input id="cloudBoardInput" type="text" placeholder="casal-aline-caio" 
-               style="width:100%" required>
-        <div style="color:var(--muted);font-size:0.85rem;margin-top:6px;line-height:1.4">
-          ⚠️ IMPORTANTE: Vocês dois devem usar o MESMO Board ID
-        </div>
-      </label>
-      
-      <details>
-        <summary style="user-select:none">📖 Como configurar Firebase?</summary>
-        <div style="margin-top:12px;color:var(--muted);font-size:0.88rem;line-height:1.7">
-          <strong style="color:var(--text)">1. Firebase Console</strong><br>
-          • Acesse: <span style="color:var(--accent)">console.firebase.google.com</span><br>
-          • Vá no seu projeto → ⚙️ Configurações<br>
-          • Role até "Seus apps"<br>
-          • Copie o <strong>firebaseConfig</strong> completo<br><br>
-          
-          <strong style="color:var(--text)">2. Habilite Authentication</strong><br>
-          • Menu lateral → Authentication<br>
-          • Clique em "Vamos começar"<br>
-          • Ative "Anônimo" (Anonymous) ✅<br><br>
-          
-          <strong style="color:var(--text)">3. Configure Firestore</strong><br>
-          • Menu lateral → Firestore Database<br>
-          • Crie o banco de dados<br>
-          • Em "Regras", permita read/write autenticado<br>
-        </div>
-      </details>
-      
-      <div class="modal-actions" style="margin-top:20px">
-        <button class="btn" type="button" onclick="document.getElementById('cloudConfigModal').close()">Cancelar</button>
-        <button class="btn primary" type="submit">🌐 Conectar</button>
-      </div>
-    </form>
-  </dialog>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.3/firebase-app-compat.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.3/firebase-firestore-compat.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.3/firebase-auth-compat.min.js"></script>
-
-<script>
-// IMPORTANTE: Este arquivo só inicializa UMA VEZ
-if (!window.SprintApp) {
-  console.log('🚀 Iniciando Sprint Tracker...');
-  
-  window.SprintApp = {
-    state: {sprints:[], selected:0},
-    fb: {app:null,db:null,auth:null,user:null,boardId:null,connected:false,unsub:null,saving:false},
-    LS_KEY: 'sprint-tracker-v2-offline',
-    LS_BACKUP_KEY: 'sprint-tracker-backup',
-    
-    init() {
-      this.load();
-      this.setupUI();
-      this.setupEvents();
-      this.render();
-      setTimeout(() => this.autoConnect(), 1000);
-    },
-    
-    load() {
-      try {
-        const raw = localStorage.getItem(this.LS_KEY);
-        if (raw) {
-          this.state = JSON.parse(raw);
-          console.log('📂 Carregado:', this.state.sprints.length, 'sprints');
-        } else {
-          this.createInitial();
-        }
-      } catch(e) {
-        console.error('Erro ao carregar:', e);
-        this.createInitial();
-      }
-      this.validateState();
-    },
-    
-    validateState() {
-      if (!Array.isArray(this.state.sprints)) this.state.sprints = [];
-      if (typeof this.state.selected !== 'number') this.state.selected = 0;
-      if (this.state.selected >= this.state.sprints.length) this.state.selected = 0;
-      this.state.sprints.forEach(s => {
-        if (!s.id) s.id = crypto.randomUUID();
-        if (!s.name) s.name = 'Sprint';
-        if (!Array.isArray(s.tasks)) s.tasks = [];
-        if (!Array.isArray(s.epics)) s.epics = [];
-      });
-    },
-    
-    createInitial() {
-      const today = new Date().toISOString().slice(0,10);
-      const addDays = (iso, n) => {
-        const d = new Date(iso+'T00:00:00');
-        d.setDate(d.getDate()+n);
-        return d.toISOString().slice(0,10);
-      };
-      this.state = {
-        sprints: [{
-          id: crypto.randomUUID(),
-          name: 'Sprint 1',
-          start: today,
-          end: addDays(today, 14),
-          epics: [
-            {id:crypto.randomUUID(), name:'Saúde'},
-            {id:crypto.randomUUID(), name:'Casa'},
-            {id:crypto.randomUUID(), name:'Trabalho'}
-          ],
-          tasks: [{
-            id:crypto.randomUUID(),
-            title:'Configurar o tracker',
-            epicId:'',
-            tags:['setup'],
-            assignee:'Caio',
-            points:5,
-            status:'todo',
-            notes:'',
-            checklist:[]
-          }]
-        }],
+  <script>
+    const app = {
+      state: {
+        sprints: [
+          // Cole aqui o conteúdo de sprints-backup.json
+          // Exemplo:
+          {
+            "name": "Sprint 1",
+            "start": "2025-10-01",
+            "end": "2025-10-15",
+            "tasks": [
+              { "id": 1, "title": "Tarefa A", "points": 3, "assignee": "Caio", "done": false },
+              { "id": 2, "title": "Tarefa B", "points": 5, "assignee": "Aline", "done": true }
+              // … demais tarefas …
+            ]
+          }
+        ],
         selected: 0
-      };
-      this.save();
-      console.log('🆕 Estado inicial criado');
-    },
-    
-    save(skipCloud) {
-      try {
-        const current = localStorage.getItem(this.LS_KEY);
-        if (current) localStorage.setItem(this.LS_BACKUP_KEY, current);
-        localStorage.setItem(this.LS_KEY, JSON.stringify(this.state));
-        console.log('💾 Salvo:', this.state.sprints.length, 'sprints');
-        
-        if (!skipCloud && this.fb.connected && !this.fb.saving) {
-          clearTimeout(this.fb.saveTimeout);
-          this.fb.saveTimeout = setTimeout(() => this.cloudSave(), 800);
+      },
+
+      init() {
+        try {
+          console.log('✅ Event listeners configurados');
+        } catch (err) {
+          console.error('Falha na inicialização:', err);
         }
-      } catch(e) {
-        console.error('Erro ao salvar:', e);
-      }
-    },
-    
-    setupUI() {
-      // Inicializar modais
-      document.querySelectorAll('dialog').forEach(d => {
-        if (!d.showModal) d.style.display = 'none';
-      });
-    },
-    
-    setupEvents() {
-      const app = this;
-      
-      document.getElementById('sprintSelect').addEventListener('change', function(e) {
-        const idx = Number(e.target.value);
-        if (idx >= 0 && idx < app.state.sprints.length) {
-          app.state.selected = idx;
-          app.save();
-          app.render();
-        }
-      });
-      
-      document.getElementById('taskForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const fd = new FormData(e.target);
-        const sp = app.currentSprint();
+        this.render();
+      },
+
+      currentSprint() {
+        if (!this.state.sprints.length) return null;
+        if (this.state.selected >= this.state.sprints.length) this.state.selected = 0;
+        return this.state.sprints[this.state.selected];
+      },
+
+      render() {
+        const sp = this.currentSprint();
         if (!sp) return;
-        sp.tasks.push({
-          id: crypto.randomUUID(),
-          title: String(fd.get('title')||'').trim(),
-          epicId: String(fd.get('epicId')||''),
-          tags: String(fd.get('tags')||'').split(',').map(s=>s.trim()).filter(Boolean),
-          assignee: String(fd.get('assignee')||'Aline'),
-          points: Number(fd.get('points')||0),
-          status: String(fd.get('status')||'todo'),
-          notes: '',
-          checklist: []
-        });
-        e.target.reset();
-        app.save();
-        app.render();
-      });
-      
-      document.getElementById('addSprintBtn').addEventListener('click', function() {
-        const last = app.state.sprints[app.state.sprints.length-1];
-        const today = new Date().toISOString().slice(0,10);
-        const addDays = (iso, n) => {
-          const d = new Date(iso+'T00:00:00');
-          d.setDate(d.getDate()+n);
-          return d.toISOString().slice(0,10);
-        };
-        document.getElementById('newSprintName').value = `Sprint ${app.state.sprints.length+1}`;
-        document.getElementById('startDate').value = last ? last.end : today;
-        document.getElementById('endDate').value = last ? addDays(last.end||today, 14) : addDays(today, 14);
-        document.getElementById('sprintModal').showModal();
-      });
-      
-      document.getElementById('sprintForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const fd = new FormData(e.target);
-        const prev = app.currentSprint();
-        app.state.sprints.push({
-          id: crypto.randomUUID(),
-          name: String(fd.get('name')||'Sprint').trim(),
-          start: String(fd.get('start')||''),
-          end: String(fd.get('end')||''),
-          epics: prev?.epics ? JSON.parse(JSON.stringify(prev.epics)) : [],
-          tasks: []
-        });
-        app.state.selected = app.state.sprints.length - 1;
-        document.getElementById('sprintModal').close();
-        app.save();
-        app.render();
-      });
-      
-      document.getElementById('cloudBtn').addEventListener('click', function() {
-        const modal = document.getElementById('cloudConfigModal');
-        const savedCfg = localStorage.getItem('fb_cfg');
-        const savedBoard = localStorage.getItem('fb_board') || 'casal-1';
-        if (savedCfg) {
-          try {
-            document.getElementById('cloudCfgInput').value = JSON.stringify(JSON.parse(savedCfg), null, 2);
-          } catch(e) {}
-        }
-        document.getElementById('cloudBoardInput').value = savedBoard;
-        modal.showModal();
-      });
-      
-      document.getElementById('cloudConfigForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const cfg = document.getElementById('cloudCfgInput').value.trim();
-        const board = document.getElementById('cloudBoardInput').value.trim();
-        if (!cfg || !board) return alert('Preencha todos os campos!');
-        try {
-          const config = JSON.parse(cfg);
-          document.getElementById('cloudConfigModal').close();
-          await app.cloudConnect(config, board);
-        } catch(e) {
-          alert('JSON inválido!');
-        }
-      });
-      
-document.getElementById('importFile').addEventListener('change', async function(e) {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  try {
-    const text = await file.text();
-    const data = JSON.parse(text);
-    
-    console.log('📥 Importando backup:', data);
-    
-    // Suportar diferentes formatos de backup
-    let sprints = [];
-    let selected = 0;
-    
-    if (Array.isArray(data)) {
-      // Formato: array direto de sprints
-      sprints = data;
-    } else if (data.state && data.state.sprints) {
-      // Formato: {state: {sprints: [...], selected: 0}}
-      sprints = data.state.sprints;
-      selected = data.state.selected || 0;
-    } else if (data.sprints) {
-      // Formato: {sprints: [...], selected: 0}
-      sprints = data.sprints;
-      selected = data.selected || 0;
-    }
-    
-    if (!sprints.length) {
-      console.error('❌ Nenhuma sprint encontrada');
-      return alert('❌ Nenhuma sprint encontrada no backup.\n\nVerifique se o arquivo está correto.');
-    }
-    
-    console.log(`✅ Encontrado: ${sprints.length} sprints, selected: ${selected}`);
-    
-    // Atualizar o estado
-    app.state.sprints = sprints;
-    app.state.selected = Math.min(selected, sprints.length - 1);
-    
-    // Validar e salvar
-    app.validateState();
-    app.save();  // Isso já vai chamar cloudSave se estiver conectado
-    app.render();
-    
-    const msg = `✅ ${sprints.length} sprint(s) importada(s) com sucesso!\n\nOs dados foram sincronizados ${app.fb.connected ? 'com o cloud ☁️' : 'localmente 💾'}.`;
-    alert(msg)
 
- 
+        // Sprint select
+        const opts = this.state.sprints.map((s, i) =>
+          `<option value="${i}" ${i===this.state.selected?'selected':''}>${this.escapeHtml(s.name)}</option>`
+        ).join('');
+        document.getElementById('sprintSelect').innerHTML = opts;
 
-      
-      console.log('✅ Event listeners configurados');
-    },
-    
-    currentSprint() {
-      if (!this.state.sprints.length) return null;
-      if (this.state.selected >= this.state.sprints.length) this.state.selected = 0;
-      return this.state.sprints[this.state.selected];
-    },
-    
-    render() {
-      const sp = this.currentSprint();
-      if (!sp) return;
-      
-      // Sprint select
-      const opts = this.state.sprints.map((s, i) => 
-        `<option value="${i}" ${i===this.state.selected?'selected':''}>${this.escapeHtml(s.name)}</option>`
-      ).join('');
-      document.getElementById('sprintSelect').innerHTML = opts;
-      
-      // Header
-      const total = Math.max(1, Math.ceil((new Date(sp.end) - new Date(sp.start)) / 864e5));
-      const left = Math.max(0, Math.ceil((new Date(sp.end) - new Date()) / 864e5));
-      const ratio = left / total;
-      let cls = 'ok';
-      if (ratio <= 1/3) cls = 'danger';
-      else if (ratio <= 2/3) cls = 'warn';
-      
-      document.getElementById('sprintTitle').textContent = sp.name;
-      const badge = document.getElementById('dateBadge');
-      badge.className = `pill ${cls}`;
-      
-      const formatDate = (iso) => new Date(iso+'T00:00:00').toLocaleDateString('pt-BR', {day:'2-digit', month:'short'});
-      badge.textContent = `${formatDate(sp.start)} → ${formatDate(sp.end)} • ${left}/${total} dias`;
-      
-      // Stats
-      const fib = n => Number(n)||0;
-      const byAssignee = {
-        Aline: {total:0, done:0, notdone:0},
-        Caio: {total:0, done:0, notdone:0}
-      };
-      sp.tasks.forEach(t => {
-        const a = byAssignee[t.assignee];
-        const pts = fib(t.points);
-        if (a) {
-          a.total += pts;
-          if (t.status === 'done') a.done += pts;
-          if (t.status === 'notdone') a.notdone += pts;
-        }
-      });
-      
-      const alinePct = byAssignee.Aline.total ? Math.round((byAssignee.Aline.done/byAssignee.Aline.total)*100) : 0;
-      const caioPct = byAssignee.Caio.total ? Math.round((byAssignee.Caio.done/byAssignee.Caio.total)*100) : 0;
-      
-      document.getElementById('progressAlineBar').style.width = `${alinePct}%`;
-      document.getElementById('progressAlinePct').textContent = `${alinePct}%`;
-      document.getElementById('progressCaioBar').style.width = `${caioPct}%`;
-      document.getElementById('progressCaioPct').textContent = `${caioPct}%`;
-      document.getElementById('concluidoAline').textContent = `Concluído Aline: ${byAssignee.Aline.done} pts`;
-      document.getElementById('concluidoCaio').textContent = `Concluído Caio: ${byAssignee.Caio.done} pts`;
-      
-      // Counters
-      document.getElementById('todoCount').textContent = sp.tasks.filter(t=>t.status==='todo').length;
-      document.getElementById('doingCount').textContent = sp.tasks.filter(t=>t.status==='doing').length;
-      document.getElementById('doneCount').textContent = sp.tasks.filter(t=>t.status==='done').length;
-      document.getElementById('notDoneCount').textContent = sp.tasks.filter(t=>t.status==='notdone').length;
-      
-      console.log('✅ Renderizado');
-    },
-    
-    escapeHtml(s) {
-      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-    },
-    
-    async cloudConnect(cfg, board) {
-      try {
-        console.log('🔄 Conectando ao Firebase...');
-        localStorage.setItem('fb_cfg', JSON.stringify(cfg));
-        localStorage.setItem('fb_board', board);
-        
-        if (!this.fb.app) {
-          this.fb.app = firebase.initializeApp(cfg);
-        }
-        this.fb.db = firebase.firestore();
-        this.fb.auth = firebase.auth();
-        await this.fb.auth.signInAnonymously();
-        this.fb.user = this.fb.auth.currentUser;
-        this.fb.boardId = board;
-        this.fb.connected = true;
-        
-        const status = document.getElementById('cloudStatus');
-        status.textContent = `🌐 ${board}`;
-        status.className = 'pill ok';
-        
-        const ref = this.fb.db.collection('boards').doc(board);
-        
-        if (this.fb.unsub) this.fb.unsub();
-        
-        const app = this;
-        this.fb.unsub = ref.onSnapshot(snap => {
-          if (!snap.exists) return;
-          const data = snap.data();
-          if (data.__lastWriteBy === app.fb.user.uid) return;
-          if (data.state) {
-            app.state = data.state;
-            app.validateState();
-            app.save(true);
-            app.render();
-            console.log('📥 Atualizado do Cloud');
-          }
+        // Header
+        const total = Math.max(1, Math.ceil((new Date(sp.end) - new Date(sp.start)) / 864e5));
+        const left = Math.max(0, Math.ceil((new Date(sp.end) - new Date()) / 864e5));
+        const ratio = left / total;
+        let cls = 'ok';
+        if (ratio <= 1/3) cls = 'danger';
+        else if (ratio <= 2/3) cls = 'warn';
+
+        document.getElementById('sprintTitle').textContent = sp.name;
+        const badge = document.getElementById('dateBadge');
+        badge.className = `pill ${cls}`;
+        const formatDate = iso => new Date(iso+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+        badge.textContent = `${formatDate(sp.start)} → ${formatDate(sp.end)} • ${left}/${total} dias`;
+
+        // Tasks
+        const fib = n => Number(n) || 0;
+        const byAssignee = { Aline: [], Caio: [] };
+        sp.tasks.forEach(t => {
+          byAssignee[t.assignee] = byAssignee[t.assignee] || [];
+          byAssignee[t.assignee].push(t);
         });
-        
-        const cur = await ref.get();
-        if (cur.exists) {
-          const data = cur.data();
-          if (data.state) {
-            this.state = data.state;
-            this.validateState();
-            this.save(true);
-            this.render();
-          }
-        } else {
-          await this.cloudSave();
-        }
-        
-        alert('✅ Conectado ao Cloud!\n\nBoard: ' + board);
-        console.log('✅ Cloud conectado');
-      } catch(err) {
-        console.error('❌ Erro:', err);
-        alert('Erro: ' + err.message);
+
+        const rows = sp.tasks.map(t => `
+          <tr>
+            <td>${t.id}</td>
+            <td>${this.escapeHtml(t.title)}</td>
+            <td>${fib(t.points)}</td>
+            <td>${this.escapeHtml(t.assignee)}</td>
+            <td>${t.done ? '✅' : '❌'}</td>
+          </tr>
+        `).join('');
+        document.getElementById('tasksTable').innerHTML = rows;
+      },
+
+      escapeHtml(str) {
+        return str.replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;' })[m]);
+      },
+
+      save() {
+        localStorage.setItem('sprintTrackerState', JSON.stringify(this.state));
       }
-    },
-    
-    async cloudSave() {
-      if (!this.fb.connected || this.fb.saving) return;
-      this.fb.saving = true;
-      try {
-        const ref = this.fb.db.collection('boards').doc(this.fb.boardId);
-        await ref.set({
-          state: JSON.parse(JSON.stringify(this.state)),
-          __lastWriteAt: Date.now(),
-          __lastWriteBy: this.fb.user.uid
-        });
-        console.log('☁️ Salvo no Cloud');
-      } catch(err) {
-        console.error('❌ Cloud save falhou:', err);
-      } finally {
-        this.fb.saving = false;
-      }
-    },
-    
-    async autoConnect() {
-      const cfg = localStorage.getItem('fb_cfg');
-      const board = localStorage.getItem('fb_board');
-      if (cfg && board) {
-        try {
-          await this.cloudConnect(JSON.parse(cfg), board);
-        } catch(e) {
-          console.warn('Falha na auto-conexão:', e);
-        }
-      }
-    }
-  };
-  
-  // Inicializar quando DOM estiver pronto
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => window.SprintApp.init());
-  } else {
-    window.SprintApp.init();
-  }
-  
-} else {
-  console.log('⚠️ Sprint Tracker já inicializado, apenas re-renderizando...');
-  if (window.SprintApp.render) window.SprintApp.render();
-}
-</script>
+    };
+
+    // Inicializa
+    app.init();
+  </script>
 </body>
+
 </html>
