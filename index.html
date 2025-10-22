@@ -702,7 +702,6 @@ if (!window.SprintApp) {
       const epicFilter = document.getElementById('epicFilter');
       const epicList = document.getElementById('epicList');
 
-      // Populate selects
       if (epicSel) {
         epicSel.innerHTML = '<option value="">Épico…</option>' + sp.epics.map(e => (
           `<option value="${e.id}">${this.escapeHtml(e.name)}</option>`
@@ -714,12 +713,8 @@ if (!window.SprintApp) {
           `<option value="${e.id}" ${cur===e.id?'selected':''}>${this.escapeHtml(e.name)}</option>`
         )).join('');
       }
-
-      // Badges list
       if (epicList) {
-        epicList.innerHTML = sp.epics.map(e => (
-          `<span class="badge epic">${this.escapeHtml(e.name)}</span>`
-        )).join('');
+        epicList.innerHTML = sp.epics.map(e => `<span class=\"badge epic\">${this.escapeHtml(e.name)}</span>`).join('');
       }
     };
 
@@ -754,18 +749,17 @@ if (!window.SprintApp) {
           el.className = 'task' + (t.status === 'done' ? ' done' : '');
           el.draggable = true;
           el.dataset.id = t.id;
-
           el.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', t.id));
 
           const tagText = (t.tags && t.tags.length) ? '#' + t.tags.map(s => this.escapeHtml(String(s))).join(', #') : '';
 
           el.innerHTML = `
-            <div class="title">${this.escapeHtml(t.title)}</div>
-            ${t.notes ? `<div class="notes">${this.escapeHtml(t.notes)}</div>` : ''}
-            <div class="footer">
-              <span class="mini">${this.escapeHtml(t.assignee||'')} • ${Number(t.points||0)} pts</span>
-              <span class="mini">${tagText}</span>
-              <button class="btn" data-edit="${t.id}">✎</button>
+            <div class=\"title\">${this.escapeHtml(t.title)}</div>
+            ${t.notes ? `<div class=\"notes\">${this.escapeHtml(t.notes)}</div>` : ''}
+            <div class=\"footer\">
+              <span class=\"mini\">${this.escapeHtml(t.assignee||'')} • ${Number(t.points||0)} pts</span>
+              <span class=\"mini\">${tagText}</span>
+              <button class=\"btn\" data-edit=\"${t.id}\">✎</button>
             </div>
           `;
 
@@ -776,11 +770,16 @@ if (!window.SprintApp) {
         });
     };
 
-    // --- Edit Task Modal ---
+    // --- Edit Task Modal (FIXED: no stale closures) ---
     app.openEdit = function(id) {
       const sp = this.currentSprint();
       const t = sp?.tasks?.find(x => x.id === id);
       if (!t) return;
+
+      const modal = document.getElementById('editTaskModal');
+      if (!modal) return;
+      modal.dataset.taskId = t.id;
+      modal.showModal();
 
       const title = document.getElementById('et_title');
       const assignee = document.getElementById('et_assignee');
@@ -795,66 +794,66 @@ if (!window.SprintApp) {
       assignee.value = t.assignee || 'Aline';
       points.value = String(t.points || 0);
       status.value = t.status || 'todo';
-
       epic.innerHTML = '<option value="">Épico…</option>' + sp.epics.map(e => (
-        `<option value="${e.id}" ${t.epicId===e.id?'selected':''}>${this.escapeHtml(e.name)}</option>`
+        `<option value=\"${e.id}\" ${t.epicId===e.id?'selected':''}>${this.escapeHtml(e.name)}</option>`
       )).join('');
-
       tags.value = (t.tags || []).join(', ');
       notes.value = t.notes || '';
 
       list.innerHTML = '';
       (t.checklist || []).forEach((it, idx) => {
         const row = document.createElement('div');
-        row.innerHTML = `<label><input type="checkbox" ${it.done?'checked':''} data-idx="${idx}"> ${this.escapeHtml(it.text||'')}</label>`;
+        row.innerHTML = `<label><input type=\"checkbox\" ${it.done?'checked':''} data-idx=\"${idx}\"> ${this.escapeHtml(it.text||'')}</label>`;
         list.appendChild(row);
       });
 
-      const modal = document.getElementById('editTaskModal');
-      modal.showModal();
+      const getCurrent = () => {
+        const curSp = this.currentSprint();
+        const curId = modal.dataset.taskId;
+        const curTask = curSp?.tasks?.find(x => x.id === curId);
+        return { curSp, curTask };
+        };
 
-      if (!this._editBound) {
-        document.getElementById('et_addItem').addEventListener('click', () => {
-          const txt = document.getElementById('et_newItem').value.trim();
-          if (!txt) return;
-          t.checklist = t.checklist || [];
-          t.checklist.push({ id: crypto.randomUUID(), text: txt, done: false });
-          document.getElementById('et_newItem').value = '';
-          this.openEdit(t.id);
+      document.getElementById('et_addItem').onclick = () => {
+        const { curTask } = getCurrent();
+        const txt = document.getElementById('et_newItem').value.trim();
+        if (!curTask || !txt) return;
+        curTask.checklist = curTask.checklist || [];
+        curTask.checklist.push({ id: crypto.randomUUID(), text: txt, done: false });
+        document.getElementById('et_newItem').value = '';
+        this.openEdit(curTask.id);
+      };
+
+      document.getElementById('et_save').onclick = (ev) => {
+        ev.preventDefault();
+        const { curSp, curTask } = getCurrent();
+        if (!curSp || !curTask) return;
+        curTask.title = title.value.trim();
+        curTask.assignee = assignee.value;
+        curTask.points = Number(points.value || 0);
+        curTask.status = status.value;
+        curTask.epicId = epic.value;
+        curTask.tags = tags.value.split(',').map(s => s.trim()).filter(Boolean);
+        curTask.notes = notes.value;
+        const inputs = list.querySelectorAll('input[type=\"checkbox\"]');
+        inputs.forEach(inp => {
+          const idx = Number(inp.dataset.idx);
+          if (curTask.checklist && curTask.checklist[idx]) curTask.checklist[idx].done = inp.checked;
         });
+        modal.close();
+        this.save();
+        this.render();
+      };
 
-        document.getElementById('et_save').addEventListener('click', (ev) => {
-          ev.preventDefault();
-          t.title = title.value.trim();
-          t.assignee = assignee.value;
-          t.points = Number(points.value || 0);
-          t.status = status.value;
-          t.epicId = epic.value;
-          t.tags = tags.value.split(',').map(s => s.trim()).filter(Boolean);
-          t.notes = notes.value;
-
-          // update checklist checks
-          const inputs = list.querySelectorAll('input[type="checkbox"]');
-          inputs.forEach(inp => {
-            const idx = Number(inp.dataset.idx);
-            if (t.checklist && t.checklist[idx]) t.checklist[idx].done = inp.checked;
-          });
-
-          document.getElementById('editTaskModal').close();
-          this.save();
-          this.render();
-        });
-
-        document.getElementById('et_delete').addEventListener('click', () => {
-          const i = sp.tasks.findIndex(x => x.id === t.id);
-          if (i >= 0) sp.tasks.splice(i, 1);
-          document.getElementById('editTaskModal').close();
-          this.save();
-          this.render();
-        });
-
-        this._editBound = true;
-      }
+      document.getElementById('et_delete').onclick = () => {
+        const { curSp, curTask } = getCurrent();
+        if (!curSp || !curTask) return;
+        const i = curSp.tasks.findIndex(x => x.id === curTask.id);
+        if (i >= 0) curSp.tasks.splice(i, 1);
+        modal.close();
+        this.save();
+        this.render();
+      };
     };
 
     // --- Extra buttons / handlers ---
@@ -924,13 +923,11 @@ if (!window.SprintApp) {
       this.renderBoard();
     };
 
-    // Initial enhanced render
     app.render();
   } catch (e) {
     console.error('Enhancement script failed:', e);
   }
 })();
 </script>
-
-</body>
+\n</body>
 </html>
